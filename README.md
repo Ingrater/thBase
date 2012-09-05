@@ -13,6 +13,6 @@ To use the library you have to specifiy the include path for my modified version
 
 -I[path to druntime]\import -I[path to phobos]\phobos; -I[path to thBase]\src
 
-Also you need to specify -version=NOGCSAFE
+Also you need to specify -version=NOGCSAFE. And link against gcstub.obj (just add it to the command line).
 
 And of course link against thBase.lib or thBased.lib (for debug)
