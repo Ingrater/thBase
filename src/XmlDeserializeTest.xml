@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<test f="0.5" i="16" name="testnode">
+	<s size="4">
+	  <special value="0.0" />
+	  <special value="1.0" />
+	  <special value="2.0" />
+	  <special value="3.0" />
+	</s>
+	<s2 size="4">
+	  <special value="0.0" />
+	  <special value="1.0" />
+	  <special value="2.0" />
+	  <special value="3.0" />
+	</s2>
+</test>
