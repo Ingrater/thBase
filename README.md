@@ -10,6 +10,9 @@ Modifiy the paths in the sc.ini to the paths where you checked out my versions d
 You also need to modify the paths in th project settings.
 
 To use the library you have to specifiy the include path for my modified version of phobos and druntime with:
--I<path to druntime>\import -I<path to phobos>\phobos; -I<path to thBase>\src
+
+-I[path to druntime]\import -I[path to phobos]\phobos; -I[path to thBase]\src
+
 Also you need to specify -version=NOGCSAFE
+
 And of course link against thBase.lib or thBased.lib (for debug)
