@@ -430,6 +430,7 @@ cd %CWD%</preBuildCommand>
    <File path="thBase\allocator.d" />
    <File path="thBase\bitstream.d" />
    <File path="thBase\casts.d" />
+   <File path="thBase\chunkfile.d" />
    <File path="thBase\contracts.d" />
    <File path="thBase\conv.d" />
    <File path="thBase\ctfe.d" />

@@ -16,14 +16,17 @@ version(Windows)
  */
 struct RawFile {
 	FILE* m_Handle = null;
+
+  @disable this(this);
 	
 	/**
-	 * constructor
+	 * opens a file
 	 * Params:
 	 *  pFilename = the filename
 	 *  pMode = the mode for the filestream
 	 */
-	this(const(char)[] pFilename, const(char)[] pMode){
+	void open(const(char)[] pFilename, const(char)[] pMode){
+    assert(!isOpen());
     char[] szFilename = (cast(char*)alloca(pFilename.length+1))[0..(pFilename.length+1)];
     szFilename[0..($-1)] = pFilename[];
     szFilename[$-1] = '\0';
@@ -33,11 +36,22 @@ struct RawFile {
     szMode[$-1] = '\0';
 		m_Handle = fopen(szFilename.ptr,szMode.ptr);
 	}
+
+	/**
+  * constructor
+  * Params:
+  *  pFilename = the filename
+  *  pMode = the mode for the filestream
+  */
+  this(const(char)[] pFilename, const(char)[] pMode)
+  {
+    open(pFilename, pMode);
+  }
 	
 	~this(){
 		close();
 	}
-	
+
 	/**
 	 * Returns: if the file is open or not
 	 */
@@ -56,7 +70,7 @@ struct RawFile {
 		assert(m_Handle !is null);
 	}
 	body {
-		return fwrite(&value,T.sizeof,1,m_Handle);
+		return fwrite(&value,T.sizeof,1,m_Handle) * T.sizeof;
 	}
 	
 	/**
@@ -70,7 +84,7 @@ struct RawFile {
 		assert(m_Handle !is null);
 	}
 	body {
-		return fwrite(values.ptr,arrayType!T.sizeof,values.length,m_Handle);
+		return fwrite(values.ptr,arrayType!T.sizeof,values.length,m_Handle)  * arrayType!T.sizeof;
 	}
 	
 	/**
@@ -84,7 +98,7 @@ struct RawFile {
 		assert(m_Handle !is null);
 	}
 	body {
-		return fread(&value,T.sizeof,1,m_Handle);
+		return fread(&value,T.sizeof,1,m_Handle) * T.sizeof;
 	}
 	
 	/**
@@ -98,7 +112,7 @@ struct RawFile {
 		assert(m_Handle !is null);
 	}
 	body {
-		return fread(values.ptr,arrayType!T.sizeof,values.length,m_Handle);
+		return fread(values.ptr,arrayType!T.sizeof,values.length,m_Handle) * arrayType!T.sizeof;
 	}
 	
 	/**
@@ -126,6 +140,51 @@ struct RawFile {
       return len;
     }
     return 0;
+  }
+
+  /**
+   * gets the current position in the file
+   */
+  @property size_t position()
+  {
+    if(m_Handle != null)
+    {
+      return ftell(m_Handle);
+    }
+    return 0;
+  }
+
+  /**
+   * sets the current position in the file
+   */
+  void seek(size_t position)
+  {
+    if( m_Handle != null)
+    {
+      fseek(m_Handle, position, SEEK_SET);
+    }
+  }
+
+  /**
+   * sets the position to the end of the file
+   */
+  void seekEnd()
+  {
+    if(m_Handle != null)
+    {
+      fseek(m_Handle, 0, SEEK_END);
+    }
+  }
+
+  /**
+   * skips a given number of bytes
+   */
+  void skip(size_t bytes)
+  {
+    if(m_Handle != null)
+    {
+      fseek(m_Handle, bytes, SEEK_CUR);
+    }
   }
 
   @property bool eof()
