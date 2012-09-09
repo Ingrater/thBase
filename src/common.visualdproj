@@ -431,6 +431,7 @@ cd %CWD%</preBuildCommand>
    <File path="thBase\bitstream.d" />
    <File path="thBase\casts.d" />
    <File path="thBase\chunkfile.d" />
+   <File path="thBase\constref.d" />
    <File path="thBase\contracts.d" />
    <File path="thBase\conv.d" />
    <File path="thBase\ctfe.d" />
@@ -443,6 +444,7 @@ cd %CWD%</preBuildCommand>
    <File path="thBase\metainfo.d" />
    <File path="thBase\metatools.d" />
    <File path="thBase\scoped.d" />
+   <File path="thBase\sharedlib.d" />
    <File path="thBase\stream.d" />
    <File path="thBase\string.d" />
    <File path="thBase\timer.d" />
