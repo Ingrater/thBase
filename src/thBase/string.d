@@ -398,6 +398,40 @@ unittest
   }
 }
 
+bool endsWith(T,U)(T str, U end, CaseSensitive cs = CaseSensitive.yes)
+if(thBase.traits.isSomeString!T && thBase.traits.isSomeString!U 
+   && is(StripModifier!(arrayType!T) == StripModifier!(arrayType!U)))
+{
+  auto data1 = str[];
+  auto data2 = end[];
+  if(cs == CaseSensitive.yes)
+  {
+    if(str.length < end.length)
+      return false;
+    size_t to = str.length;
+    for(size_t i = to - end.length; i<to; ++i)
+    {
+      if(data1[i] != data2[i])
+        return false;
+    }
+  }
+  else
+  {
+    size_t i=0;
+    size_t j=0;
+    while( i < data1.length && j < data2.length )
+    {
+      if(std.uni.toLower(decode(data1,i)) != std.uni.toLower(decode(data2,j)))
+      {
+        return false;
+      }
+    }
+    if( data2.length > j ) //second string not completely read
+      return false;
+  }
+  return true;
+}
+
 struct Tokenizer(T)
 {
   static assert(thBase.traits.isArray!T, "template argument is not an array");

@@ -6,7 +6,7 @@ public import thBase.types;
 import core.refcounted;
 import thBase.utf;
 
-export class ConvException : RCException
+class ConvException : RCException
 {
   this(rcstring message, string file = __FILE__, int line = __LINE__)
   {
@@ -171,4 +171,31 @@ TT to(TT,ST)(ST arg) if(isRCString!TT && (is(ST == dchar[]) || is(ST == immutabl
     len += charLen;
   }
   return result;
+}
+
+string EnumToStringGenerate(T,string templateVar = "T", string pre = "")(string var){
+	string res = "final switch(" ~ var ~ "){";
+	foreach(m;__traits(allMembers,T)){
+		res ~= "case " ~ templateVar ~ "." ~ m ~ ": return \"" ~ pre ~ m ~ "\";";
+	}
+	res ~= "}";
+	return res;
+}
+
+string EnumToString(T)(T value){
+	mixin(EnumToStringGenerate!(T)("value"));
+}
+
+unittest
+{
+  enum Test : uint
+  {
+    Value1,
+    Value2,
+    Value3
+  }
+
+  assert(EnumToString(Test.Value1) == "Value1");
+  assert(EnumToString(Test.Value2) == "Value2");
+  assert(EnumToString(Test.Value3) == "Value3");
 }
