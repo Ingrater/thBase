@@ -46,7 +46,7 @@
   <compiler>0</compiler>
   <otherDMD>0</otherDMD>
   <program>$(DMDInstallDir)windows\bin\dmd.exe</program>
-  <imppath>$(SolutionDir)\..\..\druntime\import;$(SolutionDir)\..\..\phobos;</imppath>
+  <imppath>$(ProjectDir)\..\..\druntime\import;$(ProjectDir)\..\..\phobos;</imppath>
   <fileImppath />
   <outdir>$(ConfigurationName)</outdir>
   <objdir>$(OutDir)</objdir>
@@ -83,11 +83,11 @@
   <objfiles />
   <linkswitches />
   <libfiles />
-  <libpaths>$(SolutionDir)\..\phobos;$(SolutionDir)\..\thBase\lib</libpaths>
+  <libpaths>$(ProjectDir)\..\..\phobos;$(ProjectDir)\..\..\thBase\lib</libpaths>
   <deffile />
   <resfile />
   <exefile>$(OutDir)\$(ProjectName).exe</exefile>
-  <additionalOptions>-defaultlib=phobosnogcd -debuglib=phobosnogcd gcstub.obj</additionalOptions>
+  <additionalOptions>-defaultlib=phobosnogcd -debuglib=phobosnogcd $(ProjectDir)\..\..\druntime\lib\gcstub.obj</additionalOptions>
   <preBuildCommand>set CWD=%CD%
 cd $(ProjectDir)\..\..\druntime
 $(DMDInstallDir)windows\bin\make -f win32nogc.mak
@@ -145,7 +145,7 @@ cd %CWD%</preBuildCommand>
   <compiler>0</compiler>
   <otherDMD>0</otherDMD>
   <program>$(DMDInstallDir)windows\bin\dmd.exe</program>
-  <imppath>$(SolutionDir)\..\..\druntime\import;$(SolutionDir)\..\..\phobos;</imppath>
+  <imppath>$(ProjectDir)\..\..\druntime\import;$(ProjectDir)\..\..\phobos;</imppath>
   <fileImppath />
   <outdir>$(ConfigurationName)</outdir>
   <objdir>$(OutDir)</objdir>
@@ -182,11 +182,11 @@ cd %CWD%</preBuildCommand>
   <objfiles />
   <linkswitches />
   <libfiles />
-  <libpaths>$(SolutionDir)\..\phobos;$(SolutionDir)\..\thBase\lib</libpaths>
+  <libpaths>$(ProjectDir)\..\..\phobos;$(ProjectDir)\..\..\thBase\lib</libpaths>
   <deffile />
   <resfile />
   <exefile>$(OutDir)\$(ProjectName).exe</exefile>
-  <additionalOptions>-defaultlib=phobosnogc -debuglib=phobosnogc gcstub.obj</additionalOptions>
+  <additionalOptions>-defaultlib=phobosnogc -debuglib=phobosnogc $(ProjectDir)\..\..\druntime\lib\gcstub.obj</additionalOptions>
   <preBuildCommand>set CWD=%CD%
 cd $(ProjectDir)\..\..\druntime
 $(DMDInstallDir)windows\bin\make -f win32nogc.mak
@@ -244,7 +244,7 @@ cd %CWD%</preBuildCommand>
   <compiler>0</compiler>
   <otherDMD>0</otherDMD>
   <program>$(DMDInstallDir)windows\bin\dmd.exe</program>
-  <imppath>$(SolutionDir)\..\..\druntime\import;$(SolutionDir)\..\..\phobos;</imppath>
+  <imppath>$(ProjectDir)\..\..\druntime\import;$(ProjectDir)\..\..\phobos;</imppath>
   <fileImppath />
   <outdir>$(ConfigurationName)</outdir>
   <objdir>$(OutDir)</objdir>
@@ -343,7 +343,7 @@ cd %CWD%</preBuildCommand>
   <compiler>0</compiler>
   <otherDMD>0</otherDMD>
   <program>$(DMDInstallDir)windows\bin\dmd.exe</program>
-  <imppath>$(SolutionDir)\..\..\druntime\import;$(SolutionDir)\..\..\phobos;</imppath>
+  <imppath>$(ProjectDir)\..\..\druntime\import;$(ProjectDir)\..\..\phobos;</imppath>
   <fileImppath />
   <outdir>$(ConfigurationName)</outdir>
   <objdir>$(OutDir)</objdir>

@@ -223,3 +223,124 @@ size_t encode(ref char[4] buf, dchar c) @trusted
   assert(!isValidDchar(c));
   throw (New!UTFException(_T("Encoding an invalid code point in UTF-8"), c));
 }
+
+/*
+ From here on my own implementations
+*/
+
+/* ============ Decode Reverse ============= */
+
+/+
+Decodes and returns the character starting at $(D str[index]). $(D index)
+is decremented to one past the decoded character. If the character is not
+well-formed, then a $(D UTFException) is thrown and $(D index) remains
+unchanged.
+
+Throws:
+$(D UTFException) if $(D str[index]) is not the end of a valid UTF
+sequence.
++/
+dchar decodeReverse(S)(S str, ref size_t index) @trusted
+if( thBase.traits.isSomeString!S && is(StripModifier!(arrayType!S) == char))
+in
+{
+  assert(index < str.length, "Decode out of bounds");
+}
+body
+{
+  if (str[$-index-1] < 0x80)
+    return str[$-1-(index++)];
+  else
+    return decodeReverseImpl(str.ptr, str.length, index);
+}
+
+
+/*
+* This function does it's own bounds checking to give a more useful
+* error message when attempting to decode past the end of a string.
+* Subsequently it uses a pointer instead of an array to avoid
+* redundant bounds checking.
+*/
+private dchar decodeReverseImpl(immutable(char)* pstr, size_t len, ref size_t index) @trusted
+{
+  /* The following encodings are valid, except for the 5 and 6 byte
+  * combinations:
+  *  0xxxxxxx
+  *  110xxxxx 10xxxxxx
+  *  1110xxxx 10xxxxxx 10xxxxxx
+  *  11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
+  *  111110xx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
+  *  1111110x 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
+  */
+
+  /* Dchar bitmask for different numbers of UTF-8 code units.
+  */
+  enum bitMask = [0, 0xc0, 0xe0, 0xf0]; 
+
+  uint charLen = 0;
+  dchar result = 0;
+
+  foreach(i; TypeTuple!(0,1,2,3))
+  {
+    sizediff_t pos = len - index - i - 1;
+    if(pos < 0)
+      goto Ebounds;
+
+    char c = pstr[pos];
+
+    if((c & 0xC0) == 0x80)
+    {
+      charLen++;
+    }
+    else
+    {
+      if(i != charLen)
+        goto Eutf;
+
+      if((c & bitMask[i]) != bitMask[i])
+        goto Eutf;
+
+      result = (c & (~bitMask[i])) << (i * 6);
+    }
+  }
+
+  for(uint i=0; i<charLen; i++)
+  {
+    result |= (pstr[len-index-i-1] & 0x3f) << ((2-i) * 6);
+  }
+
+  index += charLen+1;
+  return result;
+
+
+  static UTFException exception(string str, rcstring msg)
+  {
+    uint[4] sequence = void;
+    size_t i=0;
+    do
+    {
+      sequence[i] = str[i];
+    } while (++i < str.length && i < 4 && (str[i] & 0xC0) == 0x80);
+
+    auto ex = New!UTFException(msg, i);
+    ex.setSequence(sequence[0 .. i]);
+    return ex;
+  }
+
+Eutf:
+  throw exception(pstr[(len-index-charLen-1) .. len], _T("Invalid UTF-8 sequence") );
+Ebounds:
+  throw exception(pstr[(len-index-charLen-1) .. len], _T("Attempted to decode past the end of a string") );
+}
+
+unittest
+{
+  size_t index;
+
+  assert(decodeReverse("A", index) == 'A');
+  assert(index == 1);
+
+  index = 0;
+  assert(decodeReverse("ш", index) == 'ш');
+  assert(index == 2);
+}
