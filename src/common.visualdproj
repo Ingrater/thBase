@@ -83,7 +83,7 @@
   <objfiles />
   <linkswitches />
   <libfiles />
-  <libpaths />
+  <libpaths>$(SolutionDir)\..\phobos;$(SolutionDir)\..\thBase\lib</libpaths>
   <deffile />
   <resfile />
   <exefile>$(OutDir)\$(ProjectName).exe</exefile>
@@ -182,7 +182,7 @@ cd %CWD%</preBuildCommand>
   <objfiles />
   <linkswitches />
   <libfiles />
-  <libpaths />
+  <libpaths>$(SolutionDir)\..\phobos;$(SolutionDir)\..\thBase\lib</libpaths>
   <deffile />
   <resfile />
   <exefile>$(OutDir)\$(ProjectName).exe</exefile>
@@ -281,7 +281,7 @@ cd %CWD%</preBuildCommand>
   <objfiles />
   <linkswitches />
   <libfiles />
-  <libpaths />
+  <libpaths>$(SolutionDir)\..\phobos;$(SolutionDir)\..\thBase\lib</libpaths>
   <deffile />
   <resfile />
   <exefile>..\lib\thBased.lib</exefile>
@@ -380,7 +380,7 @@ cd %CWD%</preBuildCommand>
   <objfiles />
   <linkswitches />
   <libfiles />
-  <libpaths />
+  <libpaths>$(SolutionDir)\..\phobos;$(SolutionDir)\..\thBase\lib</libpaths>
   <deffile />
   <resfile />
   <exefile>..\lib\thBase.lib</exefile>
