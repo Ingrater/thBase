@@ -46,7 +46,7 @@
   <compiler>0</compiler>
   <otherDMD>0</otherDMD>
   <program>$(DMDInstallDir)windows\bin\dmd.exe</program>
-  <imppath>C:\Users\Benjamin\Documents\d-projects\druntime\import;C:\Users\Benjamin\Documents\d-projects\phobos</imppath>
+  <imppath>$(SolutionDir)\..\..\druntime\import;$(SolutionDir)\..\..\phobos;</imppath>
   <fileImppath />
   <outdir>$(ConfigurationName)</outdir>
   <objdir>$(OutDir)</objdir>
@@ -89,11 +89,11 @@
   <exefile>$(OutDir)\$(ProjectName).exe</exefile>
   <additionalOptions>-defaultlib=phobosnogcd -debuglib=phobosnogcd gcstub.obj</additionalOptions>
   <preBuildCommand>set CWD=%CD%
-cd C:\Users\Benjamin\Documents\d-projects\druntime
-make -f win32nogc.mak
+cd $(ProjectDir)\..\..\druntime
+$(DMDInstallDir)windows\bin\make -f win32nogc.mak
 if errorlevel 1 goto reportError
-cd C:\Users\Benjamin\Documents\d-projects\phobos
-make -f win32nogc.mak
+cd $(ProjectDir)\..\..\phobos
+$(DMDInstallDir)windows\bin\make -f win32nogc.mak
 if errorlevel 1 goto reportError
 cd %CWD%</preBuildCommand>
   <postBuildCommand />
@@ -145,7 +145,7 @@ cd %CWD%</preBuildCommand>
   <compiler>0</compiler>
   <otherDMD>0</otherDMD>
   <program>$(DMDInstallDir)windows\bin\dmd.exe</program>
-  <imppath>C:\Users\Benjamin\Documents\d-projects\druntime\import;C:\Users\Benjamin\Documents\d-projects\phobos</imppath>
+  <imppath>$(SolutionDir)\..\..\druntime\import;$(SolutionDir)\..\..\phobos;</imppath>
   <fileImppath />
   <outdir>$(ConfigurationName)</outdir>
   <objdir>$(OutDir)</objdir>
@@ -188,11 +188,11 @@ cd %CWD%</preBuildCommand>
   <exefile>$(OutDir)\$(ProjectName).exe</exefile>
   <additionalOptions>-defaultlib=phobosnogc -debuglib=phobosnogc gcstub.obj</additionalOptions>
   <preBuildCommand>set CWD=%CD%
-cd C:\Users\Benjamin\Documents\d-projects\druntime
-make -f win32nogc.mak
+cd $(ProjectDir)\..\..\druntime
+$(DMDInstallDir)windows\bin\make -f win32nogc.mak
 if errorlevel 1 goto reportError
-cd C:\Users\Benjamin\Documents\d-projects\phobos
-make -f win32nogc.mak
+cd $(ProjectDir)\..\..\phobos
+$(DMDInstallDir)windows\bin\make -f win32nogc.mak
 if errorlevel 1 goto reportError
 cd %CWD%</preBuildCommand>
   <postBuildCommand />
@@ -244,7 +244,7 @@ cd %CWD%</preBuildCommand>
   <compiler>0</compiler>
   <otherDMD>0</otherDMD>
   <program>$(DMDInstallDir)windows\bin\dmd.exe</program>
-  <imppath>C:\Users\Benjamin\Documents\d-projects\druntime\import;C:\Users\Benjamin\Documents\d-projects\phobos</imppath>
+  <imppath>$(SolutionDir)\..\..\druntime\import;$(SolutionDir)\..\..\phobos;</imppath>
   <fileImppath />
   <outdir>$(ConfigurationName)</outdir>
   <objdir>$(OutDir)</objdir>
@@ -287,11 +287,11 @@ cd %CWD%</preBuildCommand>
   <exefile>..\lib\thBased.lib</exefile>
   <additionalOptions />
   <preBuildCommand>set CWD=%CD%
-cd C:\Users\Benjamin\Documents\d-projects\druntime
-make -f win32nogc.mak
+cd $(ProjectDir)\..\..\druntime
+$(DMDInstallDir)windows\bin\make -f win32nogc.mak
 if errorlevel 1 goto reportError
-cd C:\Users\Benjamin\Documents\d-projects\phobos
-make -f win32nogc.mak
+cd $(ProjectDir)\..\..\phobos
+$(DMDInstallDir)windows\bin\make -f win32nogc.mak
 if errorlevel 1 goto reportError
 cd %CWD%</preBuildCommand>
   <postBuildCommand />
@@ -343,7 +343,7 @@ cd %CWD%</preBuildCommand>
   <compiler>0</compiler>
   <otherDMD>0</otherDMD>
   <program>$(DMDInstallDir)windows\bin\dmd.exe</program>
-  <imppath>C:\Users\Benjamin\Documents\d-projects\druntime\import;C:\Users\Benjamin\Documents\d-projects\phobos</imppath>
+  <imppath>$(SolutionDir)\..\..\druntime\import;$(SolutionDir)\..\..\phobos;</imppath>
   <fileImppath />
   <outdir>$(ConfigurationName)</outdir>
   <objdir>$(OutDir)</objdir>
@@ -386,11 +386,11 @@ cd %CWD%</preBuildCommand>
   <exefile>..\lib\thBase.lib</exefile>
   <additionalOptions />
   <preBuildCommand>set CWD=%CD%
-cd C:\Users\Benjamin\Documents\d-projects\druntime
-make -f win32nogc.mak
+cd $(ProjectDir)\..\..\druntime
+$(DMDInstallDir)windows\bin\make -f win32nogc.mak
 if errorlevel 1 goto reportError
-cd C:\Users\Benjamin\Documents\d-projects\phobos
-make -f win32nogc.mak
+cd $(ProjectDir)\..\..\phobos
+$(DMDInstallDir)windows\bin\make -f win32nogc.mak
 if errorlevel 1 goto reportError
 cd %CWD%</preBuildCommand>
   <postBuildCommand />
