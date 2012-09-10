@@ -408,8 +408,8 @@ if(thBase.traits.isSomeString!T && thBase.traits.isSomeString!U
   {
     if(str.length < end.length)
       return false;
-    size_t to = str.length;
-    for(size_t i = to - end.length; i<to; ++i)
+    size_t to = str.length - end.length;
+    for(sizediff_t i = str.length-1; i>=to; --i)
     {
       if(data1[i] != data2[i])
         return false;
@@ -417,11 +417,11 @@ if(thBase.traits.isSomeString!T && thBase.traits.isSomeString!U
   }
   else
   {
-    size_t i=0;
-    size_t j=0;
-    while( i < data1.length && j < data2.length )
+    size_t i = 0;
+    size_t j = 0;
+    while( i < data1.length && j < data2.length)
     {
-      if(std.uni.toLower(decode(data1,i)) != std.uni.toLower(decode(data2,j)))
+      if(std.uni.toLower(decodeReverse(data1,i)) != std.uni.toLower(decodeReverse(data2,j)))
       {
         return false;
       }

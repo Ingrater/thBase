@@ -286,7 +286,7 @@ private dchar decodeReverseImpl(immutable(char)* pstr, size_t len, ref size_t in
     if(pos < 0)
       goto Ebounds;
 
-    char c = pstr[pos];
+    dchar c = pstr[pos];
 
     if((c & 0xC0) == 0x80)
     {
@@ -301,12 +301,13 @@ private dchar decodeReverseImpl(immutable(char)* pstr, size_t len, ref size_t in
         goto Eutf;
 
       result = (c & (~bitMask[i])) << (i * 6);
+      break;
     }
   }
 
-  for(uint i=0; i<charLen; i++)
+  for(uint i=1; i<=charLen; i++)
   {
-    result |= (pstr[len-index-i-1] & 0x3f) << ((2-i) * 6);
+    result |= (pstr[len-index-i] & 0x3f) << ((charLen-i) * 6);
   }
 
   index += charLen+1;
@@ -333,14 +334,52 @@ Ebounds:
   throw exception(pstr[(len-index-charLen-1) .. len], _T("Attempted to decode past the end of a string") );
 }
 
+version(unittest)
+{
+  import thBase.devhelper;
+}
+
 unittest
 {
-  size_t index;
+  auto leak = LeakChecker("thBase.utf.decodeReverse unittest");
+  {
+    size_t index;
 
-  assert(decodeReverse("A", index) == 'A');
-  assert(index == 1);
+    assert(decodeReverse("A", index) == 'A');
+    assert(index == 1);
 
-  index = 0;
-  assert(decodeReverse("ш", index) == 'ш');
-  assert(index == 2);
+    index = 0;
+    dchar result = decodeReverse("ш", index);
+    assert(result == 'ш');
+    assert(index == 2);
+
+    auto test = "Мaшa";
+    auto testResult = "Мaшa"d;
+    index = 0;
+    foreach(size_t i, dchar d; testResult)
+    {
+      result = decodeReverse(test, index);
+      switch(i)
+      {
+        case 0:
+          assert(result == 'a');
+          assert(index == 1);
+          break;
+        case 1:
+          assert(result == 'ш');
+          assert(index == 3);
+          break;
+        case 2:
+          assert(result == 'a');
+          assert(index == 4);
+          break;
+        case 3:
+          assert(result == 'М');
+          assert(index == 6);
+          break;
+        default:
+          assert(0, "non handeled index");
+      }
+    }
+  }
 }
