@@ -76,6 +76,11 @@ class Chunkfile
       Delete(m_oldData);
     }
 
+    @property Operation operation()
+    {
+      return m_operation;
+    }
+
     size_t read(T)(ref T val) if(!thBase.traits.isArray!T)
     {
       assert(m_operation != Operation.Write, "can not read in write operation");
@@ -156,6 +161,14 @@ class Chunkfile
         return [];
       }
       return data;
+    }
+
+    final size_t writeArray(T, ST = uint)(T data) 
+    {
+      static assert(isArray!T, T.stringof ~ " is not an array");
+      size_t size = write!ST(data.length);
+      size += write(data);
+      return size;
     }
 
     final size_t write(T)(auto ref T val) if(!thBase.traits.isArray!T)

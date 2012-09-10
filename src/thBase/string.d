@@ -408,10 +408,10 @@ if(thBase.traits.isSomeString!T && thBase.traits.isSomeString!U
   {
     if(str.length < end.length)
       return false;
-    size_t to = str.length - end.length;
+    sizediff_t to = str.length - end.length;
     for(sizediff_t i = str.length-1; i>=to; --i)
     {
-      if(data1[i] != data2[i])
+      if(data1[i] != data2[i-to])
         return false;
     }
   }
@@ -430,6 +430,19 @@ if(thBase.traits.isSomeString!T && thBase.traits.isSomeString!U
       return false;
   }
   return true;
+}
+
+unittest
+{
+  auto leak = LeakChecker("thBase.string.endsWith unittest");
+  {
+    assert(endsWith(_T("Мaшa"), _T("Мaшa"), CaseSensitive.yes) == true);
+    assert(endsWith(_T("Мaшa"), _T("Мaшa"), CaseSensitive.no) == true);
+    assert(endsWith(_T("Мaшa"), _T("шa"), CaseSensitive.no) == true);
+    assert(endsWith(_T("Мaшa"), _T("aa"), CaseSensitive.no) == false);
+    assert(endsWith(_T("World"), _T("Hello World"), CaseSensitive.no) == false);
+    assert(endsWith(_T("Hello World"), _T("World"), CaseSensitive.no) == true);
+  }
 }
 
 struct Tokenizer(T)
