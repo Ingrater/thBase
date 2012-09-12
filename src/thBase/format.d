@@ -294,42 +294,53 @@ size_t formatDo(PP)(ref PP putPolicy, const(char)[] fmt, TypeInfo[] arguments, v
         }
         else if(fmt[i+1] == 'd' || fmt[i+1] == 'i')
         {
-          if(arguments[argNum] == typeid(byte))
+		      TypeInfo strippedType = arguments[argNum];
+          TypeInfo.Type tt = strippedType.type;
+          while(tt == TypeInfo.Type.Const || tt == TypeInfo.Type.Immutable || tt == TypeInfo.Type.Shared)
+          {
+            strippedType = strippedType.next();
+            if(strippedType is null)
+            {
+              throw New!FormatException(_T("Invalid TypeInfo"));
+            }
+            tt = strippedType.type();
+          }
+          if(strippedType == typeid(byte))
           {
             needed += formatImpl(*cast(byte*)argptr,putPolicy);
             argptr += byte.sizeof;
           }
-          else if(arguments[argNum] == typeid(ubyte))
+          else if(strippedType == typeid(ubyte))
           {
             needed += formatImpl(*cast(ubyte*)argptr,putPolicy);
             argptr += ubyte.sizeof;
           }
-          else if(arguments[argNum] == typeid(short))
+          else if(strippedType == typeid(short))
           {
             needed += formatImpl(*cast(short*)argptr,putPolicy);
             argptr += short.sizeof;
           }
-          else if(arguments[argNum] == typeid(ushort))
+          else if(strippedType == typeid(ushort))
           {
             needed += formatImpl(*cast(ushort*)argptr,putPolicy);
             argptr += ushort.sizeof;
           }
-          else if(arguments[argNum] == typeid(int))
+          else if(strippedType == typeid(int))
           {
             needed += formatImpl(*cast(int*)argptr,putPolicy);
             argptr += int.sizeof;
           }
-          else if(arguments[argNum] == typeid(uint))
+          else if(strippedType == typeid(uint))
           {
             needed += formatImpl(*cast(uint*)argptr,putPolicy);
             argptr += uint.sizeof;
           }
-          else if(arguments[argNum] == typeid(long))
+          else if(strippedType == typeid(long))
           {
             needed += formatImpl(*cast(long*)argptr,putPolicy);
             argptr += long.sizeof;
           }
-          else if(arguments[argNum] == typeid(ulong))
+          else if(strippedType == typeid(ulong))
           {
             needed += formatImpl(*cast(ulong*)argptr,putPolicy);
             argptr += ulong.sizeof;

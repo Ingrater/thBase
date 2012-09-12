@@ -275,7 +275,7 @@ class Chunkfile
       m_writeInfo.push(info);
     }
 
-    final void endWriteChunk()
+    final size_t endWriteChunk()
     {
       assert(m_writeInfo.size > 0, "there is no chunk to end");
       auto length = m_writeInfo.top.length;
@@ -285,6 +285,7 @@ class Chunkfile
       m_writeInfo.pop();
       if(m_writeInfo.size > 0)
         m_writeInfo.top.length += length;
+      return length;
     }
 
     /**
