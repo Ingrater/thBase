@@ -10,6 +10,31 @@ version(Windows)
 }
 
 struct Position {
+  struct Component
+  {
+    int cell;
+    float relPos;
+
+    this(int cell, float relPos)
+    {
+      this.cell = cell;
+      this.relPos = relPos;
+    }
+
+    bool opEquals(const(Component) rh)
+    {
+      return (this.cell == rh.cell) && (this.relPos == rh.relPos);
+    }
+
+    int opCmp(const(Component) rh)
+    {
+      int cellDiff = rh.cell - this.cell;
+      if(cellDiff != 0)
+        return cellDiff;
+      return cast(int)(this.relPos > rh.relPos) - cast(int)(this.relPos < rh.relPos);
+    }
+  }
+
   version(USE_SSE){
     alias vec3_t!(int) cell_t;
   }
@@ -60,6 +85,21 @@ struct Position {
 	pos_t relPos;
   version(USE_SSE){
     int iPadding = 0;
+  }
+
+  @property Component x()
+  {
+    return Component(cell.x, relPos.x);
+  }
+
+  @property Component y()
+  {
+    return Component(cell.y, relPos.y);
+  }
+
+  @property Component z()
+  {
+    return Component(cell.z, relPos.z);
   }
 	
 	/**
@@ -297,7 +337,7 @@ struct Position {
 	/**
 	 * operations which are done on all components
 	 */
-	bool opAll(string op)(Position rh) const if(op == "<")
+	bool allComponents(string op)(Position rh) const if(op == "<")
 		{
 			for(int i=0;i<cell.f.length;i++){
 				if(cell.f[i] == rh.cell.f[i]){
@@ -311,7 +351,7 @@ struct Position {
 		}
 	
 	///ditto
-	bool opAll(string op)(Position rh) const if(op == "<=")
+	bool allComponents(string op)(Position rh) const if(op == "<=")
 		{
 			for(int i=0;i<cell.f.length;i++){
 				if(cell.f[i] == rh.cell.f[i]){
@@ -325,7 +365,7 @@ struct Position {
 		}
 	
 	///ditto
-	bool opAll(string op)(Position rh) const if(op == ">")
+	bool allComponents(string op)(Position rh) const if(op == ">")
 		{
 			for(int i=0;i<cell.f.length;i++){
 				if(cell.f[i] == rh.cell.f[i]){
@@ -339,7 +379,7 @@ struct Position {
 		}
 	
 	///ditto
-	bool opAll(string op)(Position rh) const if(op == ">=")
+	bool allComponents(string op)(Position rh) const if(op == ">=")
 		{
 			for(int i=0;i<cell.f.length;i++){
 				if(cell.f[i] == rh.cell.f[i]){
@@ -350,31 +390,6 @@ struct Position {
 					return false;
 			}
 			return true;
-		}
-	
-	/**
-	 * operation on only one member
-	 */
-	bool opSingle(string op, string member)(Position rh) const
-		if((op == "<" || op == "<=" || op == ">" || op ==">=") &&
-		   (member == "x" || member == "y" || member=="z"))
-		{
-			if(mixin("cell." ~ member ~ op[0..1] ~ "rh.cell." ~ member))
-				return true;
-			if(mixin("cell." ~ member ~ " == rh.cell." ~ member ~ " && relPos." ~ member ~ op ~ "rh.relPos." ~ member))
-				return true;
-			return false;
-		}
-	
-	///ditto
-	bool opSingle(string op)(Position rh,int index) const
-		if(op == "<" || op == "<=" || op == ">" || op ==">=")
-		{
-			if(mixin("cell.f[index]" ~ op[0..1] ~ "rh.cell.f[index]"))
-				return true;
-			if(mixin("cell.f[index] == rh.cell.f[index] && relPos.f[index]" ~ op ~ "rh.relPos.f[index]"))
-				return true;
-			return false;
 		}
 	
 	/**

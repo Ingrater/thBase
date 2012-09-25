@@ -2,6 +2,31 @@ module thBase.constref;
 
 import std.traits;
 
+template ConstPtr(T) if(!is(T == class) && !is(T == interface) && !isArray!T)
+{
+  struct ConstPtr
+  {
+    private union
+    {
+      const(T*) original;
+      T* stripped;
+    }
+    void opAssign(const(T*) other)
+    {
+      stripped = cast(T*) other;
+    }
+    this(const(T*) init)
+    {
+      opAssign(init);
+    }
+    @property const(T*) get()
+    {
+      return original;
+    }
+    alias get this;
+  }
+}
+
 template ConstRef(T) if (is(T == class) || is(T == interface) || isArray!(T))
 {
   static if (!is(T X == const(U), U) && !is(T X == immutable(U), U))

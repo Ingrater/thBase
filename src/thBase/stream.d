@@ -15,6 +15,11 @@ interface IInputStream
 {
 }
 
+interface IDataInStream
+{
+  //TODO implement when static final template methods are allowed within interfaces
+}
+
 interface IOutputStream
 {
   void write(ubyte data);

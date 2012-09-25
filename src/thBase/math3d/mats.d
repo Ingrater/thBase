@@ -78,7 +78,7 @@ struct mat3 {
 
 	 *  v = the vector
 	 */ 
-	vec3 opMul(vec3 v) const {
+	vec3 opMul(const vec3 v) const {
 		vec3 temp;
 		temp.x = v.x * this.f[0] + v.y * this.f[3] + v.z * this.f[6];
 		temp.y = v.x * this.f[1] + v.y * this.f[4] + v.z * this.f[7];

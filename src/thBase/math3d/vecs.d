@@ -1,6 +1,7 @@
 module thBase.math3d.vecs;
 
 import std.math;
+import thBase.format;
 
 /**
  * a 2 dimensional vector
@@ -243,6 +244,11 @@ struct vec3_t(T) if(is(T == float) || is(T == short) || is(T == int)){
 	/*vec3 opDiv(ref const(vec3) v) const {
 		return vec3(this.x / v.x, this.y/v.y, this.z/v.z);
 	}*/
+
+  bool allComponents(string op)(const(vec3) rh) const if(op == "<" || op == "<=" || op == ">" || op == ">=")
+  {
+    return mixin("this.x " ~ op ~ " rh.x && this.y " ~ op ~ " rh.y && this.z " ~ op ~ " rh.z");
+  }
 	
 	/**
 	 * Returns: the length of this vector
@@ -303,42 +309,17 @@ struct vec3_t(T) if(is(T == float) || is(T == short) || is(T == int)){
 		res.z = cast(KT)z;
 		return res;
 	}
-	
-	/**
-	 * operations which are done on all components
-	 */
-	bool opAll(string op)(vec3_t!(T) rh) const if(op == "<")
-		{
-			return (x < rh.x && y < rh.y && z < rh.z);
-		}
-	
-	///ditto
-	bool opAll(string op)(vec3_t!(T) rh) const if(op == "<=")
-		{
-			return (x <= rh.x && y <= rh.y && z <= rh.z); 
-		}
-	
-	///ditto
-	bool opAll(string op)(vec3_t!(T) rh) const if(op == ">")
-		{
-			return (x > rh.x && y > rh.y && z > rh.z); 
-		}
-	
-	///ditto
-	bool opAll(string op)(vec3_t!(T) rh) const if(op == ">=")
-		{
-			return (x >= rh.x && y >= rh.y && z >= rh.z); 
-		}
-	
-	/**
-	 * += / -= operator
-	 */
+
+  /**
+   * += and -= operator
+   */
 	void opOpAssign(string op)(vec3_t!(T) rh) if( op == "-" || op == "+")
-		{
-			mixin("x"~op~"=rh.x;");
-			mixin("y"~op~"=rh.y;");
-			mixin("z"~op~"=rh.z;");
-		}
+  {
+    mixin("x"~op~"=rh.x;");
+    mixin("y"~op~"=rh.y;");
+    mixin("z"~op~"=rh.z;");
+  }
+
 	
 	/**
 	 * - unary operator
@@ -361,6 +342,11 @@ struct vec3_t(T) if(is(T == float) || is(T == short) || is(T == int)){
 	XmlValue XmlGetValue(){
 		return XmlValue(x,y,z);
 	}
+  
+  rcstring toString()
+  {
+    return format("%s", f);
+  }
 }
 alias vec3_t!(float) vec3;
 
@@ -558,32 +544,6 @@ struct vec4_t(T) if(is(T == float) || is(T == short) || is(T == int)) {
 		foreach(ref e;f)
 			e = value;
 	}
-	
-	/**
-	 * operations which are done on all components
-	 */
-	bool opAll(string op)(vec4_t!(T) rh) const if(op == "<")
-		{
-			return (x < rh.x && y < r.hy && z < rh.z && w < rh.w);
-		}
-	
-	///ditto
-	bool opAll(string op)(vec4_t!(T) rh) const if(op == "<=")
-		{
-			return (x <= rh.x && y <= r.hy && z <= rh.z && w <= rh.w); 
-		}
-	
-	///ditto
-	bool opAll(string op)(vec4_t!(T) rh) const if(op == ">")
-		{
-			return (x > rh.x && y > r.hy && z > rh.z && w > rh.w); 
-		}
-	
-	///ditto
-	bool opAll(string op)(vec4_t!(T) rh) const if(op == ">=")
-		{
-			return (x >= rh.x && y >= r.hy && z >= rh.z && w >= rh.wz); 
-		}
 	
 	/**
 	 * - unary operator

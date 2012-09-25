@@ -81,6 +81,24 @@ class Chunkfile
       return m_operation;
     }
 
+    void skipRead(size_t bytes)
+    {
+      assert(m_operation != Operation.Write, "can not read in write operation");
+      assert(m_readInfo.size == 0 || m_readInfo.top.bytesLeft >= bytes, "reading over chunk boundary");
+      size_t size;
+      if(m_operation == Operation.Read)
+      {
+        m_file.skip(bytes);
+      }
+      else
+      {
+        assert(m_readLocation + bytes <= m_oldData.ptr + m_oldData.length, "out of bounds");
+        m_readLocation += bytes;
+      }
+      if(m_readInfo.size > 0)
+        m_readInfo.top.bytesLeft -= bytes;
+    }
+
     size_t read(T)(ref T val) if(!thBase.traits.isArray!T)
     {
       assert(m_operation != Operation.Write, "can not read in write operation");
@@ -117,8 +135,11 @@ class Chunkfile
       {   
         if(m_readLocation + ET.sizeof * val.length <= m_oldData.ptr + m_oldData.length)
         {
-          assert(0, "out of bounds");
-          return 0;
+          debug {
+            assert(0, "out of bounds");
+          }
+          else
+            return 0;
         }
         val[] = (cast(ET*)m_readLocation)[0..val.length];
         size = ET.sizeof * val.length;

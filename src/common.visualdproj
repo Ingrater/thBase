@@ -436,6 +436,7 @@ cd %CWD%</preBuildCommand>
    <File path="thBase\conv.d" />
    <File path="thBase\ctfe.d" />
    <File path="thBase\devhelper.d" />
+   <File path="thBase\enumbitfield.d" />
    <File path="thBase\error.d" />
    <File path="thBase\file.d" />
    <File path="thBase\format.d" />
