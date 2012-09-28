@@ -120,3 +120,33 @@ struct EnumBitfield(T)
     return (value & temp) == temp;
   }
 }
+
+EnumBitfield!T Flags(T)(T v1)
+{
+  return EnumBitfield!T(v1);
+}
+
+EnumBitfield!T Flags(T)(T v1, T v2)
+{
+  return EnumBitfield!T(v1, v2);
+}
+
+EnumBitfield!T Flags(T)(T v1, T v2, T v3)
+{
+  return EnumBitfield!T(v1, v2, v3);
+}
+
+EnumBitfield!T Flags(T)(T v1, T v2, T v3, T v4)
+{
+  return EnumBitfield!T(v1, v2, v3, v4);
+}
+
+EnumBitfield!T Flags(T)(T v1, T v2, T v3, T v4, T v5)
+{
+  return EnumBitfield!T(v1, v2, v3, v4, v5);
+}
+
+EnumBitfield!T Flags(T)(T v1, T v2, T v3, T v4, T v5, T v6)
+{
+  return EnumBitfield!T(v1, v2, v3, v4, v5, v6);
+}

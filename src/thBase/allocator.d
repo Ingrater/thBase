@@ -10,6 +10,8 @@ import thBase.container.vector;
 import core.sync.mutex;
 import thBase.policies.locking;
 
+debug import thBase.format;
+
 class FixedBlockAllocator(LockingPolicy) : IAllocator
 {
   private: 
@@ -64,6 +66,7 @@ class FixedStackAllocator(LockingPolicy, Allocator) : IAllocator
     void[] m_memoryBlock;
     void* m_cur;
     void* m_last;
+    size_t m_alignmentWasted; //wasted memory due to alignment
 
     debug {
       void* m_upperEnd;
@@ -111,10 +114,13 @@ class FixedStackAllocator(LockingPolicy, Allocator) : IAllocator
     {
       m_lock.Lock();
       scope(exit) m_lock.Unlock();
+      size_t padding = 0;
       size_t alignedSize = size;
       if(alignedSize % alignment != 0)
       {
-        alignedSize += alignment - (alignedSize % alignment);
+        padding = alignment - (alignedSize % alignment);
+        alignedSize += padding;
+        m_alignmentWasted += padding;
         assert(alignedSize % alignment == 0);
       }
       debug
@@ -129,8 +135,10 @@ class FixedStackAllocator(LockingPolicy, Allocator) : IAllocator
       if(m_cur + size > upperEnd)
       {
         debug {
+          m_alignmentWasted -= padding;
           PopBlockSize(alignedSize);
-          assert(0, "Out of memory");
+          auto error = format("Out of memory %d requested %d left", alignedSize, upperEnd - m_cur);
+          assert(0, error[]);
         }
         else
           return [];
@@ -138,7 +146,7 @@ class FixedStackAllocator(LockingPolicy, Allocator) : IAllocator
       auto result = m_cur[0..size];
 
       m_cur += alignedSize;
-      //printf("allocate %d %x\n",size,cast(size_t)result.ptr);
+      printf("allocate %d => %d ptr: %x\n", size, alignedSize, cast(size_t)result.ptr);
       return result;
     }
 
