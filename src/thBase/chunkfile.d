@@ -14,8 +14,15 @@ class Chunkfile
     Modify
   }
 
+  public enum DebugMode
+  {
+    On,
+    Off
+  }
+
   private:
     Operation m_operation;
+    DebugMode m_debugMode;
     byte[] m_oldData;
     byte* m_readLocation;
     RawFile m_file;
@@ -42,10 +49,11 @@ class Chunkfile
     composite!(Stack!ChunkWriteInfo) m_writeInfo;
 
   public:
-    this(rcstring filename, Operation operation)
+    this(rcstring filename, Operation operation, DebugMode debugMode = DebugMode.Off)
     {
       m_filename = filename;
       m_operation = operation;
+      m_debugMode = debugMode;
       m_readInfo = typeof(m_readInfo)(DefaultCtor());
       m_readInfo.construct();
       m_writeInfo = typeof(m_writeInfo)(DefaultCtor());
@@ -103,20 +111,34 @@ class Chunkfile
     {
       assert(m_operation != Operation.Write, "can not read in write operation");
       assert(m_readInfo.size == 0 || m_readInfo.top.bytesLeft >= T.sizeof, "reading over chunk boundary");
-      size_t size;
+      size_t size, debugSize;
       if(m_operation == Operation.Read)
       {
+        if(m_debugMode == DebugMode.On)
+        {
+          TypeInfo.Type type;
+          debugSize = m_file.read(type);
+          assert(type == typeid(StripModifier!T).type, "reading wrong type");
+        }
         size = m_file.read(val);
       }
       else
       {
         assert(m_readLocation + T.sizeof <= m_oldData.ptr + m_oldData.length, "out of bounds");
+        if(m_debugMode == DebugMode.On)
+        {
+          TypeInfo.Type type;
+          type = *cast(TypeInfo.Type*)(m_readLocation);
+          debugSize = TypeInfo.Type.sizeof;
+          m_readLocation += TypeInfo.Type.sizeof;
+          assert(type == typeid(StripModifier!T).type, "reading wrong type");
+        }
         val = *cast(T*)(m_readLocation);
         size = T.sizeof;
-        m_readLocation += size;
+        m_readLocation += T.sizeof;
       }
       if(m_readInfo.size > 0)
-        m_readInfo.top.bytesLeft -= size;
+        m_readInfo.top.bytesLeft -= size + debugSize;
       return size;
     }
 
@@ -125,28 +147,39 @@ class Chunkfile
       assert(m_operation != Operation.Write, "can not read in write operation");
       alias arrayType!T ET;
       assert(m_readInfo.size == 0 || m_readInfo.top.bytesLeft >= ET.sizeof * val.length, "reading over chunk boundary");
-
+      
       size_t size;
-      if(m_operation == Operation.Read)
+      if(m_debugMode == DebugMode.On)
       {
-        size = m_file.readArray(val);
+        foreach(ref el; val)
+        {
+          size += read(el);
+        }
       }
       else
-      {   
-        if(m_readLocation + ET.sizeof * val.length <= m_oldData.ptr + m_oldData.length)
+      {
+        if(m_operation == Operation.Read)
         {
-          debug {
-            assert(0, "out of bounds");
-          }
-          else
-            return 0;
+          size = m_file.readArray(val);
         }
-        val[] = (cast(ET*)m_readLocation)[0..val.length];
-        size = ET.sizeof * val.length;
-        m_readLocation += size;
+        else
+        {   
+
+          if(m_readLocation + ET.sizeof * val.length <= m_oldData.ptr + m_oldData.length)
+          {
+            debug {
+              assert(0, "out of bounds");
+            }
+            else
+              return 0;
+          }
+          val[] = (cast(ET*)m_readLocation)[0..val.length];
+          size = ET.sizeof * val.length;
+          m_readLocation += size;
+        }
+        if(m_readInfo.size > 0)
+          m_readInfo.top.bytesLeft -= size;
       }
-      if(m_readInfo.size > 0)
-        m_readInfo.top.bytesLeft -= size;
       return size;
     }
 
@@ -171,12 +204,12 @@ class Chunkfile
         assert(allocator !is null, "no allocator given");
       }
       ST len = 0;
-      if( read(len) < ST.sizeof)
+      if( read(len) != ST.sizeof)
         return [];
       if(len <= 0)
         return [];
       T[] data = AllocatorNewArray!T(allocator, len, InitializeMemoryWith.NOTHING);
-      if( read(data) < T.sizeof * len )
+      if( read(data) != T.sizeof * len )
       {
         Delete(data);
         return [];
@@ -187,7 +220,7 @@ class Chunkfile
     final size_t writeArray(T, ST = uint)(T data) 
     {
       static assert(isArray!T, T.stringof ~ " is not an array");
-      size_t size = write!ST(data.length);
+      size_t size = write(cast(ST)data.length);
       size += write(data);
       return size;
     }
@@ -195,22 +228,36 @@ class Chunkfile
     final size_t write(T)(auto ref T val) if(!thBase.traits.isArray!T)
     {
       assert(m_operation != Operation.Read, "can not write in read operation");
-      size_t size = m_file.write(val);
+      size_t size, debugSize;
+      if(m_debugMode == DebugMode.On)
+      {
+        debugSize = m_file.write(typeid(StripModifier!T).type);
+      }
+      size = m_file.write(val);
       assert(size == T.sizeof, "writing failed");
       if(m_writeInfo.size > 0)
-        m_writeInfo.top.length += size;
+        m_writeInfo.top.length += size + debugSize;
       return size;
     }
 
-    final size_t write(T, ST = uint)(auto ref T val) if(thBase.traits.isArray!T)
+    final size_t write(T)(auto ref T val) if(thBase.traits.isArray!T)
     {
       assert(m_operation != Operation.Read, "can not write in read operation");
-      assert(val.length < ST.max);
-      size_t size = m_file.write!ST(cast(ST)val.length);
-      size += m_file.writeArray(val);
-      assert(size == (arrayType!T).sizeof * val.length + ST.sizeof, "writing failed");
-      if(m_writeInfo.size > 0)
-        m_writeInfo.top.length += size;
+      size_t size;
+      if(m_debugMode == DebugMode.On)
+      {
+        foreach(ref el; val)
+        {
+          size += write(el);
+        }
+      }
+      else
+      {
+        size = m_file.writeArray(val);
+        assert(size == (arrayType!T).sizeof * val.length, "writing failed");
+        if(m_writeInfo.size > 0)
+          m_writeInfo.top.length += size;
+      }
       return size;
     }
 
@@ -289,9 +336,9 @@ class Chunkfile
     final void startWriteChunk(const(char)[] name)
     {
       assert(name.length <= MAX_CHUNK_NAME_LENGTH, "chunk name is to long");
-      write!(const(char)[], ubyte)(name);
+      writeArray!(const(char)[], ubyte)(name);
       ChunkWriteInfo info;
-      info.lengthPosition = m_file.position;
+      info.lengthPosition = m_file.position + ((m_debugMode == DebugMode.On) ? TypeInfo.Type.sizeof : 0);
       write!uint(cast(uint)0);
       m_writeInfo.push(info);
     }
@@ -350,11 +397,13 @@ class Chunkfile
       assert(ver > 0, "version has to be greater then 0");
       startWriteChunk(filetype);
       write(ver);
+      write(m_debugMode);
     }
 
     final void endWriting()
     {
       assert(m_operation != Operation.Read, "can't write in reading operation");
+      assert(m_writeInfo.size == 1, "there is still more then 1 chunk open");
       endWriteChunk();
     }
 
@@ -378,6 +427,18 @@ class Chunkfile
       if( m_version == 0 )
       {
         assert(0, "invalid version in chunk file");
+        skipCurrentChunk();
+        return thResult.FAILURE;
+      }
+      DebugMode debugMode;
+      if( read(debugMode) < typeof(debugMode).sizeof )
+      {
+        skipCurrentChunk();
+        return thResult.FAILURE;
+      }
+      if( debugMode != m_debugMode)
+      {
+        assert(0, "debug mode does not match");
         skipCurrentChunk();
         return thResult.FAILURE;
       }

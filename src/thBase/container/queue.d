@@ -94,6 +94,8 @@ public:
       T* mem = cast(T*)m_NextWrite;
       uninitializedCopy(*mem, elem);
       m_NextWrite += T.sizeof;
+      if(m_NextWrite > m_JumpAt)
+        m_JumpAt = m_NextWrite;
     }
   }
 
