@@ -146,7 +146,7 @@ class FixedStackAllocator(LockingPolicy, Allocator) : IAllocator
       auto result = m_cur[0..size];
 
       m_cur += alignedSize;
-      printf("allocate %d => %d ptr: %x\n", size, alignedSize, cast(size_t)result.ptr);
+      //printf("allocate %d => %d ptr: %x\n", size, alignedSize, cast(size_t)result.ptr);
       return result;
     }
 
