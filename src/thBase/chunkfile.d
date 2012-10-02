@@ -475,7 +475,7 @@ unittest
       file.write(i);
       file.write(i * 0.25f);
       file.startWriteChunk("array");
-      file.write(vals);
+      file.writeArray(vals);
       file.endWriteChunk();
       file.endWriteChunk();
     }
