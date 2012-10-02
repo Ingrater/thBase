@@ -398,9 +398,9 @@ unittest
   }
   catch(RCException ex)
   {
-    RCException d = ex;
-    assert(0, "unexpected error");
+    auto error = ex.toString();
     Delete(ex);
+    assert(0, error[]);
   }
 
   //TODO add test for class serialization
