@@ -113,41 +113,48 @@ class DDSLoader
 
     DDS_HEADER m_header;
     rcstring m_filename;
-    ubyte[] m_memory;
-    ubyte[][] m_imageData;
-    ubyte[][][] m_data;
+    alias RCArray!(ubyte, IAllocator) mipmap_data_t;
+    alias RCArray!(mipmap_data_t, IAllocator) image_data_t;
+    mipmap_data_t m_memory;
+    image_data_t m_imageData;
+    image_data_t[] m_images;
+    IAllocator m_allocator;
   public:
 
-    @property final const(ubyte[][][]) data()
+    @property final const(image_data_t)[] images() const
     {
-      return m_data;
+      return m_images;
     }
 
-    @property final D3DFORMAT dataFormat()
+    @property final D3DFORMAT dataFormat() const
     {
       return cast(D3DFORMAT)m_header.ddspf.dwFourCC;
     }
 
-    @property final bool isCubemap()
+    @property final bool isCubemap() const
     {
       return (m_header.dwCaps2 & DDSCAPS2.CUBEMAP) != 0;
     }
 
-    @property final uint width()
+    @property final uint width() const
     {
       return cast(uint)m_header.dwWidth;
     }
 
-    @property final uint height()
+    @property final uint height() const
     {
       return cast(uint)m_header.dwHeight;
     }
 
+    this(IAllocator allocator)
+    {
+      assert(allocator !is null);
+      m_allocator = allocator;
+    }
+
     ~this()
     {
-      Delete(m_memory);
-      Delete(m_imageData);
-      Delete(m_data);
+      Delete(m_images);
     }
 
     final void LoadFile(rcstring filename)
@@ -274,13 +281,13 @@ class DDSLoader
           }
 
           numTextures = 6;
-          m_data = NewArray!(ubyte[][])(numTextures);
-          m_imageData = NewArray!(ubyte[])(numTextures * numMipmaps);
+          m_images = NewArray!(image_data_t)(numTextures);
+          m_imageData = image_data_t(numTextures * numMipmaps, m_allocator);
         }
         else
         {
-          m_data = NewArray!(ubyte[][])(numTextures);
-          m_imageData = NewArray!(ubyte[])(numTextures * numMipmaps);
+          m_images = NewArray!(image_data_t)(numTextures);
+          m_imageData = image_data_t(numTextures * numMipmaps, m_allocator);
         }
       }
       else
@@ -288,18 +295,18 @@ class DDSLoader
         assert(0, "not implemented yet");
       }
 
-      m_memory = NewArray!ubyte(memoryNeeded);
+      m_memory = mipmap_data_t(memoryNeeded, m_allocator); //new RCArray of size memoryNeeded
       size_t memStart = 0;
       size_t arrStart = 0;
       for(size_t texture=0; texture<numTextures; texture++)
       {
-        m_data[texture] = m_imageData[arrStart..arrStart+numMipmaps];
+        m_images[texture] = m_imageData[arrStart..arrStart+numMipmaps];
         arrStart += numMipmaps;
         for(size_t mipmap=0; mipmap<numMipmaps; mipmap++)
         {
-          m_data[texture][mipmap] = m_memory[memStart..memStart+mipmapMemorySize[mipmap]];
+          m_images[texture][mipmap] = m_memory[memStart..memStart+mipmapMemorySize[mipmap]];
           memStart += mipmapMemorySize[mipmap];
-          if( file.readArray(m_data[texture][mipmap]) != mipmapMemorySize[mipmap] )
+          if( file.readArray(m_images[texture][mipmap]) != mipmapMemorySize[mipmap] )
           {
             throw New!DDSLoadingException(format("Error reading texture %d mipmap level %d of file '%s'", texture, mipmap, filename[]));
           }
@@ -315,13 +322,13 @@ unittest
     // DXT1 compressed file without mipmaps
     try
     {
-      auto loader = New!DDSLoader();
+      auto loader = New!DDSLoader(StdAllocator.globalInstance);
       scope(exit) Delete(loader);
 
       loader.LoadFile(_T("dxt1.dds"));
-      assert(loader.data.length == 1, "number of textures incorrect");
-      assert(loader.data[0].length == 1, "number of mipmaps incorrect");
-      assert(loader.data[0][0].length > 0, "no image data loaded");
+      assert(loader.images.length == 1, "number of textures incorrect");
+      assert(loader.images[0].length == 1, "number of mipmaps incorrect");
+      assert(loader.images[0][0].length > 0, "no image data loaded");
     }
     catch(DDSLoadingException ex)
     {
@@ -333,15 +340,15 @@ unittest
     // DXT1 compressed file with mipmaps
     try
     {
-      auto loader = New!DDSLoader();
+      auto loader = New!DDSLoader(StdAllocator.globalInstance);
       scope(exit) Delete(loader);
 
       loader.LoadFile(_T("dxt1_with_mipmaps.dds"));
-      assert(loader.data.length == 1, "number of textures incorrect");
-      assert(loader.data[0].length == 7, "number of mipmaps incorrect");
+      assert(loader.images.length == 1, "number of textures incorrect");
+      assert(loader.images[0].length == 7, "number of mipmaps incorrect");
       for(int i=0; i<7; i++)
       {
-        assert(loader.data[0][i].length > 0, "no image data loaded");
+        assert(loader.images[0][i].length > 0, "no image data loaded");
       }
     }
     catch(DDSLoadingException ex)
@@ -354,13 +361,13 @@ unittest
     //DXT3 compressed file
     try
     {
-      auto loader = New!DDSLoader();
+      auto loader = New!DDSLoader(StdAllocator.globalInstance);
       scope(exit) Delete(loader);
 
       loader.LoadFile(_T("dxt3.dds"));
-      assert(loader.data.length == 1, "number of textures incorrect");
-      assert(loader.data[0].length == 1, "number of mipmaps incorrect");
-      assert(loader.data[0][0].length > 0, "no image data loaded");
+      assert(loader.images.length == 1, "number of textures incorrect");
+      assert(loader.images[0].length == 1, "number of mipmaps incorrect");
+      assert(loader.images[0][0].length > 0, "no image data loaded");
     }
     catch(DDSLoadingException ex)
     {
@@ -372,15 +379,15 @@ unittest
     //DXT3 compressed file with mipmaps
     try
     {
-      auto loader = New!DDSLoader();
+      auto loader = New!DDSLoader(StdAllocator.globalInstance);
       scope(exit) Delete(loader);
 
       loader.LoadFile(_T("dxt3_with_mipmaps.dds"));
-      assert(loader.data.length == 1, "number of textures incorrect");
-      assert(loader.data[0].length == 7, "number of mipmaps incorrect");
+      assert(loader.images.length == 1, "number of textures incorrect");
+      assert(loader.images[0].length == 7, "number of mipmaps incorrect");
       for(int i=0; i<7; i++)
       {
-        assert(loader.data[0][i].length > 0, "no image data loaded");
+        assert(loader.images[0][i].length > 0, "no image data loaded");
       }
     }
     catch(DDSLoadingException ex)
@@ -393,13 +400,13 @@ unittest
     // DXT5 copressed image
     try
     {
-      auto loader = New!DDSLoader();
+      auto loader = New!DDSLoader(StdAllocator.globalInstance);
       scope(exit) Delete(loader);
 
       loader.LoadFile(_T("dxt5.dds"));
-      assert(loader.data.length == 1, "number of textures incorrect");
-      assert(loader.data[0].length == 1, "number of mipmaps incorrect");
-      assert(loader.data[0][0].length > 0, "no image data loaded");
+      assert(loader.images.length == 1, "number of textures incorrect");
+      assert(loader.images[0].length == 1, "number of mipmaps incorrect");
+      assert(loader.images[0][0].length > 0, "no image data loaded");
     }
     catch(DDSLoadingException ex)
     {
@@ -411,15 +418,15 @@ unittest
     // DXT5 compressed image with mipmaps
     try
     {
-      auto loader = New!DDSLoader();
+      auto loader = New!DDSLoader(StdAllocator.globalInstance);
       scope(exit) Delete(loader);
 
       loader.LoadFile(_T("dxt5_with_mipmaps.dds"));
-      assert(loader.data.length == 1, "number of textures incorrect");
-      assert(loader.data[0].length == 7, "number of mipmaps incorrect");
+      assert(loader.images.length == 1, "number of textures incorrect");
+      assert(loader.images[0].length == 7, "number of mipmaps incorrect");
       for(int i=0; i<7; i++)
       {
-        assert(loader.data[0][i].length > 0, "no image data loaded");
+        assert(loader.images[0][i].length > 0, "no image data loaded");
       }
     }
     catch(DDSLoadingException ex)
