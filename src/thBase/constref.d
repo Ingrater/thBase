@@ -69,9 +69,7 @@ template ConstRef(T) if (is(T == class) || is(T == interface) || isArray!(T))
       @property T get(){
 				return original;
 			}
-      T opDot() {
-        return original;
-      }
+      alias get this;
     }
   }
 }

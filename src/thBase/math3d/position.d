@@ -78,7 +78,7 @@ struct Position {
 	///cell position
 	cell_t cell;
   version(USE_SSE){
-    float fPadding = 0.f;
+    float fPadding = 0.0f;
   }
 	
 	///relativ position inside a cell

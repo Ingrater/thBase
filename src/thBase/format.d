@@ -6,6 +6,7 @@ import thBase.conv;
 import thBase.types;
 import thBase.file;
 import thBase.utf;
+import thBase.constref;
 import core.stdc.string;
 
 class FormatException : RCException
@@ -294,53 +295,53 @@ size_t formatDo(PP)(ref PP putPolicy, const(char)[] fmt, TypeInfo[] arguments, v
         }
         else if(fmt[i+1] == 'd' || fmt[i+1] == 'i')
         {
-		      TypeInfo strippedType = arguments[argNum];
+		      ConstRef!(const(TypeInfo)) strippedType = arguments[argNum];
           TypeInfo.Type tt = strippedType.type;
           while(tt == TypeInfo.Type.Const || tt == TypeInfo.Type.Immutable || tt == TypeInfo.Type.Shared)
           {
             strippedType = strippedType.next();
-            if(strippedType is null)
+            if(strippedType.get is null)
             {
               throw New!FormatException(_T("Invalid TypeInfo"));
             }
             tt = strippedType.type();
           }
-          if(strippedType == typeid(byte))
+          if(strippedType.get == typeid(byte))
           {
             needed += formatImpl(*cast(byte*)argptr,putPolicy);
             argptr += byte.sizeof;
           }
-          else if(strippedType == typeid(ubyte))
+          else if(strippedType.get == typeid(ubyte))
           {
             needed += formatImpl(*cast(ubyte*)argptr,putPolicy);
             argptr += ubyte.sizeof;
           }
-          else if(strippedType == typeid(short))
+          else if(strippedType.get == typeid(short))
           {
             needed += formatImpl(*cast(short*)argptr,putPolicy);
             argptr += short.sizeof;
           }
-          else if(strippedType == typeid(ushort))
+          else if(strippedType.get == typeid(ushort))
           {
             needed += formatImpl(*cast(ushort*)argptr,putPolicy);
             argptr += ushort.sizeof;
           }
-          else if(strippedType == typeid(int))
+          else if(strippedType.get == typeid(int))
           {
             needed += formatImpl(*cast(int*)argptr,putPolicy);
             argptr += int.sizeof;
           }
-          else if(strippedType == typeid(uint))
+          else if(strippedType.get == typeid(uint))
           {
             needed += formatImpl(*cast(uint*)argptr,putPolicy);
             argptr += uint.sizeof;
           }
-          else if(strippedType == typeid(long))
+          else if(strippedType.get == typeid(long))
           {
             needed += formatImpl(*cast(long*)argptr,putPolicy);
             argptr += long.sizeof;
           }
-          else if(strippedType == typeid(ulong))
+          else if(strippedType.get == typeid(ulong))
           {
             needed += formatImpl(*cast(ulong*)argptr,putPolicy);
             argptr += ulong.sizeof;
@@ -353,12 +354,12 @@ size_t formatDo(PP)(ref PP putPolicy, const(char)[] fmt, TypeInfo[] arguments, v
         }
         else if(fmt[i+1] == 's')
         {
-		      TypeInfo strippedType = arguments[argNum];
+		      ConstRef!(const(TypeInfo)) strippedType = arguments[argNum];
           TypeInfo.Type tt = strippedType.type;
           while(tt == TypeInfo.Type.Const || tt == TypeInfo.Type.Immutable || tt == TypeInfo.Type.Shared)
           {
             strippedType = strippedType.next();
-            if(strippedType is null)
+            if(strippedType.get is null)
             {
               throw New!FormatException(_T("Invalid TypeInfo"));
             }
@@ -369,7 +370,7 @@ size_t formatDo(PP)(ref PP putPolicy, const(char)[] fmt, TypeInfo[] arguments, v
           {
             do {
 			        strippedType = strippedType.next();
-              if(strippedType is null)
+              if(strippedType.get is null)
               {
                 throw New!FormatException(_T("Invalid TypeInfo"));
               }
@@ -465,7 +466,7 @@ size_t formatDo(PP)(ref PP putPolicy, const(char)[] fmt, TypeInfo[] arguments, v
               throw New!FormatException(_T("Wrong type '") ~ arguments[argNum].toString() ~ _T("' for format specifier %") ~ fmt[i+1]);
             }
           }
-          else if(strippedType == typeid(bool))
+          else if(strippedType.get == typeid(bool))
           {
             string value = *cast(bool*)argptr ? "true" : "false";
             argptr += bool.sizeof;
@@ -473,52 +474,52 @@ size_t formatDo(PP)(ref PP putPolicy, const(char)[] fmt, TypeInfo[] arguments, v
               putPolicy.put(c);
             needed += value.length;
           }
-          else if(strippedType == typeid(float))
+          else if(strippedType.get == typeid(float))
           {
             needed += formatImpl(*cast(float*)argptr, 6, putPolicy, true);
             argptr += float.sizeof;
           }
-          else if(strippedType == typeid(double))
+          else if(strippedType.get == typeid(double))
           {
             needed += formatImpl(*cast(double*)argptr, 6, putPolicy, true);
             argptr += double.sizeof;
           }
-          else if(strippedType == typeid(byte))
+          else if(strippedType.get == typeid(byte))
           {
             needed += formatImpl(*cast(byte*)argptr,putPolicy);
             argptr += byte.sizeof;
           }
-          else if(strippedType == typeid(ubyte))
+          else if(strippedType.get == typeid(ubyte))
           {
             needed += formatImpl(*cast(ubyte*)argptr,putPolicy);
             argptr += ubyte.sizeof;
           }
-          else if(strippedType == typeid(short))
+          else if(strippedType.get == typeid(short))
           {
             needed += formatImpl(*cast(short*)argptr,putPolicy);
             argptr += short.sizeof;
           }
-          else if(strippedType == typeid(ushort))
+          else if(strippedType.get == typeid(ushort))
           {
             needed += formatImpl(*cast(ushort*)argptr,putPolicy);
             argptr += ushort.sizeof;
           }
-          else if(strippedType == typeid(int))
+          else if(strippedType.get == typeid(int))
           {
             needed += formatImpl(*cast(int*)argptr,putPolicy);
             argptr += int.sizeof;
           }
-          else if(strippedType == typeid(uint))
+          else if(strippedType.get == typeid(uint))
           {
             needed += formatImpl(*cast(uint*)argptr,putPolicy);
             argptr += uint.sizeof;
           }
-          else if(strippedType == typeid(long))
+          else if(strippedType.get == typeid(long))
           {
             needed += formatImpl(*cast(long*)argptr,putPolicy);
             argptr += long.sizeof;
           }
-          else if(strippedType == typeid(ulong))
+          else if(strippedType.get == typeid(ulong))
           {
             needed += formatImpl(*cast(ulong*)argptr,putPolicy);
             argptr += ulong.sizeof;
@@ -545,48 +546,48 @@ size_t formatDo(PP)(ref PP putPolicy, const(char)[] fmt, TypeInfo[] arguments, v
         }
         else if(fmt[i+1] == 'x')
         {
-          TypeInfo type = arguments[argNum];
+          ConstRef!(const(TypeInfo)) type = arguments[argNum];
           while(type.classinfo is typeid(TypeInfo_Const) || type.classinfo is typeid(TypeInfo_Invariant) || type.classinfo is typeid(TypeInfo_Shared))
           {
             type = type.next;
           }
 
-          if(type == typeid(byte))
+          if(type.get == typeid(byte))
           {
             needed += formatHex(*cast(ubyte*)argptr,putPolicy);
             argptr += byte.sizeof;
           }
-          else if(type == typeid(ubyte))
+          else if(type.get == typeid(ubyte))
           {
             needed += formatHex(*cast(ubyte*)argptr,putPolicy);
             argptr += ubyte.sizeof;
           }
-          else if(type == typeid(short))
+          else if(type.get == typeid(short))
           {
             needed += formatHex(*cast(ushort*)argptr,putPolicy);
             argptr += short.sizeof;
           }
-          else if(type == typeid(ushort))
+          else if(type.get == typeid(ushort))
           {
             needed += formatHex(*cast(ushort*)argptr,putPolicy);
             argptr += ushort.sizeof;
           }
-          else if(type == typeid(int))
+          else if(type.get == typeid(int))
           {
             needed += formatHex(*cast(uint*)argptr,putPolicy);
             argptr += int.sizeof;
           }
-          else if(type == typeid(uint))
+          else if(type.get == typeid(uint))
           {
             needed += formatHex(*cast(uint*)argptr,putPolicy);
             argptr += uint.sizeof;
           }
-          else if(type == typeid(long))
+          else if(type.get == typeid(long))
           {
             needed += formatHex(*cast(ulong*)argptr,putPolicy);
             argptr += long.sizeof;
           }
-          else if(type == typeid(ulong))
+          else if(type.get == typeid(ulong))
           {
             needed += formatHex(*cast(ulong*)argptr,putPolicy);
             argptr += ulong.sizeof;
@@ -604,7 +605,7 @@ size_t formatDo(PP)(ref PP putPolicy, const(char)[] fmt, TypeInfo[] arguments, v
         }
         else if(fmt[i+1] == 'c')
         {
-		      TypeInfo strippedType = arguments[argNum];
+		      ConstRef!(const(TypeInfo)) strippedType = arguments[argNum];
           TypeInfo.Type tt = strippedType.type;
           while(tt == TypeInfo.Type.Const || tt == TypeInfo.Type.Immutable)
           {
@@ -616,14 +617,14 @@ size_t formatDo(PP)(ref PP putPolicy, const(char)[] fmt, TypeInfo[] arguments, v
             tt = strippedType.type();
           }
 
-          if(strippedType == typeid(char))
+          if(strippedType.get == typeid(char))
           {
             auto c = *cast(const(char)*)argptr;
             argptr += (const(char)).sizeof;
             putPolicy.put(c);
             needed++;
           }
-          else if(strippedType == typeid(wchar))
+          else if(strippedType.get == typeid(wchar))
           {
             auto c = *cast(const(wchar)*)argptr;
             argptr += (const(wchar)).sizeof;
@@ -633,7 +634,7 @@ size_t formatDo(PP)(ref PP putPolicy, const(char)[] fmt, TypeInfo[] arguments, v
               putPolicy.put(cs[j]);
             needed++;
           }
-          else if(strippedType == typeid(dchar))
+          else if(strippedType.get == typeid(dchar))
           {
             auto c = *cast(const(dchar)*)argptr;
             argptr += (const(dchar)).sizeof;

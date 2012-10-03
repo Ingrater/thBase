@@ -198,6 +198,17 @@ class FixedStackAllocator(LockingPolicy, Allocator) : IAllocator
         return mem >= m_memoryBlock.ptr && mem < upperEnd;
       }
     }
+
+    final void FreeAllMemory()
+    {
+      m_lock.Lock();
+      scope(exit) m_lock.Unlock();
+
+      debug {
+        m_upperEnd = m_memoryBlock.ptr + m_memoryBlock.length;
+      }
+      m_cur = m_memoryBlock.ptr;
+    }
 }
 
 version(unittest)
