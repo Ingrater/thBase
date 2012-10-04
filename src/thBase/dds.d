@@ -121,7 +121,7 @@ class DDSLoader
     IAllocator m_allocator;
   public:
 
-    @property final const(image_data_t)[] images() const
+    @property final image_data_t[] images()
     {
       return m_images;
     }
