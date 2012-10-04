@@ -281,6 +281,7 @@ class DDSLoader
           }
 
           numTextures = 6;
+          memoryNeeded *= numTextures;
           m_images = NewArray!(image_data_t)(numTextures);
           m_imageData = image_data_t(numTextures * numMipmaps, m_allocator);
         }
