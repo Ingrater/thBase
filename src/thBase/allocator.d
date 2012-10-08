@@ -9,8 +9,18 @@ import thBase.container.stack;
 import thBase.container.vector;
 import core.sync.mutex;
 import thBase.policies.locking;
+import thBase.format;
 
-debug import thBase.format;
+class AllocatorOutOfMemory : RCException
+{
+  public:
+    IAllocator allocator;
+    this(rcstring msg, IAllocator allocator)
+    {
+      this.allocator = allocator;
+      super(msg);
+    }
+}
 
 class FixedBlockAllocator(LockingPolicy) : IAllocator
 {
@@ -141,12 +151,14 @@ class FixedStackAllocator(LockingPolicy, Allocator) : IAllocator
           assert(0, error[]);
         }
         else
-          return [];
+        {
+          throw New!AllocatorOutOfMemory(format("Fixed stack allocator not enough space left requested: %d left: %d", alignedSize, upperEnd - m_cur), this);
+        }
       }
       auto result = m_cur[0..size];
 
       m_cur += alignedSize;
-      //printf("allocate %d => %d ptr: %x\n", size, alignedSize, cast(size_t)result.ptr);
+      printf("allocate: %d overhead: %d ptr: %x\n", size, alignedSize - size, cast(size_t)result.ptr);
       return result;
     }
 
