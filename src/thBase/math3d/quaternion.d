@@ -32,8 +32,45 @@ struct Quaternion {
 	/**
 	 * constructs a quaternion from a rotation matrix
 	 */
-	this(mat4 rot){
-		//TODO implement
+	this(mat3 rot){
+		float trace = 1.0f + rot.f[0] + rot.f[4] + rot.f[8];
+    if(trace > 0.00000001f)
+    {
+      float S = sqrt(T) * 2.0f;
+      this.x = ( rot.f[7] - rot.f[5] ) / S;
+      this.y = ( rot.f[2] - rot.f[6] ) / S;
+      this.z = ( rot.f[3] - rot.f[1] ) / S;
+      this.w = 0.25 * S;
+    }
+    else
+    {
+      if( rot.f[0] > rot.f[4] && mat.f[0] > mat.f[8] ) //Column 0:
+      {
+        float S = sqrt( 1.0f + mat.f[0] - mat.f[4] - mat.f[8] ) * 2;
+        this.x = 0.25f * S;
+        this.y = ( mat.f[3] * mat.f[1] ) / S;
+      }
+
+      /*if ( mat[0] > mat[5] && mat[0] > mat[10] )  {	// Column 0: 
+        S  = sqrt( 1.0 + mat[0] - mat[5] - mat[10] ) * 2;
+        X = 0.25 * S;
+        Y = (mat[4] + mat[1] ) / S;
+        Z = (mat[2] + mat[8] ) / S;
+        W = (mat[9] - mat[6] ) / S;
+      } else if ( mat[5] > mat[10] ) {			// Column 1: 
+        S  = sqrt( 1.0 + mat[5] - mat[0] - mat[10] ) * 2;
+        X = (mat[4] + mat[1] ) / S;
+        Y = 0.25 * S;
+        Z = (mat[9] + mat[6] ) / S;
+        W = (mat[2] - mat[8] ) / S;
+      } else {						// Column 2:
+        S  = sqrt( 1.0 + mat[10] - mat[0] - mat[5] ) * 2;
+        X = (mat[2] + mat[8] ) / S;
+        Y = (mat[9] + mat[6] ) / S;
+        Z = 0.25 * S;
+        W = (mat[4] - mat[1] ) / S;
+      }*/
+    }
 	}
 	
 	/**
