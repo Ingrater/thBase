@@ -272,6 +272,19 @@ struct mat4 {
 		}
 		return m3;		
 	}
+
+  @property const(mat3) rotationPart() const
+  {
+    mat3 result;
+    for(int y=0; y<3; y++)
+    {
+      for(int x=0; x<3; x++)
+      {
+        result.f[y*3+x] = this.f[y*4+x];
+      }
+    }
+    return result;
+  }
 	
 	/**
 	 * Returns: A conversion from Left to Right handed coordinate system and vise versa

@@ -36,19 +36,37 @@ struct Quaternion {
 		float trace = 1.0f + rot.f[0] + rot.f[4] + rot.f[8];
     if(trace > 0.00000001f)
     {
-      float S = sqrt(T) * 2.0f;
+      float S = sqrt(trace) * 2.0f;
       this.x = ( rot.f[7] - rot.f[5] ) / S;
       this.y = ( rot.f[2] - rot.f[6] ) / S;
       this.z = ( rot.f[3] - rot.f[1] ) / S;
-      this.w = 0.25 * S;
+      this.angle = 0.25 * S;
     }
     else
     {
-      if( rot.f[0] > rot.f[4] && mat.f[0] > mat.f[8] ) //Column 0:
+      if( rot.f[0] > rot.f[4] && rot.f[0] > rot.f[8] ) //Column 0:
       {
-        float S = sqrt( 1.0f + mat.f[0] - mat.f[4] - mat.f[8] ) * 2;
+        float S = sqrt( 1.0f + rot.f[0] - rot.f[4] - rot.f[8] ) * 2;
         this.x = 0.25f * S;
-        this.y = ( mat.f[3] * mat.f[1] ) / S;
+        this.y = ( rot.f[3] + rot.f[1] ) / S;
+        this.z = ( rot.f[2] + rot.f[6] ) / S;
+        this.angle = ( rot.f[7] - rot.f[5] ) / S;
+      }
+      else if( rot.f[4] > rot.f[8] ) // Column 1:
+      { 
+        float S = sqrt( 1.0f + rot.f[4] - rot.f[0] - rot.f[8] ) * 2.0f;
+        this.x = ( rot.f[3] + rot.f[1] ) / S;
+        this.y = 0.25f * S;
+        this.z = ( rot.f[7] + rot.f[5] ) / S;
+        this.angle = ( rot.f[2] - rot.f[6] ) / S;
+      }
+      else 
+      {
+        float S = sqrt( 1.0f + rot.f[8] - rot.f[0] - rot.f[4] ) * 2.0f;
+        this.x = ( rot.f[2] + rot.f[6] ) / S;
+        this.y = ( rot.f[7] + rot.f[5] ) / S;
+        this.z = 0.25f * S;
+        this.angle = ( rot.f[3] - rot.f[1] ) / S;
       }
 
       /*if ( mat[0] > mat[5] && mat[0] > mat[10] )  {	// Column 0: 
