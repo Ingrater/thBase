@@ -6,6 +6,7 @@ import thBase.math3d.plane;
 import thBase.math3d.ray;
 import thBase.math3d.mats;
 import thBase.algorithm;
+import thBase.math;
 
 struct Triangle {
 	vec3[3] v;
@@ -18,7 +19,7 @@ struct Triangle {
 		plane = Plane(v1,v2,v3);
 	}
 	
-	bool intersects(ref Triangle other){
+	bool intersects(ref Triangle other, ref Ray intersection){
 		float d1 = plane.distance(other.v[0]);
 		float d2 = plane.distance(other.v[1]);
 		float d3 = plane.distance(other.v[2]);
@@ -147,10 +148,21 @@ struct Triangle {
 		if(interval2[0] > interval2[1])
 			swap(interval2[0],interval2[1]);
 		
-		if((interval1[0] >= interval2[0] && interval1[0] <= interval2[1]) ||
-		   (interval1[1] >= interval2[0] && interval1[1] <= interval2[1]) ||
-		   (interval1[0] <= interval2[0] && interval1[1] >= interval2[1]))
-			return true;
+		if(interval1[0] >= interval2[0] && interval1[0] <= interval2[1])
+    {
+      intersection = Ray.CreateFromPoints(L.get(interval1[0]), L.get(min(interval1[1], interval2[1])));
+      return true;
+    }
+		else if(interval1[1] >= interval2[0] && interval1[1] <= interval2[1])
+    {
+      intersection = Ray.CreateFromPoints(L.get(max(interval1[0], interval2[0])), L.get(interval1[1]));
+      return true;
+    }
+    else if(interval1[0] <= interval2[0] && interval1[1] >= interval2[1])
+    {
+      intersection = Ray.CreateFromPoints(L.get(interval2[0]), L.get(interval2[1]));
+      return true;
+    }
 		
 		return false;
 	}
