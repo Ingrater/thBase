@@ -13,11 +13,21 @@ class StreamException : RCException
 
 interface IInputStream
 {
-}
+  public:
+    final size_t read(T)(ref T data) if(!thBase.traits.isArray!T)
+    {
+      //TODO check for const / immutable
+      return readImpl((cast(void*)&data)[0..T.sizeof]);
+    }
 
-interface IDataInStream
-{
-  //TODO implement when static final template methods are allowed within interfaces
+    final size_t read(T)(T data) if(thBase.traits.isArray!T)
+    {
+      //TODO check for const / immutable
+      return readImpl((cast(void*)data.ptr)[0..(arrayType!T.sizeof * data.length)]);
+    }
+
+  protected:
+    size_t readImpl(void[] buffer);
 }
 
 interface IOutputStream
@@ -95,14 +105,22 @@ class FileOutStream : IOutputStream
 
 class FileInStream : IInputStream
 {
-  RawFile m_file;
+  private:
+    RawFile m_file;
 
-  this(string filename)
-  {
-    m_file = RawFile(filename,"rb");
-    if(!m_file.isOpen())
+  public:
+    this(string filename)
     {
-      throw New!StreamException(_T("Couldn't open file '") ~ filename ~ _T("' for reading"));
+      m_file = RawFile(filename,"rb");
+      if(!m_file.isOpen())
+      {
+        throw New!StreamException(_T("Couldn't open file '") ~ filename ~ _T("' for reading"));
+      }
     }
-  }
+
+  protected:
+    override size_t readImpl(void[] buffer)
+    {
+      return m_file.readArray(buffer);
+    }
 }

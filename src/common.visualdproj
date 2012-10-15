@@ -87,6 +87,7 @@
   <deffile />
   <resfile />
   <exefile>$(OutDir)\$(ProjectName).exe</exefile>
+  <useStdLibPath>1</useStdLibPath>
   <additionalOptions>-defaultlib=phobosnogcd -debuglib=phobosnogcd $(ProjectDir)\..\..\druntime\lib\gcstub.obj</additionalOptions>
   <preBuildCommand>set CWD=%CD%
 cd $(ProjectDir)\..\..\druntime
@@ -186,6 +187,7 @@ cd %CWD%</preBuildCommand>
   <deffile />
   <resfile />
   <exefile>$(OutDir)\$(ProjectName).exe</exefile>
+  <useStdLibPath>1</useStdLibPath>
   <additionalOptions>-defaultlib=phobosnogc -debuglib=phobosnogc $(ProjectDir)\..\..\druntime\lib\gcstub.obj</additionalOptions>
   <preBuildCommand>set CWD=%CD%
 cd $(ProjectDir)\..\..\druntime
@@ -242,8 +244,8 @@ cd %CWD%</preBuildCommand>
   <Dversion>2</Dversion>
   <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
   <compiler>0</compiler>
-  <otherDMD>0</otherDMD>
-  <program>$(DMDInstallDir)windows\bin\dmd.exe</program>
+  <otherDMD>1</otherDMD>
+  <program>$(DMDInstallDir)\windows\bin-nostd\dmd.exe</program>
   <imppath>$(ProjectDir)\..\..\druntime\import;$(ProjectDir)\..\..\phobos;</imppath>
   <fileImppath />
   <outdir>$(ConfigurationName)</outdir>
@@ -285,6 +287,7 @@ cd %CWD%</preBuildCommand>
   <deffile />
   <resfile />
   <exefile>..\lib\thBased.lib</exefile>
+  <useStdLibPath>0</useStdLibPath>
   <additionalOptions />
   <preBuildCommand>set CWD=%CD%
 cd $(ProjectDir)\..\..\druntime
@@ -384,6 +387,7 @@ cd %CWD%</preBuildCommand>
   <deffile />
   <resfile />
   <exefile>..\lib\thBase.lib</exefile>
+  <useStdLibPath>1</useStdLibPath>
   <additionalOptions />
   <preBuildCommand>set CWD=%CD%
 cd $(ProjectDir)\..\..\druntime
