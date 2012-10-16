@@ -263,7 +263,7 @@ struct Position {
           divps XMM3,XMM1; // XMM1 = XMM2 / XMM1;
           roundps XMM3,XMM3,0x1; //floor
           //res.cell += cast(cell_t)(diff);
-		  cvtps2dq XMM5,XMM3; //cast to int
+		      cvtps2dq XMM5,XMM3; //cast to int
           paddd XMM0,XMM5;
           //res.relPos -= diff * cellSize;
           mulps XMM3,XMM1;
