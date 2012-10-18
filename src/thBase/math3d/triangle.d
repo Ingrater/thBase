@@ -19,7 +19,7 @@ struct Triangle {
 		plane = Plane(v1,v2,v3);
 	}
 	
-	bool intersects(ref Triangle other, ref Ray intersection){
+	bool intersects(ref const(Triangle) other, ref Ray intersection) const {
 		float d1 = plane.distance(other.v[0]);
 		float d2 = plane.distance(other.v[1]);
 		float d3 = plane.distance(other.v[2]);
@@ -87,9 +87,9 @@ struct Triangle {
 		
 		Ray L = plane.intersect(other.plane);
 		
-		float pos1 = L.m_Dir.dot(v1 - L.m_Pos);
-		float pos2 = L.m_Dir.dot(v2 - L.m_Pos);
-		float pos3 = L.m_Dir.dot(v3 - L.m_Pos);
+		float pos1 = L.dir.dot(v1 - L.pos);
+		float pos2 = L.dir.dot(v2 - L.pos);
+		float pos3 = L.dir.dot(v3 - L.pos);
 		
 		float[2] interval1;
 		interval1[0] = pos1 + (pos2 - pos1) * (d1 / (d1 - d2));
@@ -138,9 +138,9 @@ struct Triangle {
 			}
 		}
 		
-		pos1 = L.m_Dir.dot(v1 - L.m_Pos);
-		pos2 = L.m_Dir.dot(v2 - L.m_Pos);
-		pos3 = L.m_Dir.dot(v3 - L.m_Pos);
+		pos1 = L.dir.dot(v1 - L.pos);
+		pos2 = L.dir.dot(v2 - L.pos);
+		pos3 = L.dir.dot(v3 - L.pos);
 		
 		float[2] interval2;
 		interval2[0] = pos1 + (pos2 - pos1) * (t1 / (t1 - t2));
@@ -167,7 +167,7 @@ struct Triangle {
 		return false;
 	}
 	
-	Triangle transform(mat4 transformation){
+	Triangle transform(mat4 transformation) const {
 		vec4 v1 = transformation * vec4(v[0]);
 		vec4 v2 = transformation * vec4(v[1]);
 		vec4 v3 = transformation * vec4(v[2]);
@@ -185,11 +185,11 @@ struct Triangle {
 	  float t1,t2,t3,d,dt1,dt2,dt3;
 	  vec3 R2 = v[1] - v[0];
 	  vec3 R3 = v[2] - v[0];
-	  d = R3.x*R2.y*ray.m_Dir.z + R3.y*R2.z*ray.m_Dir.x + R3.z*R2.x*ray.m_Dir.y - ray.m_Dir.x*R2.y*R3.z - ray.m_Dir.y*R2.z*R3.x - ray.m_Dir.z*R2.x*R3.y;
+	  d = R3.x*R2.y*ray.dir.z + R3.y*R2.z*ray.dir.x + R3.z*R2.x*ray.dir.y - ray.dir.x*R2.y*R3.z - ray.dir.y*R2.z*R3.x - ray.dir.z*R2.x*R3.y;
 	  if(d != 0.0f){
-	   dt1 = (ray.m_Pos.x-v[0].x)*R2.y*R3.z + (ray.m_Pos.y-v[0].y)*R2.z*R3.x + (ray.m_Pos.z-v[0].z)*R2.x*R3.y - R3.x*R2.y*(ray.m_Pos.z-v[0].z) - R3.y*R2.z*(ray.m_Pos.x-v[0].x) - R3.z*R2.x*(ray.m_Pos.y-v[0].y);
-	   dt2 = R3.x*(ray.m_Pos.y-v[0].y)*ray.m_Dir.z + R3.y*(ray.m_Pos.z-v[0].z)*ray.m_Dir.x + R3.z*(ray.m_Pos.x-v[0].x)*ray.m_Dir.y - ray.m_Dir.x*(ray.m_Pos.y-v[0].y)*R3.z - ray.m_Dir.y*(ray.m_Pos.z-v[0].z)*R3.x - ray.m_Dir.z*(ray.m_Pos.x-v[0].x)*R3.y;
-	   dt3 = (ray.m_Pos.x-v[0].x)*R2.y*ray.m_Dir.z + (ray.m_Pos.y-v[0].y)*R2.z*ray.m_Dir.x + (ray.m_Pos.z-v[0].z)*R2.x*ray.m_Dir.y - ray.m_Dir.x*R2.y*(ray.m_Pos.z-v[0].z) - ray.m_Dir.y*R2.z*(ray.m_Pos.x-v[0].x) - ray.m_Dir.z*R2.x*(ray.m_Pos.y-v[0].y);
+	   dt1 = (ray.pos.x-v[0].x)*R2.y*R3.z + (ray.pos.y-v[0].y)*R2.z*R3.x + (ray.pos.z-v[0].z)*R2.x*R3.y - R3.x*R2.y*(ray.pos.z-v[0].z) - R3.y*R2.z*(ray.pos.x-v[0].x) - R3.z*R2.x*(ray.pos.y-v[0].y);
+	   dt2 = R3.x*(ray.pos.y-v[0].y)*ray.dir.z + R3.y*(ray.pos.z-v[0].z)*ray.dir.x + R3.z*(ray.pos.x-v[0].x)*ray.dir.y - ray.dir.x*(ray.pos.y-v[0].y)*R3.z - ray.dir.y*(ray.pos.z-v[0].z)*R3.x - ray.dir.z*(ray.pos.x-v[0].x)*R3.y;
+	   dt3 = (ray.pos.x-v[0].x)*R2.y*ray.dir.z + (ray.pos.y-v[0].y)*R2.z*ray.dir.x + (ray.pos.z-v[0].z)*R2.x*ray.dir.y - ray.dir.x*R2.y*(ray.pos.z-v[0].z) - ray.dir.y*R2.z*(ray.pos.x-v[0].x) - ray.dir.z*R2.x*(ray.pos.y-v[0].y);
 	   t1 = dt1 / d;
 	   t2 = dt2 / d;
 	   t3 = dt3 / d;

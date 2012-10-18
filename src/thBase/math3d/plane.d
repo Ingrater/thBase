@@ -62,12 +62,12 @@ struct Plane {
 	 *  pPoint = the point to compute the distance for
 	 * Returns: the computed distance 
 	 */
-	float distance(vec3 pPoint){
+	float distance(vec3 pPoint) const {
 		return m_Eq.x * pPoint.x + m_Eq.y * pPoint.y + m_Eq.z * pPoint.z - m_Eq.w;
 	}
 	
 	///ditto
-	float distance(vec4 pPoint){
+	float distance(vec4 pPoint) const {
 		return distance(vec3(pPoint));
 	}
 	
@@ -78,7 +78,7 @@ struct Plane {
 	 *  p3 = second other plane
 	 * Returns: the intersection point (float.nan in all 3 components if there is more then 1 intersection point)
 	 */
-	const(vec3) intersect(Plane p2, Plane p3){
+	const(vec3) intersect(const(Plane) p2, const(Plane) p3) const {
 		float d;
 		vec3 result=vec3(float.nan,float.nan,float.nan);
 		d = m_Eq.x*p2.m_Eq.y*p3.m_Eq.z + m_Eq.y*p2.m_Eq.z*p3.m_Eq.x + m_Eq.z*p2.m_Eq.x*p3.m_Eq.y - p3.m_Eq.x*p2.m_Eq.y*m_Eq.z - p3.m_Eq.y*p2.m_Eq.z*m_Eq.x - p3.m_Eq.z*p2.m_Eq.x*m_Eq.y;
@@ -101,7 +101,7 @@ struct Plane {
 	 *  other = the other plane to intersect with
 	 * Returns: the intersection ray
 	 */
-	const(Ray) intersect(Plane other){
+	const(Ray) intersect(const(Plane) other) const{
 		vec3 dir,pos;
 		float d = (other.m_Eq.x*m_Eq.y) - (m_Eq.x*other.m_Eq.y);
 		
