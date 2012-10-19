@@ -22,6 +22,12 @@ class AllocatorOutOfMemory : RCException
     }
 }
 
+enum StillAllocated
+{
+  Check,
+  Ignore
+}
+
 class FixedBlockAllocator(LockingPolicy) : IAllocator
 {
   private: 
@@ -427,10 +433,10 @@ class TemporaryAllocator(LockingPolicy, Allocator, size_t ALIGNMENT = size_t.siz
     m_allocator.FreeMemory(lastBlock);
   }
 
-  final void Reset()
+  final void Reset(StillAllocated check = StillAllocated.Check)
   {
     debug {
-      assert(m_AllocatedMemory.count == 0, "there is still memory allocated");
+      assert(check == StillAllocated.Ignore || m_AllocatedMemory.count == 0, "there is still memory allocated");
       m_AllocatedMemory.clear();
     }
     FreePools();

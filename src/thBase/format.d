@@ -741,6 +741,38 @@ auto formatAllocator(AT)(AT allocator, const(char)[] fmt, ...)
   return result;
 }
 
+/**
+ * Formats a string to a buffer allocated with a given allocator
+ * Params:
+ *  allocator = the allocator to use for allocating the buffer
+ *  fmt = the format specifier
+ *  arguments = the arguments types
+ *  argptr = the argument pointer
+ * Returns: The allocated buffer with the format results
+ */
+string formatDoBufferAllocator(AT)(AT allocator, const(char)[] fmt, TypeInfo[] arguments, void* argptr)
+{
+  assert(allocator !is null);
+  auto dummy = NothingPutPolicy!char();
+  size_t needed = formatDo(dummy, fmt, arguments, argptr);
+  auto result = AllocatorNewArray!char(allocator, needed);
+  auto put = BufferPutPolicy!char(cast(char[])result[]);
+  formatDo(put, fmt, arguments, argptr);
+  return cast(string)result;
+}
+
+/**
+ * Formats a string to a buffer allocated with a given allocator
+ * Params:
+ *  allocator = The allocator to allocate the buffer with
+ *  fmt = the format specifier
+ * Returns: The allocated buffer with the format results
+ */
+string formatBufferAllocator(AT)(AT allocator, const(char)[] fmt, ...)
+{
+  return formatDoBufferAllocator!AT(allocator, fmt, _arguments, _argptr);
+}
+
 unittest
 {
   void* test = cast(void*)(0x1234ABCD);
