@@ -103,15 +103,31 @@ struct Plane {
 	 */
 	const(Ray) intersect(const(Plane) other) const{
 		vec3 dir,pos;
-		float d = (other.m_Eq.x*m_Eq.y) - (m_Eq.x*other.m_Eq.y);
+		float d = (other.m_Eq.x * m_Eq.y) - (m_Eq.x * other.m_Eq.y);
 		
 		//if divisor is to small, try a different axis
 		if(d < 0.0001f && d > -0.0001f){
-			d = (other.m_Eq.x*m_Eq.z) - (m_Eq.x*other.m_Eq.z);
+			d = (other.m_Eq.x * m_Eq.z) - (m_Eq.x * other.m_Eq.z);
 			
-			//if the divisor is to small again, we have coplanar planes
+			//if the divisor is to small again, try yet another different axis
 			if(d < 0.0001f && d > -0.0001f)
-				return Ray(vec3(float.nan),vec3(float.nan));
+      {
+        d = (other.m_Eq.y*m_Eq.z) - (m_Eq.y * other.m_Eq.z);
+
+        //if the divisor is still to small, we have coplanar planes
+        if(d < 0.0001f && d > -0.0001f)
+				  return Ray(vec3(float.nan),vec3(float.nan));
+
+        dir.x = 1.0f;
+        dir.y = (other.m_Eq.x*m_Eq.z - m_Eq.x*other.m_Eq.z) / d;
+        dir.z = (other.m_Eq.x*m_Eq.y - m_Eq.x*other.m_Eq.y) / d;
+
+        pos.x = 0.0f;
+        pos.y = (m_Eq.z * other.m_Eq.w - m_Eq.w * other.m_Eq.z) / d;
+        pos.z = (m_Eq.w * other.m_Eq.y - m_Eq.y * other.m_Eq.w) / d;
+
+        return Ray(pos, dir);
+      }
 			
 			dir.x = (other.m_Eq.y*m_Eq.z - m_Eq.y*other.m_Eq.z) / d;
 			dir.y = 1.0f;
@@ -121,7 +137,7 @@ struct Plane {
 			pos.y = 0.0f;
 			pos.z = (m_Eq.x+other.m_Eq.w - other.m_Eq.x*m_Eq.w) / d;
 			
-			return Ray(pos,dir);
+			return Ray(pos, dir);
 		}
 		
 		
@@ -133,7 +149,7 @@ struct Plane {
 		pos.y = (other.m_Eq.x*m_Eq.w - m_Eq.x*other.m_Eq.w) / d;
 		pos.z = 0.0f;
 		
-		return Ray(pos,dir);
+		return Ray(pos, dir);
 	}
 	
 	/**
@@ -160,6 +176,12 @@ unittest {
 	Plane p2 = Plane(vec3(0,0,0),vec3(0,1,0));
 	
 	Ray result = p1.intersect(p2);
-	printf("pos %f %f %f\n",result.m_Pos.x,result.m_Pos.y,result.m_Pos.z);
-	printf("dir %f %f %f\n",result.m_Dir.x,result.m_Dir.y,result.m_Dir.z);
+  assert(result.pos.epsilonCompare(vec3(0.0f, 0.0f, 0.0f), 0.00001f));
+  assert(result.dir.epsilonCompare(vec3(0.0f, 0.0f, 1.0f), 0.00001f));
+
+  Plane p3 = Plane(vec4(0.0f, 1.0f, 0.0f, 0.5f));
+  Plane p4 = Plane(vec4(0.0f, 0.0f, 1.0f, 1.0f));
+  Ray result2 = p3.intersect(p4);
+  assert(result2.pos.epsilonCompare(vec3(0.0f, 0.0f, -1.0f), 0.00001f));
+  assert(result2.dir.epsilonCompare(vec3(1.0f, 0.0f, 0.0f), 0.00001f));
 }
