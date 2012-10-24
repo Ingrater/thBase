@@ -16,7 +16,7 @@ struct Ray {
 	 *  pPos = one position on the ray
 	 *  pDir = direction of the ray
 	 */
-	this(vec3 pPos,vec3 pDir)
+	this(vec3 pPos, vec3 pDir)
   {
 		dir = pDir;
 		pos = pPos;
