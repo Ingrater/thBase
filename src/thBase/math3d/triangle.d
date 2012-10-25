@@ -187,24 +187,24 @@ struct Triangle {
 	  vec3 R3 = v[2] - v[0];
 	  d = R3.x*R2.y*ray.dir.z + R3.y*R2.z*ray.dir.x + R3.z*R2.x*ray.dir.y - ray.dir.x*R2.y*R3.z - ray.dir.y*R2.z*R3.x - ray.dir.z*R2.x*R3.y;
 	  if(d != 0.0f){
-	   dt1 = (ray.pos.x-v[0].x)*R2.y*R3.z + (ray.pos.y-v[0].y)*R2.z*R3.x + (ray.pos.z-v[0].z)*R2.x*R3.y - R3.x*R2.y*(ray.pos.z-v[0].z) - R3.y*R2.z*(ray.pos.x-v[0].x) - R3.z*R2.x*(ray.pos.y-v[0].y);
-	   dt2 = R3.x*(ray.pos.y-v[0].y)*ray.dir.z + R3.y*(ray.pos.z-v[0].z)*ray.dir.x + R3.z*(ray.pos.x-v[0].x)*ray.dir.y - ray.dir.x*(ray.pos.y-v[0].y)*R3.z - ray.dir.y*(ray.pos.z-v[0].z)*R3.x - ray.dir.z*(ray.pos.x-v[0].x)*R3.y;
-	   dt3 = (ray.pos.x-v[0].x)*R2.y*ray.dir.z + (ray.pos.y-v[0].y)*R2.z*ray.dir.x + (ray.pos.z-v[0].z)*R2.x*ray.dir.y - ray.dir.x*R2.y*(ray.pos.z-v[0].z) - ray.dir.y*R2.z*(ray.pos.x-v[0].x) - ray.dir.z*R2.x*(ray.pos.y-v[0].y);
-	   t1 = dt1 / d;
-	   t2 = dt2 / d;
-	   t3 = dt3 / d;
+	    dt1 = (ray.pos.x-v[0].x)*R2.y*R3.z + (ray.pos.y-v[0].y)*R2.z*R3.x + (ray.pos.z-v[0].z)*R2.x*R3.y - R3.x*R2.y*(ray.pos.z-v[0].z) - R3.y*R2.z*(ray.pos.x-v[0].x) - R3.z*R2.x*(ray.pos.y-v[0].y);
+	    dt2 = R3.x*(ray.pos.y-v[0].y)*ray.dir.z + R3.y*(ray.pos.z-v[0].z)*ray.dir.x + R3.z*(ray.pos.x-v[0].x)*ray.dir.y - ray.dir.x*(ray.pos.y-v[0].y)*R3.z - ray.dir.y*(ray.pos.z-v[0].z)*R3.x - ray.dir.z*(ray.pos.x-v[0].x)*R3.y;
+	    dt3 = (ray.pos.x-v[0].x)*R2.y*ray.dir.z + (ray.pos.y-v[0].y)*R2.z*ray.dir.x + (ray.pos.z-v[0].z)*R2.x*ray.dir.y - ray.dir.x*R2.y*(ray.pos.z-v[0].z) - ray.dir.y*R2.z*(ray.pos.x-v[0].x) - ray.dir.z*R2.x*(ray.pos.y-v[0].y);
+	    t1 = dt1 / d;
+	    t2 = dt2 / d;
+	    t3 = dt3 / d;
 	  }
 	  else{
-		rayPos=float.nan;
-		return false;
+		  rayPos=float.nan;
+		  return false;
 	  }
-	  if((t2+t3)<= 1.0f && t2 > 0.0f && t3 > 0.0f){
-		rayPos = t1;
-		return true;
+	  if((t2+t3)<= 1.0f && t2 >= 0.0f && t3 >= 0.0f){
+		  rayPos = t1;
+		  return true;
 	  }
 	  else{
-		rayPos=float.nan;
-		return false;
+		  rayPos=float.nan;
+		  return false;
 	  }
 	  assert(0,"not reachable");
 	}

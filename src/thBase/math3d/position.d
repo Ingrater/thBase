@@ -73,7 +73,7 @@ struct Position {
   
 	///constant for the cell size
 	enum float cellSize = 1000.0f;
-  static immutable(float[4]) cellSizeVector = [cellSize,cellSize,cellSize,1];
+  align(16) static immutable(float[4]) cellSizeVector = [cellSize,cellSize,cellSize,1];
 	
 	///cell position
 	cell_t cell;
@@ -83,6 +83,7 @@ struct Position {
 	
 	///relativ position inside a cell
 	pos_t relPos;
+  pos_t oldRelPos;
   version(USE_SSE){
     int iPadding = 0;
   }
@@ -152,6 +153,7 @@ struct Position {
     this.relPos = pos;
     
 		version(USE_SSE){
+      oldRelPos = relPos;
       asm {
         mov ECX,this;
         movups XMM0,[ECX+Position.cell.offsetof];
@@ -188,6 +190,7 @@ struct Position {
 	Position opBinary(string op,T)(auto ref T rh) const if(op == "+" && is(StripConst!(T) == pos_t))
 		{
       version(USE_SSE){
+        (cast(Position)this).oldRelPos = relPos;
         Position res;
         auto pRes = &res;
         pos_fill_t rhf = pos_fill_t(rh,0.0f);
@@ -243,6 +246,7 @@ struct Position {
 	Position opBinary(string op,T)(auto ref T rh) const if(op == "+" && is(StripConst!(T) == Position))
 		{
       version(USE_SSE){
+        (cast(Position)this).oldRelPos = relPos;
         Position res;
         Position* pRes = &res;
         T* pRh = &rh;
@@ -298,6 +302,7 @@ struct Position {
 	vec3 opBinary(string op, T)(auto ref T rh) const if(op == "-" && is(StripConst!(T) == Position))
 		{
       version(USE_SSE){
+        (cast(Position)this).oldRelPos = relPos;
         pos_fill_t res;
         auto pRh = &rh;
         auto pRes = &res;
@@ -397,6 +402,7 @@ struct Position {
 	 */
 	void validate(){
     version(USE_SSE){
+      oldRelPos = relPos;
       asm {
         mov ECX,this;
         movups XMM0,[ECX+Position.cell.offsetof];
