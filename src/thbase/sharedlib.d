@@ -17,7 +17,7 @@ public import thBase.string;
 
 string generateDllCode(T)(string function(string name) func){
 	string result = "";
-	foreach(m;__traits(allMembers,T)){
+	foreach(m;__traits(allMembers,T)){   
 		static if( !is(typeof(__traits(getMember,T,m)) == function) && m[0..2] != "__" ){
 			static if(__traits(compiles, std.traits.isFunctionPointer!(__traits(getMember,T,m))) && std.traits.isFunctionPointer!(__traits(getMember,T,m)) )
       {

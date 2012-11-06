@@ -453,6 +453,7 @@ cd %CWD%</preBuildCommand>
    <File path="thBase\sharedlib.d" />
    <File path="thBase\stream.d" />
    <File path="thBase\string.d" />
+   <File path="thBase\task.d" />
    <File path="thBase\timer.d" />
    <File path="thBase\tinyxml.d" />
    <File path="thBase\tools.d" />

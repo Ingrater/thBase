@@ -660,6 +660,15 @@ struct ZeroTerminatedStringHolder
   }
 }
 
+string stackCString(string invar, string outvar)
+{
+  string result = "import core.stdc.stdlib;";
+  result ~=       "auto " ~ outvar ~ " = (cast(char*)alloca(" ~ invar ~ ".length+1))[0.." ~ invar ~ ".length+1];";
+  result ~=       outvar ~ "[0.."~invar~".length] = "~invar~"[];";
+  result ~=       outvar ~ "[$-1] = 0;";
+  return result;
+}
+
 auto toCString(const(char)[] str)
 {
   return ZeroTerminatedStringHolder(str);

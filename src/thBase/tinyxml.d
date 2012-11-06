@@ -389,23 +389,23 @@ protected{
 			}
 			else if ( c == '&' )
 			{
-				outs.writeString(entity[0].str); 
+				outs.write(entity[0].str); 
 			}
 			else if ( c == '<' )
 			{
-				outs.writeString(entity[1].str); 
+				outs.write(entity[1].str); 
 			}
 			else if ( c == '>' )
 			{
-				outs.writeString(entity[2].str); 
+				outs.write(entity[2].str); 
 			}
 			else if ( c == '\"' )
 			{
-				outs.writeString(entity[3].str); 
+				outs.write(entity[3].str); 
 			}
 			else if ( c == '\'' )
 			{
-				outs.writeString(entity[4].str); 
+				outs.write(entity[4].str); 
 			}
 			else if ( c < 32 )
 			{
@@ -1261,16 +1261,16 @@ class TiXmlAttribute : TiXmlBase
 	{
 		if (indexOf (value[], '\"') == -1)
     {
-      Stream.writeString(name[]);
-      Stream.writeString("=\"");
-      Stream.writeString(value[]);
+      Stream.write(name[]);
+      Stream.write("=\"");
+      Stream.write(value[]);
       Stream.write('\"');
     }
 		else
     {
-      Stream.writeString(name[]);
-      Stream.writeString("='");
-      Stream.writeString(value[]);
+      Stream.write(name[]);
+      Stream.write("='");
+      Stream.write(value[]);
       Stream.write('\'');
     }
 	}
@@ -1552,10 +1552,10 @@ public {
 		{
 			int i;
 			for ( i=0; i<depth; i++ )
-				Stream.writeString("    ");
+				Stream.write("    ");
 		
       Stream.write('<');
-			Stream.writeString(value[]);
+			Stream.write(value[]);
 		
 			TiXmlAttribute attrib;
 			for ( attrib = attributeSet.First; attrib; attrib = attrib.Next )
@@ -1566,13 +1566,13 @@ public {
 		
 			TiXmlNode node;
 			if ( !firstChild )
-				Stream.writeString(" />");
+				Stream.write(" />");
 			else if ( firstChild == lastChild && firstChild.ToText )
 			{
 				Stream.write('>');
 				firstChild.Print( Stream, depth + 1 );
-				Stream.writeString("</");
-        Stream.writeString(value[]);
+				Stream.write("</");
+        Stream.write(value[]);
         Stream.write('>');
 			}
 			else
@@ -1582,16 +1582,16 @@ public {
 				{
 					if ( !node.ToText() )
 					{
-						Stream.writeLine("");
+						Stream.write("\n");
 					}
 					node.Print( Stream, depth+1 );
 				}
-				Stream.writeLine("");
+				Stream.write("\n");
 				for( i=0; i<depth; ++i )
-					Stream.writeString("    ");
+					Stream.write("    ");
 				
-				Stream.writeString("</");
-        Stream.writeString(value[]);
+				Stream.write("</");
+        Stream.write(value[]);
         Stream.write('>');
 			}
 		}
@@ -1721,7 +1721,7 @@ protected{
 
 	override void StreamOut( IOutputStream _Stream ) {
     _Stream.write('<');
-		_Stream.writeString(value[]);
+		_Stream.write(value[]);
 	
 		TiXmlAttribute attrib;
 		for ( attrib = attributeSet.First; attrib; attrib = attrib.Next )
@@ -1732,13 +1732,13 @@ protected{
 	
 		TiXmlNode node;
 		if ( !firstChild )
-			_Stream.writeString(" />");
+			_Stream.write(" />");
 		else if ( firstChild == lastChild && firstChild.ToText )
 		{
 			_Stream.write('>');
 			firstChild.StreamOut( _Stream );
-      _Stream.writeString("</");
-			_Stream.writeString(value[]);
+      _Stream.write("</");
+			_Stream.write(value[]);
       _Stream.write('>');
 		}
 		else
@@ -1748,14 +1748,14 @@ protected{
 			{
 				if ( !node.ToText() )
 				{
-					_Stream.writeLine("");
+					_Stream.write("\n");
 				}
 				node.StreamOut( _Stream  );
 			}
-			_Stream.writeLine("");
+			_Stream.write("\n");
 			
-      _Stream.writeString("</");
-			_Stream.writeString(value[]);
+      _Stream.write("</");
+			_Stream.write(value[]);
       _Stream.write('>');
 		}
 	}
@@ -1843,7 +1843,7 @@ public{
 	{
 		for ( int i=0; i<depth; i++ )
 		{
-			stream.writeString("    ");
+			stream.write("    ");
 		}
 		StreamOut(stream);
 	}
@@ -1880,9 +1880,9 @@ public{
 protected
 	override void StreamOut( IOutputStream Stream ) 
 	{
-		Stream.writeString("<!--");
-    Stream.writeString(value[]);
-    Stream.writeString("-->");
+		Stream.write("<!--");
+    Stream.write(value[]);
+    Stream.write("-->");
 	}	
 
 
@@ -1904,17 +1904,17 @@ public{
 		if ( cdata )
 		{
 			int i;
-			Stream.writeLine("");
+			Stream.write("\n");
 			for ( i=0; i<depth; i++ ) 
-				Stream.writeString("    ");
+				Stream.write("    ");
 			
-			Stream.writeString("<![CDATA[");
-      Stream.writeString(value[]); 
-      Stream.writeLine("]]>");
+			Stream.write("<![CDATA[");
+      Stream.write(value[]); 
+      Stream.write("]]>\n");
 		}
 		else
 		{
-			Stream.writeString(value[]);
+			Stream.write(value[]);
 		}
 	}
 
@@ -1994,13 +1994,13 @@ protected {
 		if ( cdata )
 		{
 			int i;
-			Stream.writeString("<![CDATA[");
-      Stream.writeString(value[]);
-      Stream.writeLine("]]>");
+			Stream.write("<![CDATA[");
+      Stream.write(value[]);
+      Stream.write("]]>\n");
 		}
 		else
 		{
-			Stream.writeString(value[]);
+			Stream.write(value[]);
 		} 
 	}
 	bool Blank()
@@ -2126,28 +2126,28 @@ public{
 protected {
 	override void StreamOut ( IOutputStream Stream)	
 	{
-		Stream.writeString("<?xml ");
+		Stream.write("<?xml ");
 	
 		if ( !mversion.length == 0 )
     {
-			Stream.writeString("version=\"");
-      Stream.writeString(mversion[]);
-      Stream.writeString("\" ");
+			Stream.write("version=\"");
+      Stream.write(mversion[]);
+      Stream.write("\" ");
     }
 		if ( !encoding.length == 0 )
     {
-			Stream.writeString("encoding=\"");
-      Stream.writeString(encoding[]);
-      Stream.writeString("\" ");
+			Stream.write("encoding=\"");
+      Stream.write(encoding[]);
+      Stream.write("\" ");
     }
 		if ( !standalone.length == 0 )
     {
-			Stream.writeString("standalone=\"");
-      Stream.writeString(standalone[]);
+			Stream.write("standalone=\"");
+      Stream.write(standalone[]);
       Stream.write('"');
     }
 			
-		Stream.writeString("?>");
+		Stream.write("?>");
 	}
 	}
 private{
@@ -2171,7 +2171,7 @@ public{
 	}
 	override void Print( IOutputStream Stream, int depth ) {
 		for ( int i=0; i<depth; i++ )
-			Stream.writeString("    ");
+			Stream.write("    ");
 		StreamOut(Stream);
 	}
 
@@ -2220,7 +2220,7 @@ protected{
 
 	override void StreamOut ( IOutputStream Stream ) {
     Stream.write('<');
-		Stream.writeString(value[]);
+		Stream.write(value[]);
     Stream.write('>');
 	}
 	}
@@ -2492,7 +2492,7 @@ public {
 		for ( node=FirstChild; node; node=node.NextSibling )
 		{
 			node.Print( Stream, depth );
-			Stream.writeLine("");
+			Stream.write("\n");
 		}
 	}
 

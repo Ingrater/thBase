@@ -1,4 +1,4 @@
-module thBase.hashmap;
+module thBase.container.hashmap;
 
 public import core.hashmap;
 

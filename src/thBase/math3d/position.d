@@ -339,6 +339,14 @@ struct Position {
 			return this.opBinary!("+")(-rh);
 		}
 	
+  /**
+   * == operator
+   */
+  bool opEquals(ref const(Position) rh)
+  {
+    return this.cell == rh.cell && this.relPos == rh.relPos;
+  }
+
 	/**
 	 * operations which are done on all components
 	 */

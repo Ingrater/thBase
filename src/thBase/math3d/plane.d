@@ -182,6 +182,6 @@ unittest {
   Plane p3 = Plane(vec4(0.0f, 1.0f, 0.0f, 0.5f));
   Plane p4 = Plane(vec4(0.0f, 0.0f, 1.0f, 1.0f));
   Ray result2 = p3.intersect(p4);
-  assert(result2.pos.epsilonCompare(vec3(0.0f, 0.0f, -1.0f), 0.00001f));
+  assert(result2.pos.epsilonCompare(vec3(0.0f, 0.5f, 1.0f), 0.00001f));
   assert(result2.dir.epsilonCompare(vec3(1.0f, 0.0f, 0.0f), 0.00001f));
 }

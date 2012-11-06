@@ -3,6 +3,7 @@ module thBase.traits;
 import std.traits;
 public import core.traits;
 import core.refcounted;
+import thBase.ctfe;
 
 template isRCString(T) if(is(T U : RCArray!(U,A),A))
 {
@@ -130,3 +131,49 @@ unittest
   static assert(HasPostblit!Test5 == true);
 }
 
+/* fullyQualifiedName is taken from phobos std.traits */
+/**
+* Get the fully qualified name of a symbol.
+* Example:
+* ---
+* import std.traits;
+* static assert(fullyQualifiedName!(fullyQualifiedName) == "std.traits.fullyQualifiedName");
+* ---
+*/
+template fullyQualifiedName(alias T)
+{
+  static if (is(typeof(__traits(parent, T))))
+  {
+    static if (T.stringof.length >= 9 && T.stringof[0..8] == "package ")
+    {
+      enum fullyQualifiedName = fullyQualifiedName!(__traits(parent, T)) ~ '.' ~ T.stringof[8..$];
+    }
+    else static if (T.stringof.length >= 8 && T.stringof[0..7] == "module ")
+    {
+      enum fullyQualifiedName = fullyQualifiedName!(__traits(parent, T)) ~ '.' ~ T.stringof[7..$];
+    }
+    else static if (T.stringof.indexOfChar('(') == -1)
+    {
+      enum fullyQualifiedName = fullyQualifiedName!(__traits(parent, T)) ~ '.' ~ T.stringof;
+    }
+    else
+      enum fullyQualifiedName = fullyQualifiedName!(__traits(parent, T)) ~ '.' ~ T.stringof[0..T.stringof.indexOfChar('(')];
+  }
+  else
+  {
+    static if (T.stringof.length >= 9 && T.stringof[0..8] == "package ")
+    {
+      enum fullyQualifiedName = T.stringof[8..$];
+    }
+    else static if (T.stringof.length >= 8 && T.stringof[0..7] == "module ")
+    {
+      enum fullyQualifiedName = T.stringof[7..$];
+    }
+    else static if (T.stringof.indexOfChar('(') == -1)
+    {
+      enum fullyQualifiedName = T.stringof;
+    }
+    else
+      enum fullyQualifiedName = T.stringof[0..T.stringof.indexOfChar('(')];
+  }
+}
