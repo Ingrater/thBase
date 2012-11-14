@@ -193,7 +193,7 @@ struct mat4 {
 	 */
 	float Det() const 
 	{
-		float  det, result = 0, i = 1;
+		float det = 0.0f, result = 0, i = 1;
 		mat3 msub3;
 		for (int n = 0; n < 4; n++, i *= -1 )
 		{

@@ -279,10 +279,9 @@ struct vec3_t(T) if(is(T == float) || is(T == short) || is(T == int)){
 	 * Returns: a normalized copy of this vector
 	 */
 	vec3_t!(T) normalize() const {
-      T length;
       vec3_t!(T) temp,res=this;
       temp=(this) * (this);
-      length=cast(T)std.math.sqrt(cast(float)(temp.f[0]+temp.f[1]+temp.f[2]));
+      T length = cast(T)std.math.sqrt(cast(float)(temp.f[0]+temp.f[1]+temp.f[2]));
       if(length != 0){
         temp.set(length);
         res = (this) / temp;
