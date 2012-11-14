@@ -209,11 +209,21 @@ struct Position {
           divps XMM3,XMM4;
           roundps XMM3,XMM3,0x1; //floor
           //res.cell += cast(cell_t)(diff);
-		  cvtps2dq XMM5,XMM3; //convert to int
+		      cvtps2dq XMM5,XMM3; //convert to int
           paddd XMM0,XMM5;
           //res.relPos -= diff * cellSize;
           mulps XMM3,XMM4;
-          subps XMM2,XMM3;
+          subps XMM2,XMM3; //due to percision loss this can be >= cellSize
+          //floor(res.relPos / cellSize)
+          movaps XMM3,XMM2;
+          divps XMM3,XMM4;
+          roundps XMM3,XMM3,0x1; //floor
+          //res.cell += cast(cell_t)(diff);
+          cvtps2dq XMM5,XMM3; //convert to int
+          paddd XMM0,XMM5;
+          //res.relPos -= diff * cellSize;
+          mulps XMM3,XMM4;
+          subps XMM2,XMM3; //this is the final value, even after percision loss
           //write result back to res
           movups [EAX+Position.cell.offsetof],XMM0;
           movups [EAX+Position.relPos.offsetof],XMM2;
@@ -489,4 +499,9 @@ unittest {
   assert(p4.relPos.x == 250.0f);
   assert(p4.relPos.y == 750.0f);
   assert(p4.relPos.z == 0.0f);
+
+  //float accuracy test
+  Position p5 = Position(Position.pos_t(0,0,0));
+  p5 = p5 - Position.pos_t(float.epsilon, float.epsilon, float.epsilon);
+  assert(p5.isValid());
 }
