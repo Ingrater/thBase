@@ -24,8 +24,8 @@ struct Triangle {
 		float d2 = plane.distance(other.v[1]);
 		float d3 = plane.distance(other.v[2]);
 		
-		if((d1 < 0 && d2 < 0 && d3 < 0) || 
-		   (d1 > 0 && d2 > 0 && d3 > 0) || 
+		if((d1 < FloatEpsilon && d2 < FloatEpsilon && d3 < FloatEpsilon) || 
+		   (d1 > -FloatEpsilon && d2 > -FloatEpsilon && d3 > -FloatEpsilon) || 
 		   (d1 == d2 && d2 == d3))
 		{
 			return false;
@@ -35,8 +35,8 @@ struct Triangle {
 		float t2 = other.plane.distance(v[1]);
 		float t3 = other.plane.distance(v[2]);
 		
-		if((t1 < 0 && t2 < 0 && t3 < 0) ||
-		   (t1 > 0 && t2 > 0 && t3 > 0))
+		if((t1 < FloatEpsilon && t2 < FloatEpsilon && t3 < FloatEpsilon) ||
+		   (t1 > -FloatEpsilon && t2 > -FloatEpsilon && t3 > -FloatEpsilon))
 		{
 			return false;
 		}
@@ -182,10 +182,10 @@ struct Triangle {
 	//R2 = tri dir 1
 	//R3 = tri dir 2
 	bool intersects(Ray ray, ref float rayPos){
-	  float t1,t2,t3,d,dt1,dt2,dt3;
+	  float t1 = 0.0f,t2 = 0.0f,t3 = 0.0f,dt1 = 0.0f,dt2 = 0.0f,dt3 = 0.0f;
 	  vec3 R2 = v[1] - v[0];
 	  vec3 R3 = v[2] - v[0];
-	  d = R3.x*R2.y*ray.dir.z + R3.y*R2.z*ray.dir.x + R3.z*R2.x*ray.dir.y - ray.dir.x*R2.y*R3.z - ray.dir.y*R2.z*R3.x - ray.dir.z*R2.x*R3.y;
+	  float d = R3.x*R2.y*ray.dir.z + R3.y*R2.z*ray.dir.x + R3.z*R2.x*ray.dir.y - ray.dir.x*R2.y*R3.z - ray.dir.y*R2.z*R3.x - ray.dir.z*R2.x*R3.y;
 	  if(d != 0.0f){
 	    dt1 = (ray.pos.x-v[0].x)*R2.y*R3.z + (ray.pos.y-v[0].y)*R2.z*R3.x + (ray.pos.z-v[0].z)*R2.x*R3.y - R3.x*R2.y*(ray.pos.z-v[0].z) - R3.y*R2.z*(ray.pos.x-v[0].x) - R3.z*R2.x*(ray.pos.y-v[0].y);
 	    dt2 = R3.x*(ray.pos.y-v[0].y)*ray.dir.z + R3.y*(ray.pos.z-v[0].z)*ray.dir.x + R3.z*(ray.pos.x-v[0].x)*ray.dir.y - ray.dir.x*(ray.pos.y-v[0].y)*R3.z - ray.dir.y*(ray.pos.z-v[0].z)*R3.x - ray.dir.z*(ray.pos.x-v[0].x)*R3.y;
@@ -220,4 +220,16 @@ struct Triangle {
 	  normal = normal.normalize();
 	  return normal;
 	}
+}
+
+unittest
+{
+  auto t1 = Triangle(vec3(-25,-1,-25),
+                     vec3(-25,-1, 25),
+                     vec3( 25,-1,-25));
+  auto t2 = Triangle(vec3( 1, 1, 1),
+                     vec3(-1,-1, 1),
+                     vec3( 1,-1, 1));
+  Ray intersectionRay;
+  assert(!t1.intersects(t2, intersectionRay));
 }

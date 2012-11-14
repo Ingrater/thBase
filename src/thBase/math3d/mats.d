@@ -142,6 +142,20 @@ struct mat4 {
 		temp.w = v.x * this.f[3] + v.y * this.f[7] + v.z * this.f[11] + v.w * this.f[15];
 		return temp;		
 	}
+
+  /**
+   * transforms a direction
+   * Params:
+   *  v = the direction to transform
+   */
+  vec3 transformDirection(vec3 v) const
+  {
+		vec3 temp;
+		temp.x = v.x * this.f[0] + v.y * this.f[4] + v.z * this.f[8];
+		temp.y = v.x * this.f[1] + v.y * this.f[5] + v.z * this.f[9];
+		temp.z = v.x * this.f[2] + v.y * this.f[6] + v.z * this.f[10];
+		return temp;		
+  }
 	
 	/**
 
