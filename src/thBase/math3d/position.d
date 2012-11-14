@@ -119,6 +119,10 @@ struct Position {
         movups XMM0,[ECX+Position.cell.offsetof];
         movups XMM2,[ECX+Position.relPos.offsetof];
         movaps XMM4,[cellSizeVector];
+        //handle percision loss
+        addps XMM2,XMM4;
+        subps XMM2,XMM4;
+        //floor(res.relPos / cellSize);
         movaps XMM3,XMM2;
         divps XMM3,XMM4;
         roundps XMM3,XMM3,0x1; //floor
@@ -159,6 +163,10 @@ struct Position {
         movups XMM0,[ECX+Position.cell.offsetof];
         movups XMM2,[ECX+Position.relPos.offsetof];
         movaps XMM4,[cellSizeVector];
+        //handle percision loss
+        addps XMM2,XMM4;
+        subps XMM2,XMM4;
+        //floor(res.relPos / cellSize);
         movaps XMM3,XMM2;
         divps XMM3,XMM4;
         roundps XMM3,XMM3,0x1; //floor
@@ -203,8 +211,11 @@ struct Position {
           movups XMM2,[ECX+Position.relPos.offsetof];
           movups XMM1,[EDX];
           addps XMM2,XMM1;
-          //floor(res.relPos / cellSize);
+          //kill any possible percision loss
           movaps XMM4,[cellSizeVector];
+          addps XMM2,XMM4;
+          subps XMM2,XMM4;
+          //floor(res.relPos / cellSize);
           movaps XMM3,XMM2;
           divps XMM3,XMM4;
           roundps XMM3,XMM3,0x1; //floor
@@ -213,17 +224,7 @@ struct Position {
           paddd XMM0,XMM5;
           //res.relPos -= diff * cellSize;
           mulps XMM3,XMM4;
-          subps XMM2,XMM3; //due to percision loss this can be >= cellSize
-          //floor(res.relPos / cellSize)
-          movaps XMM3,XMM2;
-          divps XMM3,XMM4;
-          roundps XMM3,XMM3,0x1; //floor
-          //res.cell += cast(cell_t)(diff);
-          cvtps2dq XMM5,XMM3; //convert to int
-          paddd XMM0,XMM5;
-          //res.relPos -= diff * cellSize;
-          mulps XMM3,XMM4;
-          subps XMM2,XMM3; //this is the final value, even after percision loss
+          subps XMM2,XMM3;
           //write result back to res
           movups [EAX+Position.cell.offsetof],XMM0;
           movups [EAX+Position.relPos.offsetof],XMM2;
@@ -271,8 +272,11 @@ struct Position {
           movups XMM3,[EDX+Position.relPos.offsetof];
           paddd XMM0,XMM1;
           addps XMM2,XMM3;
-          //floor(res.relPos / cellSize);
+          //handle percision loss
           movaps XMM1,[cellSizeVector];
+          addps XMM2,XMM1;
+          subps XMM2,XMM1;
+          //floor(res.relPos / cellSize);
           movaps XMM3,XMM2;
           divps XMM3,XMM1; // XMM1 = XMM2 / XMM1;
           roundps XMM3,XMM3,0x1; //floor
@@ -500,8 +504,14 @@ unittest {
   assert(p4.relPos.y == 750.0f);
   assert(p4.relPos.z == 0.0f);
 
-  //float accuracy test
+  //float accuracy tests
   Position p5 = Position(Position.pos_t(0,0,0));
   p5 = p5 - Position.pos_t(float.epsilon, float.epsilon, float.epsilon);
   assert(p5.isValid());
+
+  Position minDelta = Position(Position.pos_t(-float.epsilon, -float.epsilon, -float.epsilon));
+
+  Position p6 = Position(Position.pos_t(0,0,0));
+  p6 = p6 + minDelta;
+  assert(p6.isValid());
 }

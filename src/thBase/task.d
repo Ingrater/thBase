@@ -27,6 +27,7 @@ shared static ~this()
 {
   Delete(g_taskQueues); g_taskQueues = null;
   Delete(g_taskMutex); g_taskMutex = null;
+  Delete(g_taskQueueDeleteMutex); g_taskQueueDeleteMutex = null;
 }
 
 static this()

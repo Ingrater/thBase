@@ -121,7 +121,7 @@ interface IOutputStream
 
     final size_t write(T)(T value) if(thBase.traits.isArray!T)
     {
-      return writeImpl((cast(const(void*))&value)[0..arrayType!T.sizeof * value.length]);
+      return writeImpl((cast(const(void*))value.ptr)[0..arrayType!T.sizeof * value.length]);
     }
 
     final size_t format(string fmt, ...)
