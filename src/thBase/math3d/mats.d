@@ -165,8 +165,11 @@ struct mat4 {
 	 */ 
 	vec3 opMul(vec3 v) const
 	{
-		vec4 temp = vec4(v);
-		return vec3( opMul(temp).f[0..3] );
+    vec3 temp;
+		temp.x = v.x * this.f[0] + v.y * this.f[4] + v.z * this.f[8]  + this.f[12];
+		temp.y = v.x * this.f[1] + v.y * this.f[5] + v.z * this.f[9]  + this.f[13];
+		temp.z = v.x * this.f[2] + v.y * this.f[6] + v.z * this.f[10] + this.f[14];
+		return temp;		
 	}
 	
 	/**
