@@ -169,6 +169,7 @@ struct Plane {
 version(unittest)
 {
   import core.stdc.stdio;
+  import thBase.math : epsilonCompare;
 }
 
 unittest {
@@ -176,12 +177,12 @@ unittest {
 	Plane p2 = Plane(vec3(0,0,0),vec3(0,1,0));
 	
 	Ray result = p1.intersect(p2);
-  assert(result.pos.epsilonCompare(vec3(0.0f, 0.0f, 0.0f), 0.00001f));
-  assert(result.dir.epsilonCompare(vec3(0.0f, 0.0f, 1.0f), 0.00001f));
+  assert(result.pos.epsilonCompare(vec3(0.0f, 0.0f, 0.0f)));
+  assert(result.dir.epsilonCompare(vec3(0.0f, 0.0f, 1.0f)));
 
   Plane p3 = Plane(vec4(0.0f, 1.0f, 0.0f, 0.5f));
   Plane p4 = Plane(vec4(0.0f, 0.0f, 1.0f, 1.0f));
   Ray result2 = p3.intersect(p4);
-  assert(result2.pos.epsilonCompare(vec3(0.0f, 0.5f, 1.0f), 0.00001f));
-  assert(result2.dir.epsilonCompare(vec3(1.0f, 0.0f, 0.0f), 0.00001f));
+  assert(result2.pos.epsilonCompare(vec3(0.0f, 0.5f, 1.0f)));
+  assert(result2.dir.epsilonCompare(vec3(1.0f, 0.0f, 0.0f)));
 }

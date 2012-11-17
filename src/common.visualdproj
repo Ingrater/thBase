@@ -451,6 +451,7 @@ cd %CWD%</preBuildCommand>
    <File path="thBase\metatools.d" />
    <File path="thBase\scoped.d" />
    <File path="thBase\sharedlib.d" />
+   <File path="thBase\socket.d" />
    <File path="thBase\stream.d" />
    <File path="thBase\string.d" />
    <File path="thBase\task.d" />

@@ -131,6 +131,21 @@ unittest
   static assert(HasPostblit!Test5 == true);
 }
 
+template staticLength(alias symbol)
+{
+  enum size_t staticLength = staticLengthImpl!(typeof(symbol));
+}
+
+template staticLengthImpl(T : U[N], U, size_t N)
+{
+  enum size_t staticLengthImpl = N;
+}
+
+template staticLengthImpl(T)
+{
+  static assert(0, T.stringof ~ " is not an static array");
+}
+
 /* fullyQualifiedName is taken from phobos std.traits */
 /**
 * Get the fully qualified name of a symbol.

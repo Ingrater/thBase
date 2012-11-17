@@ -233,3 +233,21 @@ unittest
   Ray intersectionRay;
   assert(!t1.intersects(t2, intersectionRay));
 }
+
+version(unittest)
+{
+  import thBase.math3d.quaternion;
+  import thBase.math3d.all;
+  import thBase.io;
+}
+
+unittest
+{
+  mat4 transformation = TranslationMatrix(1,2,3) * Quaternion(vec3(1,5,2), -15).toMat4() * ScaleMatrix(0.1,0.1,0.1);
+  auto t1 = Triangle(vec3(1,1,0), vec3(-1,1,0), vec3(-1,-1,0));
+  auto t2 = t1.transform(transformation);
+  assert(t2.v[0].epsilonCompare(vec3(0.27152431f, 0.37433851f, 0.078391626f)));
+  assert(t2.v[1].epsilonCompare(vec3(0.20380020f, 0.28224021f, 0.24249937f)));
+  assert(t2.v[2].epsilonCompare(vec3(0.25028610f, 0.10504641f, 0.16224094f)));
+  assert(t2.plane.m_Eq.epsilonCompare(vec4(0.91176343f, 0.054831631f, 0.40703908f, 0.29999998f)));
+}

@@ -346,11 +346,6 @@ struct vec3_t(T) if(is(T == float) || is(T == short) || is(T == int)){
   {
     return format("%s", f);
   }
-
-  bool epsilonCompare(vec3_t!(T) rh, T eps) const
-  {
-    return (x > rh.x - eps && x < rh.x + eps && y > rh.y - eps && y < rh.y + eps && z > rh.z - eps && z < rh.z + eps);
-  }
 }
 alias vec3_t!(float) vec3;
 

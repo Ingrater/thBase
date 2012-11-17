@@ -442,6 +442,7 @@ size_t formatDo(PP)(ref PP putPolicy, const(char)[] fmt, TypeInfo[] arguments, v
           else if(strippedType.type == TypeInfo.Type.Pointer)
           {
             auto value = *cast(const(char)**)argptr;
+            argptr += (const(char)*).sizeof;
             strippedType = strippedType.next();
             tt = strippedType.type;
             while(tt == TypeInfo.Type.Const || tt == TypeInfo.Type.Immutable || tt == TypeInfo.Type.Shared)
@@ -793,4 +794,6 @@ unittest
   iarray[2] = 2;
   auto str2 = format("%s %s %s", farray, darray, iarray);
   assert(str2[] == "[1.25, 0.5, 3.75] [1.25, 0.5, 3.75] [0, 1, 2]"); 
+  auto str3 = format("%s:%d", cast(const(char*))"hello".ptr, cast(ushort)80);
+  assert(str3 == "hello:80");
 }
