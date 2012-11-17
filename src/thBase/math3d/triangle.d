@@ -167,10 +167,10 @@ struct Triangle {
 		return false;
 	}
 	
-	Triangle transform(mat4 transformation) const {
-		vec4 v1 = transformation * vec4(v[0]);
-		vec4 v2 = transformation * vec4(v[1]);
-		vec4 v3 = transformation * vec4(v[2]);
+	Triangle transform(ref const(mat4) transformation) const {
+		vec4 v1 = transformation * v[0];
+		vec4 v2 = transformation * v[1];
+		vec4 v3 = transformation * v[2];
 		
 		return Triangle(vec3(v1),vec3(v2),vec3(v3));
 	}
