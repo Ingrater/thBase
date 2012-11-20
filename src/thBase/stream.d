@@ -3,6 +3,7 @@ import core.refcounted;
 import thBase.file;
 import thBase.format;
 import thBase.traits;
+import thBase.math;
 
 class StreamException : RCException
 {
@@ -76,11 +77,6 @@ interface ISeekableInputStream : IInputStream
    *   position = the position to seek to
    */
   void seek(size_t position);
-
-  /**
-   * seek to the end of the input stream
-   */
-  void seekEnd();
 }
 
 private struct IOutputStreamPutPolicy(T)
@@ -206,5 +202,74 @@ class FileInStream : IInputStream
     {
       m_file.skip(bytes);
       return bytes;
+    }
+}
+
+class MemoryInStream : ISeekableInputStream
+{
+  private:
+    void[] m_data;
+    TakeOwnership m_own;
+    size_t m_curPosition;
+    IAllocator m_allocator;
+
+  public:
+
+    enum TakeOwnership
+    {
+      No,
+      Yes
+    }
+
+    invariant()
+    {
+      assert(m_curPosition <= m_data.length);
+    }
+
+    this(void[] data, TakeOwnership own, IAllocator allocator = null)
+    {
+      assert(own == TakeOwnership.No || allocator !is null, "allocator required when taking ownership");
+      m_own = own;
+      m_data = data;
+      m_allocator = allocator;
+    }
+
+    ~this()
+    {
+      if(m_own == TakeOwnership.Yes)
+      {
+        AllocatorDelete(m_allocator, m_data);
+      }
+    }
+
+    override size_t readImpl(void[] buffer)
+    {
+      size_t canRead = min(buffer.length, m_data.length - m_curPosition);
+      buffer[0..canRead] = m_data[m_curPosition..m_curPosition+canRead];
+      m_curPosition += canRead;
+      return canRead;
+    }
+
+    override size_t skip(size_t bytes)
+    {
+      size_t canRead = min(bytes, m_data.length - m_curPosition);
+      m_curPosition += canRead;
+      return canRead;
+    }
+
+    override size_t position()
+    {
+      return m_curPosition;
+    }
+
+    override void seek(size_t position)
+    {
+      assert(position <= m_data.length);
+      m_curPosition = position;
+    }
+
+    override size_t length()
+    {
+      return m_data.length;
     }
 }

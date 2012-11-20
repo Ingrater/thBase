@@ -135,6 +135,26 @@ unittest
   assert(!map2.exists(Collision(0, 1)));
   assert(!map2.exists(Collision(1, 2)));
 
+  bool didSomething = false;
+  map2.ifExists(Collision(0,5),
+                (ref int x){ 
+                  assert(x == 5);
+                  didSomething = true;
+                },
+                (){
+                  assert(false, "should not be executed");
+                });
+  assert(didSomething, "no lambda was executed");
+  didSomething = false;
+  map2.ifExists(Collision(0,1),
+                (ref int x){
+                  assert(false, "should not be executed");
+                },
+                (){
+                  didSomething = true;
+                });
+  assert(didSomething, "no lamda was executed");
+
   map2.remove(Collision(0,0));
   map2.remove(Collision(1,1));
 

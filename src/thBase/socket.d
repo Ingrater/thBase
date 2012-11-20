@@ -1380,7 +1380,7 @@ class Socket
                         if(!this.blocking && errno == EWOULDBLOCK)
                           return null;
                         
-                        throw new SocketAcceptException("Unable to accept socket connection", _lasterr());
+                        throw New!SocketAcceptException("Unable to accept socket connection", _lasterr());
                 }
 
                 Socket newSocket;
@@ -1564,7 +1564,7 @@ class Socket
          * to be received.
          */
         //returns number of bytes actually received, 0 on connection closure, or -1 on error
-    ptrdiff_t receive(void[] buf, SocketFlags flags)
+        sizediff_t receive(void[] buf, SocketFlags flags)
         {
         return buf.length
             ? .recv(sock, buf.ptr, buf.length, cast(int)flags)

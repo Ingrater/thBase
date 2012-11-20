@@ -165,7 +165,7 @@ cd %CWD%</preBuildCommand>
   <debuglevel>0</debuglevel>
   <debugids />
   <versionlevel>0</versionlevel>
-  <versionids>NOGCSAFE thBase_test</versionids>
+  <versionids>NOGCSAFE thBase_test USE_SSE</versionids>
   <dump_source>0</dump_source>
   <mapverbosity>0</mapverbosity>
   <createImplib>0</createImplib>
@@ -440,6 +440,7 @@ cd %CWD%</preBuildCommand>
    <File path="thBase\conv.d" />
    <File path="thBase\ctfe.d" />
    <File path="thBase\dds.d" />
+   <File path="thBase\debugconnection.d" />
    <File path="thBase\devhelper.d" />
    <File path="thBase\enumbitfield.d" />
    <File path="thBase\error.d" />
@@ -452,6 +453,7 @@ cd %CWD%</preBuildCommand>
    <File path="thBase\scoped.d" />
    <File path="thBase\sharedlib.d" />
    <File path="thBase\socket.d" />
+   <File path="thBase\sse.d" />
    <File path="thBase\stream.d" />
    <File path="thBase\string.d" />
    <File path="thBase\task.d" />
