@@ -250,11 +250,11 @@ struct Triangle {
     }
     else
     {
-		  vec4 v1 = transformation * v0;
-		  vec4 v2 = transformation * v1;
-		  vec4 v3 = transformation * v2;
+		  vec3 v1 = transformation * this.v0;
+		  vec3 v2 = transformation * this.v1;
+		  vec3 v3 = transformation * this.v2;
 		
-		  return Triangle(vec3(v1),vec3(v2),vec3(v3));
+		  return Triangle(v1,v2,v3);
     }
 	}
 	
@@ -337,10 +337,10 @@ unittest
   mat4 transformation = TranslationMatrix(1,2,3) * Quaternion(vec3(1,5,2), -15).toMat4() * ScaleMatrix(0.1,0.1,0.1);
   auto t1 = Triangle(vec3(1,1,0), vec3(-1,1,0), vec3(-1,-1,0));
   auto t2 = t1.transform(transformation);
-  /*assert(t2.v0.epsilonCompare(vec3(0.27152431f, 0.37433851f, 0.078391626f)));
+  assert(t2.v0.epsilonCompare(vec3(0.27152431f, 0.37433851f, 0.078391626f)));
   assert(t2.v1.epsilonCompare(vec3(0.20380020f, 0.28224021f, 0.24249937f)));
   assert(t2.v2.epsilonCompare(vec3(0.25028610f, 0.10504641f, 0.16224094f)));
-  assert(t2.plane.m_Eq.epsilonCompare(vec4(0.91176343f, 0.054831631f, 0.40703908f, 0.29999998f)));*/
+  assert(t2.plane.m_Eq.epsilonCompare(vec4(0.91176343f, 0.054831631f, 0.40703908f, 0.29999998f)));
   version(SPEED_TEST)
   {
     auto ts = NewArray!Triangle(10000);
@@ -353,6 +353,7 @@ unittest
                    vec3(uniform(-100.0f, 100.0f, gen), uniform(-100.0f, 100.0f, gen), uniform(-100.0f, 100.0f, gen)));
     }
     shared(Timer) timer = New!(shared(Timer))();
+    scope(exit) Delete(timer);
     auto start = Zeitpunkt(timer);
     foreach(ref t; ts)
     {

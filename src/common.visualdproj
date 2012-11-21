@@ -165,7 +165,7 @@ cd %CWD%</preBuildCommand>
   <debuglevel>0</debuglevel>
   <debugids />
   <versionlevel>0</versionlevel>
-  <versionids>NOGCSAFE thBase_test USE_SSE</versionids>
+  <versionids>NOGCSAFE thBase_test</versionids>
   <dump_source>0</dump_source>
   <mapverbosity>0</mapverbosity>
   <createImplib>0</createImplib>
@@ -265,7 +265,7 @@ cd %CWD%</preBuildCommand>
   <debuglevel>0</debuglevel>
   <debugids />
   <versionlevel>0</versionlevel>
-  <versionids>NOGCSAFE</versionids>
+  <versionids>NOGCSAFE USE_SSE</versionids>
   <dump_source>0</dump_source>
   <mapverbosity>0</mapverbosity>
   <createImplib>0</createImplib>
