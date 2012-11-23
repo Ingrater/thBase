@@ -95,7 +95,7 @@ body
 * Subsequently it uses a pointer instead of an array to avoid
 * redundant bounds checking.
 */
-private dchar decodeImpl(immutable(char)* pstr, size_t length, ref size_t index) @trusted
+private dchar decodeImpl(const(char)* pstr, size_t length, ref size_t index) @trusted
 in
 {
   assert(pstr[0] & 0x80);
@@ -153,7 +153,7 @@ body
     }
   }
 
-  static UTFException exception(string str, rcstring msg)
+  static UTFException exception(const(char)[] str, rcstring msg)
   {
     uint[4] sequence = void;
     size_t i;

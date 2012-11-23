@@ -137,7 +137,7 @@ unittest
 
   bool didSomething = false;
   map2.ifExists(Collision(0,5),
-                (ref int x){ 
+                (ref x){ 
                   assert(x == 5);
                   didSomething = true;
                 },
@@ -147,7 +147,7 @@ unittest
   assert(didSomething, "no lambda was executed");
   didSomething = false;
   map2.ifExists(Collision(0,1),
-                (ref int x){
+                (ref x){
                   assert(false, "should not be executed");
                 },
                 (){

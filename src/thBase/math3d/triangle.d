@@ -291,18 +291,6 @@ struct Triangle {
 	  }
 	  assert(0,"not reachable");
 	}
-	
-	vec3 normal(){
-	  vec3 normal,v1,v2,v3;
-	  v2 = v1 - v0;
-	  v3 = v2 - v0;
-	  //normal
-	  normal.x = v2.y * v3.z - v2.z * v3.y;
-	  normal.y = v2.z * v3.x - v2.x * v3.z;
-	  normal.z = v2.x * v3.y - v2.y * v3.x;
-	  normal = normal.normalize();
-	  return normal;
-	}
 }
 
 unittest

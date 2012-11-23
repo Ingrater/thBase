@@ -163,6 +163,11 @@ struct Plane {
 		}
 		return Plane(res);
 	}
+
+  @property vec3 normal() const
+  {
+    return m_Eq.xyz;
+  }
 	
 }
 
