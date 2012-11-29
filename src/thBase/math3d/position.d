@@ -4,11 +4,6 @@ import thBase.math3d.vecs;
 import thBase.metatools;
 import thBase.format;
 
-version(Windows)
-{
-  version = USE_SSE;
-}
-
 struct Position {
   struct Component
   {

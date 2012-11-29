@@ -447,6 +447,7 @@ cd %CWD%</preBuildCommand>
    <File path="thBase\file.d" />
    <File path="thBase\format.d" />
    <File path="thBase\io.d" />
+   <File path="thBase\logging.d" />
    <File path="thBase\math.d" />
    <File path="thBase\metainfo.d" />
    <File path="thBase\metatools.d" />

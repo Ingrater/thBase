@@ -11,11 +11,12 @@ import thBase.container.hashmap;
 import thBase.types;
 import thBase.conv;
 import thBase.stream;
+import thBase.allocator;
 
 __gshared Socket g_debugConnection;
 __gshared Mutex g_debugConnectionMutex;
 __gshared Socket g_remoteDebugConnection;
-__gshared Hashmap!(string, DataBucket) g_debugData;
+__gshared Hashmap!(const(char)[], DataBucket) g_debugData;
 __gshared SmartPtr!Thread g_debugCommunicationThread;
 __gshared bool g_debugCommunicationWorking = true;
 __gshared void[] g_debugRecieveBuffer;
@@ -149,7 +150,77 @@ private void debugSendAndRecieve()
 
         //Sort recieved messages into buckets
         size_t cur = 0;
-        auto inStream = New!MemoryInStream(g_debugRecieveBuffer[0..g_debugRecieveBufferSize], MemoryInStream.TakeOwnership.No);
+        auto inStream = AllocatorNew!MemoryInStream(ThreadLocalStackAllocator.globalInstance, 
+                                                    g_debugRecieveBuffer[0..g_debugRecieveBufferSize], 
+                                                    MemoryInStream.TakeOwnership.No);
+        scope(exit) AllocatorDelete(ThreadLocalStackAllocator.globalInstance, inStream);
+        uint nameLength = 0;
+        char[64] name;
+        size_t numBytesReadSuccessfully = 0;
+        if( inStream.read(nameLength) == typeof(nameLength).sizeof )
+        {
+          if(nameLength > name.length) //given name is to long?
+          {
+            //TODO print error message for invalid debug package
+            //try to skip the name
+            if(inStream.skip(nameLength) == nameLength)
+            {
+              uint dataLength = 0;
+              // try reading the data length
+              if(inStream.read(dataLength) == typeof(dataLength).sizeof )
+              {
+                //skip the data
+                if(inStream.skip(dataLength) == dataLength)
+                {
+                  numBytesReadSuccessfully = inStream.position;
+                }
+              }
+            }
+          }
+          else //We recieved a valid packet
+          {
+            //Try reading the name
+            if( inStream.read(name[0..nameLength]) == nameLength )
+            {
+              uint dataLength = 0;
+              auto streamPos = inStream.position;
+              //try reading the data length
+              if(inStream.read(dataLength) == typeof(dataLength).sizeof)
+              {
+                //try reading the data
+                if(inStream.skip(dataLength) == dataLength)
+                {
+                  //We did successfully read the data
+                  numBytesReadSuccessfully = inStream.position;
+
+                  //now check if the data bucket does exist
+                  DataBucket bucket;
+                  {
+                    g_debugConnectionMutex.lock();
+                    scope(exit) g_debugConnectionMutex.unlock();
+
+                    g_debugData.ifExists(name[0..nameLength],
+                                         (ref entry){
+                                           bucket = entry;
+                                         },
+                                         (){
+                                           //TODO print error message
+                                         });
+                  }
+                  if(bucket.mutex !is null)
+                  {
+                    bucket.mutex.lock();
+                    scope(exit) bucket.mutex.unlock();
+                    size_t start = bucket.recieved.length;
+                    bucket.recieved.resize(start + dataLength);
+                    inStream.seek(streamPos);
+                    inStream.read(bucket.recieved[start..start+dataLength]);
+                  }
+                }
+              }
+            }
+          }
+        }
       }
       else if(bytesRecieved == 0)
       {
@@ -174,4 +245,47 @@ private void debugSendAndRecieve()
     Thread.sleep(dur!"msecs"(10));
   }
   g_debugCommunicationWorking = false;
+}
+
+void recieveDebugMessages(const(char)[] channelName, scope void delegate(void[] msg) callback)
+{
+  DataBucket bucket;
+  {
+    g_debugConnectionMutex.lock();
+    scope(exit) g_debugConnectionMutex.unlock();
+
+    g_debugData.ifExists(channelName,
+                         (ref entry)
+                         {
+                           bucket = entry;
+                         },
+                         (){
+                           assert(0, "the channel does not exist. Use registerDebugChannel firsts");
+                         });
+  }
+  if(bucket.mutex !is null)
+  {
+    bucket.mutex.lock();
+    scope(exit) bucket.mutex.unlock();
+
+    auto data = bucket.recieved.toArray();
+
+    auto inStream = AllocatorNew!MemoryInStream(ThreadLocalStackAllocator.globalInstance, 
+                                                data, 
+                                                MemoryInStream.TakeOwnership.No);
+    scope(exit) AllocatorDelete(ThreadLocalStackAllocator.globalInstance, inStream);
+
+    while(inStream.position < data.length)
+    {
+      uint dataLength;
+      size_t read = inStream.read(dataLength);
+      assert(read == typeof(dataLength).sizeof && dataLength > 0);
+      size_t start = inStream.position;
+      read = inStream.skip(dataLength);
+      assert(read == dataLength);
+      size_t end = inStream.position;
+      callback(data[start..end]);
+    }
+    bucket.recieved.resize(0);
+  }
 }
