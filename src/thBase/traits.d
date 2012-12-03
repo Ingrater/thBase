@@ -192,3 +192,73 @@ template fullyQualifiedName(alias T)
       enum fullyQualifiedName = T.stringof[0..T.stringof.indexOfChar('(')];
   }
 }
+
+private bool needsDestructionHelper(T)() if(is(T == struct))
+{
+  foreach(m; __traits(allMembers,T))
+  {
+    static if((m.length < 2 || m[0..2] != "__") && m != "this"){
+      static if(__traits(compiles,typeof(__traits(getMember,T,m)))){
+        static if(!IsStaticMember!(T, m))
+        {
+          static if(needsDestruction!(typeof(__traits(getMember,T,m))) == true)
+          {
+            return true;
+          }
+        }
+      }
+    }
+  }
+  return false;
+}
+
+template needsDestruction(T)
+{
+  static if(is(T == struct))
+  {
+    static if(is(typeof(T.__dtor)))
+      enum bool needsDestruction = true;
+    else
+      enum bool needsDestruction = needsDestructionHelper!T();
+  }
+  else
+    enum bool needsDestruction = false;
+}
+
+unittest
+{
+  static struct Test1
+  {
+    int i;
+  }
+
+  static struct Test2
+  {
+    ~this(){}
+  }
+
+  static struct Test3
+  {
+    Test2 t;
+  }
+
+  static struct Test4
+  {
+    int i;
+    float f;
+    Test3 t;
+  }
+
+  static struct Test5
+  {
+    Test1 t;
+    Object o;
+  }
+
+  static assert(needsDestruction!Object == false);
+  static assert(needsDestruction!Test1 == false, "Test1 failed");
+  static assert(needsDestruction!Test2 == true, "Test2 failed");
+  static assert(needsDestruction!Test3 == true, "Test3 failed");
+  static assert(needsDestruction!Test4 == true, "Test4 failed");
+  static assert(needsDestruction!Test5 == false, "Test5 failed");
+}
