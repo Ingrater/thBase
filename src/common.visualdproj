@@ -452,6 +452,7 @@ cd %CWD%</preBuildCommand>
    <File path="thBase\message.d" />
    <File path="thBase\metainfo.d" />
    <File path="thBase\metatools.d" />
+   <File path="thBase\plugin.d" />
    <File path="thBase\rtti.d" />
    <File path="thBase\scoped.d" />
    <File path="thBase\sharedlib.d" />
