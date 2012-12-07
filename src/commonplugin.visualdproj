@@ -1,0 +1,474 @@
+<DProject>
+ <ProjectGuid>{0B29298E-97B3-4EF1-A91A-67D0ED433937}</ProjectGuid>
+ <Config name="Debug" platform="Win32">
+  <obj>0</obj>
+  <link>0</link>
+  <lib>0</lib>
+  <subsystem>0</subsystem>
+  <multiobj>0</multiobj>
+  <singleFileCompilation>0</singleFileCompilation>
+  <oneobj>0</oneobj>
+  <trace>0</trace>
+  <quiet>0</quiet>
+  <verbose>0</verbose>
+  <vtls>0</vtls>
+  <symdebug>1</symdebug>
+  <optimize>0</optimize>
+  <cpu>0</cpu>
+  <isX86_64>0</isX86_64>
+  <isLinux>0</isLinux>
+  <isOSX>0</isOSX>
+  <isWindows>0</isWindows>
+  <isFreeBSD>0</isFreeBSD>
+  <isSolaris>0</isSolaris>
+  <scheduler>0</scheduler>
+  <useDeprecated>0</useDeprecated>
+  <useAssert>0</useAssert>
+  <useInvariants>0</useInvariants>
+  <useIn>0</useIn>
+  <useOut>0</useOut>
+  <useArrayBounds>0</useArrayBounds>
+  <noboundscheck>0</noboundscheck>
+  <useSwitchError>0</useSwitchError>
+  <useUnitTests>1</useUnitTests>
+  <useInline>0</useInline>
+  <release>0</release>
+  <preservePaths>0</preservePaths>
+  <warnings>0</warnings>
+  <infowarnings>0</infowarnings>
+  <checkProperty>0</checkProperty>
+  <genStackFrame>0</genStackFrame>
+  <pic>0</pic>
+  <cov>0</cov>
+  <nofloat>0</nofloat>
+  <Dversion>2</Dversion>
+  <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
+  <compiler>0</compiler>
+  <otherDMD>0</otherDMD>
+  <program>$(DMDInstallDir)windows\bin\dmd.exe</program>
+  <imppath>$(ProjectDir)\..\..\druntime\import;$(ProjectDir)\..\..\phobos;</imppath>
+  <fileImppath />
+  <outdir>$(ConfigurationName)</outdir>
+  <objdir>$(OutDir)</objdir>
+  <objname />
+  <libname />
+  <doDocComments>0</doDocComments>
+  <docdir />
+  <docname />
+  <modules_ddoc />
+  <ddocfiles />
+  <doHdrGeneration>0</doHdrGeneration>
+  <hdrdir />
+  <hdrname />
+  <doXGeneration>1</doXGeneration>
+  <xfilename>$(IntDir)\$(TargetName).json</xfilename>
+  <debuglevel>0</debuglevel>
+  <debugids />
+  <versionlevel>0</versionlevel>
+  <versionids>NOGCSAFE thBase_test</versionids>
+  <dump_source>0</dump_source>
+  <mapverbosity>0</mapverbosity>
+  <createImplib>0</createImplib>
+  <defaultlibname />
+  <debuglibname />
+  <moduleDepsFile />
+  <run>0</run>
+  <runargs />
+  <runCv2pdb>1</runCv2pdb>
+  <pathCv2pdb>$(VisualDInstallDir)cv2pdb\cv2pdb.exe</pathCv2pdb>
+  <cv2pdbPre2043>0</cv2pdbPre2043>
+  <cv2pdbNoDemangle>0</cv2pdbNoDemangle>
+  <cv2pdbEnumType>0</cv2pdbEnumType>
+  <cv2pdbOptions />
+  <objfiles />
+  <linkswitches />
+  <libfiles />
+  <libpaths>$(ProjectDir)\..\..\phobos;$(ProjectDir)\..\..\thBase\lib</libpaths>
+  <deffile />
+  <resfile />
+  <exefile>$(OutDir)\$(ProjectName).exe</exefile>
+  <useStdLibPath>1</useStdLibPath>
+  <additionalOptions>-defaultlib=phobosnogcd -debuglib=phobosnogcd</additionalOptions>
+  <preBuildCommand>set CWD=%CD%
+cd $(ProjectDir)\..\..\druntime
+$(DMDInstallDir)windows\bin\make -f win32nogc.mak
+if errorlevel 1 goto reportError
+cd $(ProjectDir)\..\..\phobos
+$(DMDInstallDir)windows\bin\make -f win32nogc.mak
+if errorlevel 1 goto reportError
+cd %CWD%</preBuildCommand>
+  <postBuildCommand />
+  <filesToClean>*.obj;*.cmd;*.build;*.json;*.dep</filesToClean>
+ </Config>
+ <Config name="Release" platform="Win32">
+  <obj>0</obj>
+  <link>0</link>
+  <lib>0</lib>
+  <subsystem>0</subsystem>
+  <multiobj>0</multiobj>
+  <singleFileCompilation>0</singleFileCompilation>
+  <oneobj>0</oneobj>
+  <trace>0</trace>
+  <quiet>0</quiet>
+  <verbose>0</verbose>
+  <vtls>0</vtls>
+  <symdebug>1</symdebug>
+  <optimize>1</optimize>
+  <cpu>0</cpu>
+  <isX86_64>0</isX86_64>
+  <isLinux>0</isLinux>
+  <isOSX>0</isOSX>
+  <isWindows>0</isWindows>
+  <isFreeBSD>0</isFreeBSD>
+  <isSolaris>0</isSolaris>
+  <scheduler>0</scheduler>
+  <useDeprecated>0</useDeprecated>
+  <useAssert>0</useAssert>
+  <useInvariants>0</useInvariants>
+  <useIn>0</useIn>
+  <useOut>0</useOut>
+  <useArrayBounds>0</useArrayBounds>
+  <noboundscheck>1</noboundscheck>
+  <useSwitchError>0</useSwitchError>
+  <useUnitTests>1</useUnitTests>
+  <useInline>1</useInline>
+  <release>1</release>
+  <preservePaths>0</preservePaths>
+  <warnings>0</warnings>
+  <infowarnings>0</infowarnings>
+  <checkProperty>0</checkProperty>
+  <genStackFrame>0</genStackFrame>
+  <pic>0</pic>
+  <cov>0</cov>
+  <nofloat>0</nofloat>
+  <Dversion>2</Dversion>
+  <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
+  <compiler>0</compiler>
+  <otherDMD>0</otherDMD>
+  <program>$(DMDInstallDir)windows\bin\dmd.exe</program>
+  <imppath>$(ProjectDir)\..\..\druntime\import;$(ProjectDir)\..\..\phobos;</imppath>
+  <fileImppath />
+  <outdir>$(ConfigurationName)</outdir>
+  <objdir>$(OutDir)</objdir>
+  <objname />
+  <libname />
+  <doDocComments>0</doDocComments>
+  <docdir />
+  <docname />
+  <modules_ddoc />
+  <ddocfiles />
+  <doHdrGeneration>0</doHdrGeneration>
+  <hdrdir />
+  <hdrname />
+  <doXGeneration>0</doXGeneration>
+  <xfilename>$(IntDir)\$(TargetName).json</xfilename>
+  <debuglevel>0</debuglevel>
+  <debugids />
+  <versionlevel>0</versionlevel>
+  <versionids>NOGCSAFE thBase_test</versionids>
+  <dump_source>0</dump_source>
+  <mapverbosity>0</mapverbosity>
+  <createImplib>0</createImplib>
+  <defaultlibname />
+  <debuglibname />
+  <moduleDepsFile />
+  <run>0</run>
+  <runargs />
+  <runCv2pdb>1</runCv2pdb>
+  <pathCv2pdb>$(VisualDInstallDir)cv2pdb\cv2pdb.exe</pathCv2pdb>
+  <cv2pdbPre2043>0</cv2pdbPre2043>
+  <cv2pdbNoDemangle>0</cv2pdbNoDemangle>
+  <cv2pdbEnumType>0</cv2pdbEnumType>
+  <cv2pdbOptions />
+  <objfiles />
+  <linkswitches />
+  <libfiles />
+  <libpaths>$(ProjectDir)\..\..\phobos;$(ProjectDir)\..\..\thBase\lib</libpaths>
+  <deffile />
+  <resfile />
+  <exefile>$(OutDir)\$(ProjectName).exe</exefile>
+  <useStdLibPath>1</useStdLibPath>
+  <additionalOptions>-defaultlib=phobosnogc -debuglib=phobosnogc $(ProjectDir)\..\..\druntime\lib\gcstub.obj</additionalOptions>
+  <preBuildCommand>set CWD=%CD%
+cd $(ProjectDir)\..\..\druntime
+$(DMDInstallDir)windows\bin\make -f win32nogc.mak
+if errorlevel 1 goto reportError
+cd $(ProjectDir)\..\..\phobos
+$(DMDInstallDir)windows\bin\make -f win32nogc.mak
+if errorlevel 1 goto reportError
+cd %CWD%</preBuildCommand>
+  <postBuildCommand />
+  <filesToClean>*.obj;*.cmd;*.build;*.json;*.dep</filesToClean>
+ </Config>
+ <Config name="Debug Lib" platform="Win32">
+  <obj>0</obj>
+  <link>0</link>
+  <lib>1</lib>
+  <subsystem>2</subsystem>
+  <multiobj>0</multiobj>
+  <singleFileCompilation>0</singleFileCompilation>
+  <oneobj>0</oneobj>
+  <trace>0</trace>
+  <quiet>0</quiet>
+  <verbose>0</verbose>
+  <vtls>0</vtls>
+  <symdebug>1</symdebug>
+  <optimize>0</optimize>
+  <cpu>0</cpu>
+  <isX86_64>0</isX86_64>
+  <isLinux>0</isLinux>
+  <isOSX>0</isOSX>
+  <isWindows>0</isWindows>
+  <isFreeBSD>0</isFreeBSD>
+  <isSolaris>0</isSolaris>
+  <scheduler>0</scheduler>
+  <useDeprecated>0</useDeprecated>
+  <useAssert>0</useAssert>
+  <useInvariants>0</useInvariants>
+  <useIn>0</useIn>
+  <useOut>0</useOut>
+  <useArrayBounds>0</useArrayBounds>
+  <noboundscheck>0</noboundscheck>
+  <useSwitchError>0</useSwitchError>
+  <useUnitTests>0</useUnitTests>
+  <useInline>0</useInline>
+  <release>0</release>
+  <preservePaths>0</preservePaths>
+  <warnings>0</warnings>
+  <infowarnings>0</infowarnings>
+  <checkProperty>0</checkProperty>
+  <genStackFrame>0</genStackFrame>
+  <pic>0</pic>
+  <cov>0</cov>
+  <nofloat>0</nofloat>
+  <Dversion>2</Dversion>
+  <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
+  <compiler>0</compiler>
+  <otherDMD>1</otherDMD>
+  <program>$(DMDInstallDir)\windows\bin-nostd\dmd.exe</program>
+  <imppath>$(ProjectDir)\..\..\druntime\import;$(ProjectDir)\..\..\phobos;</imppath>
+  <fileImppath />
+  <outdir>$(ConfigurationName)</outdir>
+  <objdir>$(OutDir)</objdir>
+  <objname />
+  <libname />
+  <doDocComments>0</doDocComments>
+  <docdir />
+  <docname />
+  <modules_ddoc />
+  <ddocfiles />
+  <doHdrGeneration>0</doHdrGeneration>
+  <hdrdir />
+  <hdrname />
+  <doXGeneration>1</doXGeneration>
+  <xfilename>$(IntDir)\$(TargetName).json</xfilename>
+  <debuglevel>0</debuglevel>
+  <debugids />
+  <versionlevel>0</versionlevel>
+  <versionids>NOGCSAFE USE_SSE Plugin</versionids>
+  <dump_source>0</dump_source>
+  <mapverbosity>0</mapverbosity>
+  <createImplib>0</createImplib>
+  <defaultlibname />
+  <debuglibname />
+  <moduleDepsFile />
+  <run>0</run>
+  <runargs />
+  <runCv2pdb>1</runCv2pdb>
+  <pathCv2pdb>$(VisualDInstallDir)cv2pdb\cv2pdb.exe</pathCv2pdb>
+  <cv2pdbPre2043>0</cv2pdbPre2043>
+  <cv2pdbNoDemangle>0</cv2pdbNoDemangle>
+  <cv2pdbEnumType>0</cv2pdbEnumType>
+  <cv2pdbOptions />
+  <objfiles />
+  <linkswitches />
+  <libfiles />
+  <libpaths>$(SolutionDir)\..\phobos;$(SolutionDir)\..\thBase\lib</libpaths>
+  <deffile />
+  <resfile />
+  <exefile>..\lib\thBasePlugind.lib</exefile>
+  <useStdLibPath>0</useStdLibPath>
+  <additionalOptions />
+  <preBuildCommand>set CWD=%CD%
+cd $(ProjectDir)\..\..\druntime
+$(DMDInstallDir)windows\bin\make -f win32nogc.mak
+if errorlevel 1 goto reportError
+cd $(ProjectDir)\..\..\phobos
+$(DMDInstallDir)windows\bin\make -f win32nogc.mak
+if errorlevel 1 goto reportError
+cd %CWD%</preBuildCommand>
+  <postBuildCommand />
+  <filesToClean>*.obj;*.cmd;*.build;*.json;*.dep</filesToClean>
+ </Config>
+ <Config name="Release Lib" platform="Win32">
+  <obj>0</obj>
+  <link>0</link>
+  <lib>1</lib>
+  <subsystem>2</subsystem>
+  <multiobj>0</multiobj>
+  <singleFileCompilation>0</singleFileCompilation>
+  <oneobj>0</oneobj>
+  <trace>0</trace>
+  <quiet>0</quiet>
+  <verbose>0</verbose>
+  <vtls>0</vtls>
+  <symdebug>1</symdebug>
+  <optimize>1</optimize>
+  <cpu>0</cpu>
+  <isX86_64>0</isX86_64>
+  <isLinux>0</isLinux>
+  <isOSX>0</isOSX>
+  <isWindows>0</isWindows>
+  <isFreeBSD>0</isFreeBSD>
+  <isSolaris>0</isSolaris>
+  <scheduler>0</scheduler>
+  <useDeprecated>0</useDeprecated>
+  <useAssert>0</useAssert>
+  <useInvariants>0</useInvariants>
+  <useIn>0</useIn>
+  <useOut>0</useOut>
+  <useArrayBounds>0</useArrayBounds>
+  <noboundscheck>1</noboundscheck>
+  <useSwitchError>0</useSwitchError>
+  <useUnitTests>0</useUnitTests>
+  <useInline>0</useInline>
+  <release>1</release>
+  <preservePaths>0</preservePaths>
+  <warnings>0</warnings>
+  <infowarnings>0</infowarnings>
+  <checkProperty>0</checkProperty>
+  <genStackFrame>1</genStackFrame>
+  <pic>0</pic>
+  <cov>0</cov>
+  <nofloat>0</nofloat>
+  <Dversion>2</Dversion>
+  <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
+  <compiler>0</compiler>
+  <otherDMD>0</otherDMD>
+  <program>$(DMDInstallDir)windows\bin\dmd.exe</program>
+  <imppath>$(ProjectDir)\..\..\druntime\import;$(ProjectDir)\..\..\phobos;</imppath>
+  <fileImppath />
+  <outdir>$(ConfigurationName)</outdir>
+  <objdir>$(OutDir)</objdir>
+  <objname />
+  <libname />
+  <doDocComments>0</doDocComments>
+  <docdir />
+  <docname />
+  <modules_ddoc />
+  <ddocfiles />
+  <doHdrGeneration>0</doHdrGeneration>
+  <hdrdir />
+  <hdrname />
+  <doXGeneration>0</doXGeneration>
+  <xfilename>$(IntDir)\$(TargetName).json</xfilename>
+  <debuglevel>0</debuglevel>
+  <debugids />
+  <versionlevel>0</versionlevel>
+  <versionids>NOGCSAFE USE_SSE Plugin</versionids>
+  <dump_source>0</dump_source>
+  <mapverbosity>0</mapverbosity>
+  <createImplib>0</createImplib>
+  <defaultlibname />
+  <debuglibname />
+  <moduleDepsFile />
+  <run>0</run>
+  <runargs />
+  <runCv2pdb>0</runCv2pdb>
+  <pathCv2pdb>$(VisualDInstallDir)cv2pdb\cv2pdb.exe</pathCv2pdb>
+  <cv2pdbPre2043>0</cv2pdbPre2043>
+  <cv2pdbNoDemangle>0</cv2pdbNoDemangle>
+  <cv2pdbEnumType>0</cv2pdbEnumType>
+  <cv2pdbOptions />
+  <objfiles />
+  <linkswitches />
+  <libfiles />
+  <libpaths>$(SolutionDir)\..\phobos;$(SolutionDir)\..\thBase\lib</libpaths>
+  <deffile />
+  <resfile />
+  <exefile>..\lib\thBasePlugin.lib</exefile>
+  <useStdLibPath>1</useStdLibPath>
+  <additionalOptions />
+  <preBuildCommand>set CWD=%CD%
+cd $(ProjectDir)\..\..\druntime
+$(DMDInstallDir)windows\bin\make -f win32nogc.mak
+if errorlevel 1 goto reportError
+cd $(ProjectDir)\..\..\phobos
+$(DMDInstallDir)windows\bin\make -f win32nogc.mak
+if errorlevel 1 goto reportError
+cd %CWD%</preBuildCommand>
+  <postBuildCommand />
+  <filesToClean>*.obj;*.cmd;*.build;*.json;*.dep</filesToClean>
+ </Config>
+ <Folder name="thBasePlugin">
+  <Folder name="thBase">
+   <Folder name="container">
+    <File path="thBase\container\hashmap.d" />
+    <File path="thBase\container\linkedlist.d" />
+    <File path="thBase\container\queue.d" />
+    <File path="thBase\container\stack.d" />
+    <File path="thBase\container\vector.d" />
+   </Folder>
+   <Folder name="math3d">
+    <File path="thBase\math3d\all.d" />
+    <File path="thBase\math3d\box.d" />
+    <File path="thBase\math3d\mats.d" />
+    <File path="thBase\math3d\plane.d" />
+    <File path="thBase\math3d\position.d" />
+    <File path="thBase\math3d\quaternion.d" />
+    <File path="thBase\math3d\ray.d" />
+    <File path="thBase\math3d\triangle.d" />
+    <File path="thBase\math3d\vecs.d" />
+   </Folder>
+   <Folder name="policies">
+    <File path="thBase\policies\hashing.d" />
+    <File path="thBase\policies\locking.d" />
+   </Folder>
+   <Folder name="serialize">
+    <File path="thBase\serialize\common.d" />
+    <File path="thBase\serialize\wrapper.d" />
+    <File path="thBase\serialize\xmldeserializer.d" />
+    <File path="thBase\serialize\xmlserializer.d" />
+   </Folder>
+   <File path="thBase\algorithm.d" />
+   <File path="thBase\allocator.d" />
+   <File path="thBase\bitstream.d" />
+   <File path="thBase\casts.d" />
+   <File path="thBase\chunkfile.d" />
+   <File path="thBase\constref.d" />
+   <File path="thBase\contracts.d" />
+   <File path="thBase\conv.d" />
+   <File path="thBase\ctfe.d" />
+   <File path="thBase\dds.d" />
+   <File path="thBase\debugconnection.d" />
+   <File path="thBase\devhelper.d" />
+   <File path="thBase\enumbitfield.d" />
+   <File path="thBase\error.d" />
+   <File path="thBase\file.d" />
+   <File path="thBase\format.d" />
+   <File path="thBase\io.d" />
+   <File path="thBase\logging.d" />
+   <File path="thBase\math.d" />
+   <File path="thBase\message.d" />
+   <File path="thBase\metainfo.d" />
+   <File path="thBase\metatools.d" />
+   <File path="thBase\plugin.d" />
+   <File path="thBase\rtti.d" />
+   <File path="thBase\scoped.d" />
+   <File path="thBase\sharedlib.d" />
+   <File path="thBase\socket.d" />
+   <File path="thBase\sse.d" />
+   <File path="thBase\stream.d" />
+   <File path="thBase\string.d" />
+   <File path="thBase\task.d" />
+   <File path="thBase\timer.d" />
+   <File path="thBase\tinyxml.d" />
+   <File path="thBase\tools.d" />
+   <File path="thBase\traits.d" />
+   <File path="thBase\types.d" />
+   <File path="thBase\utf.d" />
+  </Folder>
+  <File path="coretest.d" />
+  <File path="test.d" />
+ </Folder>
+</DProject>
