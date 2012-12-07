@@ -1,5 +1,6 @@
 module thBase.logging;
 
+import thBase.plugin;
 import thBase.format;
 import thBase.enumbitfield;
 import thBase.container.vector;
@@ -17,92 +18,135 @@ enum LogLevel
   FatalError = 0x10  ///< non continueable errors
 }
 
-alias void delegate(LogLevel level, ulong subsystem, scope string msg) LogHandler;
-alias void function(LogLevel level, ulong subsystem, scope string msg) LogHandlerFunc;
-
-// List of handlers that process the log messages
-private __gshared Vector!(LogHandler) g_logHandlers;
-private __gshared Mutex g_mutex;
-private __gshared ulong logSubsystemFilter;
-private __gshared EnumBitfield!LogLevel logLevelFilter;
-
 enum LogSubsystem
 {
   Global = 1
 }
 
-private ulong g_currentSubsystem = LogSubsystem.Global; //TLS
+alias void delegate(LogLevel level, ulong subsystem, scope string msg) LogHandler;
+alias void function(LogLevel level, ulong subsystem, scope string msg) LogHandlerFunc;
 
-struct ScopedLogSubsystem
+version(Plugin)
 {
-  private ulong m_oldSubsystem;
+  alias void function(LogLevel level, ulong subsystem, const(char)[] msg) ForwardToHandlersFunc;
+}
 
-  @disable this();
+version(Plugin) {}
+else
+{
+  // List of handlers that process the log messages
+  private __gshared Vector!(LogHandler) g_logHandlers;
+  private __gshared Mutex g_mutex;
+  private __gshared ulong logSubsystemFilter;
+  private __gshared EnumBitfield!LogLevel logLevelFilter;
 
-  this(ulong subsystem)
+  private ulong g_currentSubsystem = LogSubsystem.Global; //TLS
+
+  struct ScopedLogSubsystem
   {
-    m_oldSubsystem = g_currentSubsystem;
-    g_currentSubsystem = subsystem;
-  }
+    private ulong m_oldSubsystem;
 
-  ~this()
-  {
-    g_currentSubsystem = m_oldSubsystem;
+    @disable this();
+
+    this(ulong subsystem)
+    {
+      m_oldSubsystem = g_currentSubsystem;
+      g_currentSubsystem = subsystem;
+    }
+
+    ~this()
+    {
+      g_currentSubsystem = m_oldSubsystem;
+    }
   }
 }
 
 shared static this()
 {
-  g_mutex = New!Mutex();
-  g_logHandlers = New!(typeof(g_logHandlers))();
-  logLevelFilter.Add(LogLevel.Message, LogLevel.Info, LogLevel.Warning, LogLevel.Error, LogLevel.FatalError);
+  version(Plugin)
+  {
+    ForwardToHandlers = cast(ForwardToHandlersFunc)g_pluginRegistry.GetValue("LogMessageForward");
+  }
+  else
+  {
+    g_mutex = New!Mutex();
+    g_logHandlers = New!(typeof(g_logHandlers))();
+    logLevelFilter.Add(LogLevel.Message, LogLevel.Info, LogLevel.Warning, LogLevel.Error, LogLevel.FatalError);
+    g_pluginRegistry.AddValue("LogMessageForward", cast(void*)&ForwardToHandlers);
+  }
 }
 
 shared static ~this()
 {
-  Delete(g_logHandlers);
-  Delete(g_mutex);
+  version(Plugin){}
+  else 
+  {
+    Delete(g_logHandlers);
+    Delete(g_mutex);
+  }
 }
 
-/**
- * Registers a new handler for log output
- * Params:
- *  logHandler = the function that will handle log output
- */
-public void RegisterLogHandler(LogHandler logHandler){
-	g_mutex.lock();
-  scope(exit) g_mutex.unlock();
-  g_logHandlers ~= (logHandler);
-}
 
-/// ditto
-public void RegisterLogHandler(LogHandlerFunc logHandler){
-	LogHandler logHandlerDg;
-	logHandlerDg.funcptr = logHandler;
-	g_mutex.lock();
-  scope(exit) g_mutex.unlock();
-  g_logHandlers ~= (logHandlerDg);
-}
-
-/**
- * Removes a log handler
- * Params:
- *  logHandler = the log handler to remove
- */
-public void UnregisterLogHandler(LogHandler logHandler)
+version(Plugin) {}
+else
 {
-  g_mutex.lock();
-  scope(exit) g_mutex.unlock();
-  g_logHandlers.remove(logHandler);
+  /**
+   * Registers a new handler for log output
+   * Params:
+   *  logHandler = the function that will handle log output
+   */
+  public void RegisterLogHandler(LogHandler logHandler){
+	  g_mutex.lock();
+    scope(exit) g_mutex.unlock();
+    g_logHandlers ~= (logHandler);
+  }
+
+  /// ditto
+  public void RegisterLogHandler(LogHandlerFunc logHandler){
+	  LogHandler logHandlerDg;
+	  logHandlerDg.funcptr = logHandler;
+	  g_mutex.lock();
+    scope(exit) g_mutex.unlock();
+    g_logHandlers ~= (logHandlerDg);
+  }
+
+  /**
+   * Removes a log handler
+   * Params:
+   *  logHandler = the log handler to remove
+   */
+  public void UnregisterLogHandler(LogHandler logHandler)
+  {
+    g_mutex.lock();
+    scope(exit) g_mutex.unlock();
+    g_logHandlers.remove(logHandler);
+  }
+
+  /// ditto
+  public void UnregisterLogHandler(LogHandlerFunc logHandler){
+	  LogHandler logHandlerDg;
+	  logHandlerDg.funcptr = logHandler;
+	  g_mutex.lock();
+    g_mutex.unlock();
+    g_logHandlers.remove(logHandlerDg);
+  }
 }
 
-/// ditto
-public void UnregisterLogHandler(LogHandlerFunc logHandler){
-	LogHandler logHandlerDg;
-	logHandlerDg.funcptr = logHandler;
-	g_mutex.lock();
-  g_mutex.unlock();
-  g_logHandlers.remove(logHandlerDg);
+version(Plugin)
+{
+  __gshared ForwardToHandlersFunc ForwardToHandlers;
+}
+else
+{
+  private void ForwardToHandlers(LogLevel level, ulong subsystem, const(char)[] message)
+  {
+	  g_mutex.lock();
+    scope(exit)g_mutex.unlock();
+	  foreach(handler; g_logHandlers)
+    {
+		  handler(level, subsystem, cast(string)message);
+    }
+  }
 }
 
 private void log(LogLevel level, ulong subsystem, string fmt, TypeInfo[] arg_types, void* args){	
@@ -125,12 +169,7 @@ private void log(LogLevel level, ulong subsystem, string fmt, TypeInfo[] arg_typ
       Delete(message.ptr);
   }
 
-	g_mutex.lock();
-  scope(exit)g_mutex.unlock();
-	foreach(handler; g_logHandlers)
-  {
-		handler(level, subsystem, cast(string)message);
-  }
+  ForwardToHandlers(level, subsystem, message);
 }
 
 /**
