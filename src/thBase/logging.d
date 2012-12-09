@@ -28,7 +28,8 @@ alias void function(LogLevel level, ulong subsystem, scope string msg) LogHandle
 
 version(Plugin)
 {
-  alias void function(LogLevel level, ulong subsystem, const(char)[] msg) ForwardToHandlersFunc;
+  alias void function(LogLevel level, const(char)[] msg) ForwardToHandlersFunc;
+  alias bool function(LogLevel level) CanLogFunc;
 }
 
 version(Plugin) {}
@@ -65,14 +66,16 @@ shared static this()
 {
   version(Plugin)
   {
-    ForwardToHandlers = cast(ForwardToHandlersFunc)g_pluginRegistry.GetValue("LogMessageForward");
+    ForwardToHandlers = cast(ForwardToHandlersFunc)g_pluginRegistry.GetValue("thBase.logging.ForwardToHandlers");
+    CanLog = cast(CanLogFunc)g_pluginRegistry.GetValue("thBase.logging.CanLog");
   }
   else
   {
     g_mutex = New!Mutex();
     g_logHandlers = New!(typeof(g_logHandlers))();
     logLevelFilter.Add(LogLevel.Message, LogLevel.Info, LogLevel.Warning, LogLevel.Error, LogLevel.FatalError);
-    g_pluginRegistry.AddValue("LogMessageForward", cast(void*)&ForwardToHandlers);
+    g_pluginRegistry.AddValue("thBase.logging.ForwardToHandlers", cast(void*)&ForwardToHandlers);
+    g_pluginRegistry.AddValue("thBase.logging.CanLog", cast(void*)&CanLog);
   }
 }
 
@@ -138,18 +141,18 @@ version(Plugin)
 }
 else
 {
-  private void ForwardToHandlers(LogLevel level, ulong subsystem, const(char)[] message)
+  private void ForwardToHandlers(LogLevel level, const(char)[] message)
   {
 	  g_mutex.lock();
     scope(exit)g_mutex.unlock();
 	  foreach(handler; g_logHandlers)
     {
-		  handler(level, subsystem, cast(string)message);
+		  handler(level, g_currentSubsystem, cast(string)message);
     }
   }
 }
 
-private void log(LogLevel level, ulong subsystem, string fmt, TypeInfo[] arg_types, void* args){	
+private void log(LogLevel level, string fmt, TypeInfo[] arg_types, void* args){	
   char[2048] buf;
   char[] message;
 
@@ -169,7 +172,19 @@ private void log(LogLevel level, ulong subsystem, string fmt, TypeInfo[] arg_typ
       Delete(message.ptr);
   }
 
-  ForwardToHandlers(level, subsystem, message);
+  ForwardToHandlers(level, message);
+}
+
+version(Plugin)
+{
+  __gshared CanLogFunc CanLog;
+}
+else
+{
+  private bool CanLog(LogLevel level)
+  {
+    return (g_currentSubsystem & logSubsystemFilter) && logLevelFilter.IsSet(level);
+  }
 }
 
 /**
@@ -177,9 +192,9 @@ private void log(LogLevel level, ulong subsystem, string fmt, TypeInfo[] arg_typ
  */
 void logMessage(string fmt, ...)
 {
-  if((g_currentSubsystem & logSubsystemFilter) && logLevelFilter.IsSet(LogLevel.Message))
+  if(CanLog(LogLevel.Message))
   {
-    log(LogLevel.Message, g_currentSubsystem, fmt, _arguments, _argptr);
+    log(LogLevel.Message, fmt, _arguments, _argptr);
   }
 }
 
@@ -188,9 +203,9 @@ void logMessage(string fmt, ...)
  */
 void logInfo(string fmt, ...)
 {
-  if((g_currentSubsystem & logSubsystemFilter) && logLevelFilter.IsSet(LogLevel.Info))
+  if(CanLog(LogLevel.Info))
   {
-    log(LogLevel.Info, g_currentSubsystem, fmt, _arguments, _argptr);
+    log(LogLevel.Info, fmt, _arguments, _argptr);
   }
 }
 
@@ -199,9 +214,9 @@ void logInfo(string fmt, ...)
  */
 void logWarning(string fmt, ...)
 {
-  if((g_currentSubsystem & logSubsystemFilter) && logLevelFilter.IsSet(LogLevel.Warning))
+  if(CanLog(LogLevel.Warning))
   {
-    log(LogLevel.Warning, g_currentSubsystem, fmt, _arguments, _argptr);
+    log(LogLevel.Warning, fmt, _arguments, _argptr);
   }
 }
 
@@ -210,9 +225,9 @@ void logWarning(string fmt, ...)
  */
 void logError(string fmt, ...)
 {
-  if((g_currentSubsystem & logSubsystemFilter) && logLevelFilter.IsSet(LogLevel.Error))
+  if(CanLog(LogLevel.Error))
   {
-    log(LogLevel.Error, g_currentSubsystem, fmt, _arguments, _argptr);
+    log(LogLevel.Error, fmt, _arguments, _argptr);
   }
 }
 
@@ -221,9 +236,9 @@ void logError(string fmt, ...)
  */
 void logFatalError(string fmt, ...)
 {
-  if((g_currentSubsystem & logSubsystemFilter) && logLevelFilter.IsSet(LogLevel.FatalError))
+  if(CanLog(LogLevel.FatalError))
   {
-    log(LogLevel.FatalError, g_currentSubsystem, fmt, _arguments, _argptr);
+    log(LogLevel.FatalError, fmt, _arguments, _argptr);
   }
 }
 

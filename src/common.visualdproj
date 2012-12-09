@@ -432,6 +432,7 @@ cd %CWD%</preBuildCommand>
    </Folder>
    <File path="thBase\algorithm.d" />
    <File path="thBase\allocator.d" />
+   <File path="thBase\asserthandler.d" />
    <File path="thBase\bitstream.d" />
    <File path="thBase\casts.d" />
    <File path="thBase\chunkfile.d" />

@@ -277,12 +277,24 @@ size_t formatDo(PP)(ref PP putPolicy, const(char)[] fmt, TypeInfo[] arguments, v
 
         if(fmt[i+1] == 'f')
         {
-          if(arguments[argNum] == typeid(float))
+		      ConstRef!(const(TypeInfo)) strippedType = arguments[argNum];
+          TypeInfo.Type tt = strippedType.type;
+          while(tt == TypeInfo.Type.Const || tt == TypeInfo.Type.Immutable || tt == TypeInfo.Type.Shared)
+          {
+            strippedType = strippedType.next();
+            if(strippedType.get is null)
+            {
+              throw New!FormatException(_T("Invalid TypeInfo"));
+            }
+            tt = strippedType.type();
+          }
+
+          if(strippedType.get == typeid(float))
           {
             needed += formatImpl(*cast(float*)argptr,6,putPolicy,true);
             argptr += float.sizeof;
           }
-          else if(arguments[argNum] == typeid(double))
+          else if(strippedType.get == typeid(double))
           {
             needed += formatImpl(*cast(double*)argptr,6,putPolicy,true);
             argptr += double.sizeof;
