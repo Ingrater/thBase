@@ -3,6 +3,20 @@ module thBase.math3d.quaternion;
 import thBase.math3d.vecs;
 import thBase.math3d.mats;
 import std.math;
+import core.stdc.stdio;
+
+class ForceReference
+{
+  Quaternion q;
+}
+
+shared static this()
+{
+  Quaternion q;
+  auto t = typeid(Quaternion);
+  auto info = RTInfo!Quaternion;
+  printf("%x %x\n", info, t.rtInfo);
+}
 
 struct Quaternion {
 	float x,y,z,angle;
