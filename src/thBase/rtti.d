@@ -2,9 +2,9 @@ module thBase.rtti;
 
 struct thMemberInfo 
 {
-  string name;
-  TypeInfo type;
-  size_t offset;
+  string m_name;
+  TypeInfo m_type;
+  size_t m_offset;
 }
 
 template RttiInfo(alias T)

@@ -9,6 +9,7 @@ import thBase.format;
 import core.sys.windows.windows;
 import rtti;
 import thBase.stream;
+import thBase.io;
 
 //from core.allocator
 extern(C) void _initStdAllocator(bool allowMemoryTracking);
@@ -145,6 +146,7 @@ else
       {
         IPlugin plugin;
         PluginDeinitFunc PluginDeinit;
+        Hashmap!(string, const(thMemberInfo)[], StringHashPolicy) types;
       }
       composite!(Vector!(PluginInfo)) m_loadedPlugins;
 
@@ -163,6 +165,7 @@ else
         foreach(info; m_loadedPlugins)
         {
           info.PluginDeinit();
+          Delete(info.types);
         }
       }
 
@@ -218,10 +221,52 @@ else
         }
         else
         {
-          m_loadedPlugins ~= PluginInfo(plugin, deinitFunc);
+          m_loadedPlugins ~= PluginInfo(plugin, deinitFunc, New!(Hashmap!(string, const(thMemberInfo)[], StringHashPolicy))());
         }
 
         return plugin;
+      }
+
+      final void BuildPluginTypeInfo(IPlugin plugin)
+      {
+        foreach(ref info; m_loadedPlugins)
+        {
+          if(info.plugin == plugin)
+          {
+            ScanPair[10] roots;
+            size_t numRoots = info.plugin.GetScanRoots(roots);
+            foreach(ref root; roots[0..numRoots])
+            {
+              auto rttiInfo = getRttiInfo(root.type);
+              auto context = BuildTypeInfoContext(info.types);
+              context.buildInfo(rttiInfo);
+            }
+            break;
+          }
+        }
+      }
+
+      static struct BuildTypeInfoContext
+      {
+        typeof(PluginInfo.types) types;
+
+        void buildInfo(const(thMemberInfo[]) rttiInfo)
+        {
+          if(rttiInfo.length > 0)
+          {
+            if(types.exists(rttiInfo[0].name))
+              return;
+            types[rttiInfo[0].name] = rttiInfo;
+            writefln("%s => %s", rttiInfo[0].name, (cast(TypeInfo)rttiInfo[0].type).toString()[]);
+            foreach(ref info; rttiInfo[0..$-1])
+            {
+              if(info.next !is null)
+                buildInfo(*info.next);
+              else
+                buildInfo(getRttiInfo(info.type));
+            }
+          }
+        }
       }
 
       final void SerializePlugins()
@@ -273,7 +318,7 @@ else
           Delete(m_serializedObjects);
         }
 
-        void serialize(void* addr, const(char)[] name, const TypeInfo type)
+        void serialize(void* addr, const(char)[] name, const TypeInfo type, const(thMemberInfo[])* fallback = null)
         {
           auto plainType = unqualHelper(type);
           string fill = (name.length > 0) ? " = " : "";
@@ -313,7 +358,7 @@ else
               }
               break;
             case TypeInfo.Type.Struct:
-              serializeStruct(addr,name,plainType);
+              serializeStruct(addr,name,plainType,fallback);
               break;
             case TypeInfo.Type.Byte:
               serializeIntegral!byte(addr, name, fill);
@@ -386,7 +431,7 @@ else
             stream.format("%s%s%s{ __extern = %x }", spaces[0..depth*2], name, (name.length > 0) ? " = " : "", addr);
             return;
           }
-          auto rttiInfo = cast(thBase.rtti.thMemberInfo[])getRttiInfo(type);
+          auto rttiInfo = getRttiInfo(type);
           if(rttiInfo.length == 0)
           {
             stream.format("%s%s%s{ __noRTTI }", spaces[0..depth*2], name, (name.length > 0) ? " = " : "");
@@ -405,15 +450,17 @@ else
           foreach(size_t i, info; rttiInfo[1..$])
           {
             stream.format(",\n");
-            serialize(addr + info.offset, info.name, info.type);
+            serialize(addr + info.offset, info.name, info.type, info.next);
           }
           depth--;
           stream.format("\n%s}", spaces[0..depth*2]);
         }
 
-        void serializeStruct(void* addr, const(char)[] name, const TypeInfo type)
+        void serializeStruct(void* addr, const(char)[] name, const TypeInfo type, const(thMemberInfo[])* fallback)
         {
           auto rttiInfo = getRttiInfo(type);
+          if(rttiInfo.length == 0 && fallback !is null)
+            rttiInfo = *fallback;
           if(rttiInfo.length == 0)
           {
             auto typeName = (cast(TypeInfo)type).toString();
@@ -429,7 +476,7 @@ else
               stream.format("\n");
             else
               stream.format(",\n");
-            serialize(addr + info.offset, info.name, info.type);
+            serialize(addr + info.offset, info.name, info.type, info.next);
           }
           depth--;
           stream.format("\n%s}", spaces[0..depth*2]);
