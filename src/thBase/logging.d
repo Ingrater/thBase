@@ -18,9 +18,14 @@ enum LogLevel
   FatalError = 0x10  ///< non continueable errors
 }
 
+/*EnumBitfield!LogLevel opBinary(string op)(LogLevel lhs, LogLevel rhs) if(op == "|")
+{
+  return EnumBitfield!LogLevel(lhs, rhs);
+}*/
+
 enum LogSubsystem
 {
-  Global = 1
+  Global = 1 << 0
 }
 
 alias void delegate(LogLevel level, ulong subsystem, scope string msg) LogHandler;
@@ -74,6 +79,7 @@ shared static this()
     g_mutex = New!Mutex();
     g_logHandlers = New!(typeof(g_logHandlers))();
     logLevelFilter.Add(LogLevel.Message, LogLevel.Info, LogLevel.Warning, LogLevel.Error, LogLevel.FatalError);
+    logSubsystemFilter = ulong.max; //all bits set
     g_pluginRegistry.AddValue("thBase.logging.ForwardToHandlers", cast(void*)&ForwardToHandlers);
     g_pluginRegistry.AddValue("thBase.logging.CanLog", cast(void*)&CanLog);
   }

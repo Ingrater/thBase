@@ -10,6 +10,9 @@ import core.sys.windows.windows;
 import rtti;
 import thBase.stream;
 import thBase.io;
+import thBase.file;
+
+import core.stdc.string;
 
 //from core.allocator
 extern(C) void _initStdAllocator(bool allowMemoryTracking);
@@ -34,7 +37,7 @@ interface IPluginRegistry
 
 extern(C)
 {
-  alias bool function(IPluginRegistry) PluginInitFunc;
+  alias bool function(IPluginRegistry, void*) PluginInitFunc;
   alias IPlugin function() PluginGetFunc;
   alias void function() PluginDeinitFunc;
 }
@@ -117,11 +120,18 @@ version(Plugin)
       }
   }
 
-  void InitPluginSystem()
+  void InitPluginSystem(void* allocator)
   {
     _initStdAllocator(false);
     g_executableStdAllocator = cast(IAdvancedAllocator)g_pluginRegistry.GetValue("StdAllocator");
-    g_pluginAllocator = AllocatorNew!PluginTrackingAllocator(g_executableStdAllocator, g_executableStdAllocator);
+    if(allocator !is null)
+    {
+      g_pluginAllocator = cast(PluginTrackingAllocator)allocator;
+    }
+    else
+    {
+      g_pluginAllocator = AllocatorNew!PluginTrackingAllocator(g_executableStdAllocator, g_executableStdAllocator);
+    }
 
     // redirect all the allocations
     StdAllocator.globalInstance.OnAllocateMemoryCallback = &g_pluginAllocator.OnAllocateMemory;
@@ -141,12 +151,13 @@ else
   {
     private:
       composite!(Hashmap!(string, void*, StringHashPolicy)) m_storage;
+      uint tempCounter = 0; //Number of the next temporary directory
 
       static struct PluginInfo
       {
+        rcstring name;
         IPlugin plugin;
         PluginDeinitFunc PluginDeinit;
-        Hashmap!(string, const(thMemberInfo)[], StringHashPolicy) types;
       }
       composite!(Vector!(PluginInfo)) m_loadedPlugins;
 
@@ -165,7 +176,6 @@ else
         foreach(info; m_loadedPlugins)
         {
           info.PluginDeinit();
-          Delete(info.types);
         }
       }
 
@@ -186,29 +196,69 @@ else
         return result;
       }
 
-      final IPlugin LoadPlugin(string pluginName)
+      private final HMODULE CopyAndLoadPlugin(const(char)[] pluginName)
       {
-        char[256] fileName;
-        size_t fileNameLength = formatStatic(fileName, "%s%s%c", pluginName, ".dll", '\0');
-        HMODULE hModule = LoadLibraryA(fileName.ptr);
+        char[512] fileName;
+
+        size_t fileNameLength = formatStatic(fileName, "..\\plugins\\%s.dll", pluginName);
+        if(!thBase.file.exists(fileName[0..fileNameLength]))
+        {
+          throw New!RCException(format("The plugin '%s' could not be found", pluginName));
+        }
+
+        char[512] dirName;
+        size_t dirNameLength = formatStatic(dirName, "plugin%d", tempCounter++);
+        if(!thBase.file.dirExists(dirName[0..dirNameLength]))
+        {
+          if(!thBase.file.mkDir(dirName[0..dirNameLength]))
+          {
+            throw New!RCException(format("Creating the directory '%s' failed", dirName[0..dirNameLength]));
+          }
+        }
+
+        char[512] dstName;
+        size_t dstNameLength = formatStatic(dstName, "%s\\%s%d.dll", dirName[0..dirNameLength], pluginName, tempCounter-1);
+
+        if(!thBase.file.copy(fileName[0..fileNameLength], dstName[0..dstNameLength], OverwriteIfExists.Yes))
+        {
+          throw New!RCException(format("Failed to copy plugin '%s' to '%s'", pluginName, dstName[0..dstNameLength]));
+        }
+
+        char[512] pdbSource;
+        size_t pdbSourceLength = formatStatic(pdbSource, "..\\plugins\\%s.pdb", pluginName);
+        if(thBase.file.exists(pdbSource[0..pdbSourceLength]))
+        {
+          char[512] pdbDst;
+          size_t pdbDstLength = formatStatic(pdbDst, "%s\\%s.pdb", dirName[0..dirNameLength], pluginName);
+          thBase.file.copy(pdbSource[0..pdbSourceLength], pdbDst[0..pdbDstLength], OverwriteIfExists.Yes);
+        }
+
+        dstName[dstNameLength] = '\0';
+
+        HMODULE hModule = LoadLibraryA(dstName.ptr);
         if(hModule is null)
         {
-          //logFatalError("Could not load plugin '%s'", fileName[0..fileNameLength-1]);
-          return null;
+          throw New!RCException(format("Could not load plugin '%s'", fileName[0..fileNameLength-1]));
         }
+        return hModule;
+      }
+
+      final IPlugin LoadPlugin(const(char)[] pluginName)
+      {
+        HMODULE hModule = CopyAndLoadPlugin(pluginName);
 
         PluginInitFunc initFunc = cast(PluginInitFunc)GetProcAddress(hModule, "InitPlugin");
         PluginDeinitFunc deinitFunc = cast(PluginDeinitFunc)GetProcAddress(hModule, "DeinitPlugin");
         PluginGetFunc getFunc = cast(PluginGetFunc)GetProcAddress(hModule, "GetPlugin");
         if(initFunc is null || getFunc is null || deinitFunc is null)
         {
-          /*logFatalError("Loading plugin '%s' failed because %s%s", fileName[0..fileNameLength-1], 
-                        (initFunc is null) ? "InitPlugin entry point not found" : "",
-                        (getFunc is null) ? "GetPlugin entry point not found" : "");*/
-          return null;
+          throw New!RCException(format("Loading plugin '%s' failed because %s%s%s", pluginName, 
+                        (initFunc is null) ? "InitPlugin entry point not found " : "",
+                        (getFunc is null) ? "GetPlugin entry point not found " : "",
+                        (deinitFunc is null) ? "DeinitPlugin entry point not found " : ""));
         }
 
-        if(!initFunc(g_pluginRegistry))
+        if(!initFunc(g_pluginRegistry, null))
         {
           //logFatalError("Initializing plugin '%s' failed", fileName[0..fileNameLength-1]);
           return null;
@@ -221,34 +271,242 @@ else
         }
         else
         {
-          m_loadedPlugins ~= PluginInfo(plugin, deinitFunc, New!(Hashmap!(string, const(thMemberInfo)[], StringHashPolicy))());
+          m_loadedPlugins ~= PluginInfo(rcstring(pluginName), plugin, deinitFunc);
         }
 
         return plugin;
       }
 
-      final void BuildPluginTypeInfo(IPlugin plugin)
+      final IPlugin ReloadPlugin(const(char)[] pluginName)
       {
-        foreach(ref info; m_loadedPlugins)
+        IPlugin oldPlugin;
+        size_t pluginIndex;
+        foreach(size_t i, ref info; m_loadedPlugins.toArray())
         {
-          if(info.plugin == plugin)
+          if(info.name[] == pluginName)
           {
-            ScanPair[10] roots;
-            size_t numRoots = info.plugin.GetScanRoots(roots);
-            foreach(ref root; roots[0..numRoots])
-            {
-              auto rttiInfo = getRttiInfo(root.type);
-              auto context = BuildTypeInfoContext(info.types);
-              context.buildInfo(rttiInfo);
-            }
+            oldPlugin = info.plugin;
+            pluginIndex = i;
             break;
+          }
+        }
+        if(oldPlugin is null)
+        {
+          throw New!RCException(format("Can't reload plugin '%s' because it is not yet loaded", pluginName));
+        }
+
+        HMODULE hModule = CopyAndLoadPlugin(pluginName);
+
+        PluginInitFunc initFunc = cast(PluginInitFunc)GetProcAddress(hModule, "InitPlugin");
+        PluginDeinitFunc deinitFunc = cast(PluginDeinitFunc)GetProcAddress(hModule, "DeinitPlugin");
+        PluginGetFunc getFunc = cast(PluginGetFunc)GetProcAddress(hModule, "GetPlugin");
+        if(initFunc is null || getFunc is null || deinitFunc is null)
+        {
+          throw New!RCException(format("Loading plugin '%s' failed because %s%s%s", pluginName, 
+                                       (initFunc is null) ? "InitPlugin entry point not found " : "",
+                                       (getFunc is null) ? "GetPlugin entry point not found " : "",
+                                       (deinitFunc is null) ? "DeinitPlugin entry point not found " : ""));
+        }
+
+        if(!initFunc(g_pluginRegistry, null))
+        {
+          throw New!RCException(format("Initializing plugin '%s' failed", pluginName));
+        }
+
+        IPlugin newPlugin = getFunc();
+        if(newPlugin is null)
+        {
+          throw New!RCException(format("Getting reloaded plugin '%s' failed", pluginName));
+        }
+
+        //First build the type info for the new plugin
+        auto types = New!(Hashmap!(string, const(thMemberInfo)[], StringHashPolicy))();
+        scope(exit) Delete(types);
+        BuildPluginTypeInfo(newPlugin, types);
+
+        //Now patch the roots
+        ScanPair[10] oldRoots;
+        ScanPair[10] newRoots;
+        size_t numOldRoots = oldPlugin.GetScanRoots(oldRoots);
+        size_t numNewRoots = newPlugin.GetScanRoots(newRoots);
+        if(numOldRoots != numNewRoots)
+        {
+          asm { int 3; }
+          throw New!RCException(format("Error reloading plugin '%s': number of roots does not match", pluginName));
+        }
+
+        for(size_t i=0; i<numOldRoots; i++)
+        {
+          //If the address is null its a pure type root, and not a global variable
+          if( oldRoots[i].addr !is null)
+          {
+            if(oldRoots[i].type != newRoots[i].type)
+            {
+              asm { int 3; } //root type does not match
+            }
+            //Patch the root
+            memcpy(newRoots[i].addr, oldRoots[i].addr, oldRoots[i].type.tsize);
+          }
+        }
+
+        //Now patch all vtbls and stuff
+        {
+          auto context = PatchObjectsContext(types, oldPlugin);
+          foreach(ref root; oldRoots[0..numOldRoots])
+          {
+            if(root.addr !is null)
+            {
+              void* p = *cast(void**)root.addr;
+              if(p !is null)
+                context.PatchObject(p, root.type);
+            }
+          }
+        }
+
+        m_loadedPlugins[pluginIndex].plugin = newPlugin;
+      }
+
+      struct PatchObjectsContext
+      {
+        Hashmap!(string, const(thMemberInfo)[], StringHashPolicy) types;
+        Hashmap!(void*, bool, PointerHashPolicy) alreadyPatched;
+        IPlugin plugin;
+
+        this(Hashmap!(string, const(thMemberInfo)[], StringHashPolicy) types, IPlugin plugin)
+        {
+          this.types = types;
+          this.plugin = plugin;
+          alreadyPatched = New!(typeof(alreadyPatched))();
+        }
+
+        ~this()
+        {
+          Delete(alreadyPatched);
+        }
+
+        void PatchObject(void* addr, const TypeInfo type)
+        {
+          if(addr is null)
+            return;
+          if(!plugin.isInPluginMemory(addr))
+            return;
+
+          //Make sure to patch each address only once
+          if(alreadyPatched.exists(addr))
+            return;
+          alreadyPatched[addr] = true;
+
+          auto rttiInfo = getRttiInfo(type);
+          if(type.type == TypeInfo.Type.Class)
+          {
+            string mangeledTypeName = rttiInfo[0].name;
+            if(!types.exists(mangeledTypeName))
+            {
+              asm { int 3; } //type not found in type list
+            }
+            TypeInfo_Class newType = cast(TypeInfo_Class)cast(void*)(types[mangeledTypeName][0].type);
+            //Patch the vtbl and the rest of the object header
+            void[] initMem = newType.init;
+            memcpy(addr, initMem.ptr, __traits(classInstanceSize, Object)); 
+
+            //Now patch all the interface vtbls
+            for(TypeInfo_Class cur = newType; cur !is null; cur = cur.base)
+            {
+              foreach(ref i; cur.interfaces)
+              {
+                *cast(void**)(addr + i.offset) = *cast(void**)(newType.init.ptr + i.offset);
+              }
+            }
+          }
+          else if(type.type == TypeInfo.Type.Interface)
+          {
+            //Resolve the interface to a object and patch the real object
+            auto pi = **cast(Interface***)addr;
+            auto o = cast(Object)(addr - pi.offset);
+            if(o.classinfo !is null)
+              PatchObject(cast(void*)o, o.classinfo);
+          }
+
+          foreach(ref info; rttiInfo[1..$])
+          {
+            auto plainType = unqualHelper(info.type);
+            switch(plainType.type)
+            {
+              case TypeInfo.Type.Class:
+                {
+                  void* p = *cast(void**)(addr + info.offset);
+                  if(p !is null)
+                    PatchObject(p, plainType);
+                }
+                break;
+              case TypeInfo.Type.Interface:
+                {
+                  void* p = *cast(void**)(addr + info.offset);
+                  if(p !is null)
+                    PatchObject(p, plainType);
+                }
+                break;
+              case TypeInfo.Type.Struct:
+                PatchObject(addr + info.offset, plainType);
+                break;
+              case TypeInfo.Type.Pointer:
+                {
+                  void* p = addr + info.offset;
+                  if(p !is null)
+                    PatchObject(*cast(void**)p, plainType.next);
+                }
+                break;
+              case TypeInfo.Type.Array:
+                {
+                  auto elementType = unqualHelper(plainType.next);
+                  immutable elementSize = elementType.tsize();
+                  void[] array = *cast(void[]*)(addr + info.offset);
+
+                  void* cur = array.ptr;
+                  void* end = cur + (elementSize * array.length);
+                  for(; cur < end; cur += elementSize)
+                  {
+                    PatchObject(cur, elementType);
+                  }
+                }
+                break;
+              case TypeInfo.Type.StaticArray:
+                {
+                  auto t = cast(const(TypeInfo_StaticArray))cast(void*)plainType;
+                  auto elementType = unqualHelper(plainType.next);
+                  immutable elementSize = elementType.tsize();
+
+                  void* cur = addr + info.offset;
+                  void* end = cur + (t.len * elementSize);
+                  for(; cur < end; cur += elementSize)
+                  {
+                    PatchObject(cur, elementType);
+                  }
+                }
+                break;
+              default:
+                //non-recursive type, nothing to do
+                break;
+            }
           }
         }
       }
 
+      private final void BuildPluginTypeInfo(IPlugin plugin, Hashmap!(string, const(thMemberInfo)[], StringHashPolicy) types)
+      {
+          ScanPair[10] roots;
+          size_t numRoots = plugin.GetScanRoots(roots);
+          foreach(ref root; roots[0..numRoots])
+          {
+            auto rttiInfo = getRttiInfo(root.type);
+            auto context = BuildTypeInfoContext(types);
+            context.buildInfo(rttiInfo);
+          }
+      }
+
       static struct BuildTypeInfoContext
       {
-        typeof(PluginInfo.types) types;
+        Hashmap!(string, const(thMemberInfo)[], StringHashPolicy) types;
 
         void buildInfo(const(thMemberInfo[]) rttiInfo)
         {
@@ -258,12 +516,22 @@ else
               return;
             types[rttiInfo[0].name] = rttiInfo;
             writefln("%s => %s", rttiInfo[0].name, (cast(TypeInfo)rttiInfo[0].type).toString()[]);
-            foreach(ref info; rttiInfo[0..$-1])
+            foreach(ref info; rttiInfo[1..$])
             {
               if(info.next !is null)
                 buildInfo(*info.next);
               else
-                buildInfo(getRttiInfo(info.type));
+              {
+                auto tt = info.type.type;
+                if(tt == TypeInfo.Type.Array || tt == TypeInfo.Type.StaticArray || tt == TypeInfo.Type.Pointer)
+                {
+                  buildInfo(getRttiInfo(info.type.next));
+                }
+                else
+                {
+                  buildInfo(getRttiInfo(info.type));
+                }
+              }
             }
           }
         }

@@ -197,11 +197,39 @@ struct RawFile {
 
 version(Windows)
 {
-  bool exists(string filename)
+  bool exists(const(char)[] filename)
   {
-    DWORD attributes = GetFileAttributesA(toCString(filename));
+    mixin(stackCString("filename", "cstr"));
+    DWORD attributes = GetFileAttributesA(cstr.ptr);
     return (attributes != 0xFFFFFFFF && 
             !(attributes & FILE_ATTRIBUTE_DIRECTORY));
+  }
+
+  bool dirExists(const(char)[] filename)
+  {
+    mixin(stackCString("filename", "cstr"));
+    DWORD attributes = GetFileAttributesA(cstr.ptr);
+    return (attributes != 0xFFFFFFFF && 
+           (attributes & FILE_ATTRIBUTE_DIRECTORY));
+  }
+
+  enum OverwriteIfExists
+  {
+    No = 0,
+    Yes = 1
+  }
+
+  bool copy(const(char)[] from, const(char)[] to, OverwriteIfExists overwrite)
+  {
+    mixin(stackCString("from", "cstrFrom"));
+    mixin(stackCString("to","cstrTo"));
+    return CopyFileA(cstrFrom.ptr, cstrTo.ptr, (overwrite == OverwriteIfExists.No)) != 0;
+  }
+
+  bool mkDir(const(char)[] path)
+  {
+    mixin(stackCString("path", "cstr"));
+    return CreateDirectoryA(cstr.ptr, null) != 0;
   }
 }
 else

@@ -6,25 +6,6 @@ import std.math;
 import core.stdc.stdio;
 import rtti;
 
-class ForceReference
-{
-  Quaternion q;
-}
-
-shared static this()
-{
-  pragma(msg, makeRttiInfo!ForceReference());
-  Quaternion q;
-  auto t = typeid(Quaternion);
-  auto info2 = getRttiInfo(typeid(ForceReference));
-  if(info2.length > 0)
-  {
-    printf("%s\n", (*info2[1].next)[0].name.ptr);
-  }
-  auto info = RTInfo!Quaternion;
-  printf("%x %x\n", info, t.rtInfo);
-}
-
 struct Quaternion {
 	float x,y,z,angle;
 	
