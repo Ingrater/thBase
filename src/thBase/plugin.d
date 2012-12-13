@@ -11,6 +11,7 @@ import rtti;
 import thBase.stream;
 import thBase.io;
 import thBase.file;
+import core.thread : thread_findByAddr;
 
 import core.stdc.string;
 
@@ -41,12 +42,14 @@ extern(C)
   alias IPlugin function() PluginGetFunc;
   alias void function() PluginDeinitFunc;
 }
+alias bool function(uint id) IsDThreadFunc;
 
 version(Plugin)
 {
   __gshared IPluginRegistry g_pluginRegistry;
   __gshared IAdvancedAllocator g_executableStdAllocator;
   __gshared PluginTrackingAllocator g_pluginAllocator;
+  __gshared IsDThreadFunc IsDThread;
 
   class PluginTrackingAllocator
   {
@@ -122,6 +125,7 @@ version(Plugin)
 
   void InitPluginSystem(void* allocator)
   {
+    IsDThread = cast(IsDThreadFunc)g_pluginRegistry.GetValue("thBase.plugin.IsDThread");
     _initStdAllocator(false);
     g_executableStdAllocator = cast(IAdvancedAllocator)g_pluginRegistry.GetValue("StdAllocator");
     if(allocator !is null)
@@ -277,6 +281,11 @@ else
         return plugin;
       }
 
+      final void CheckForModifiedPlugins()
+      {
+
+      }
+
       final IPlugin ReloadPlugin(const(char)[] pluginName)
       {
         IPlugin oldPlugin;
@@ -384,6 +393,21 @@ else
           Delete(alreadyPatched);
         }
 
+        static const(TypeInfo) resolveType(void* addr, const TypeInfo type)
+        {
+          if(type.type != TypeInfo.Type.Class)
+            return type;
+          Object o = cast(Object)addr;
+          return o.classinfo;
+        }
+
+        static Object resolveInterface(void* addr)
+        {
+          auto pi = **cast(Interface***)addr;
+          auto o = cast(Object)(addr - pi.offset);
+          return o;
+        }
+
         void PatchObject(void* addr, const TypeInfo type)
         {
           if(addr is null)
@@ -405,6 +429,7 @@ else
               asm { int 3; } //type not found in type list
             }
             TypeInfo_Class newType = cast(TypeInfo_Class)cast(void*)(types[mangeledTypeName][0].type);
+            writefln("Patching %s at %x", newType.GetName(), addr);
             //Patch the vtbl and the rest of the object header
             void[] initMem = newType.init;
             memcpy(addr, initMem.ptr, __traits(classInstanceSize, Object)); 
@@ -420,12 +445,14 @@ else
           }
           else if(type.type == TypeInfo.Type.Interface)
           {
-            //Resolve the interface to a object and patch the real object
-            auto pi = **cast(Interface***)addr;
-            auto o = cast(Object)(addr - pi.offset);
+            auto o = resolveInterface(addr);
             if(o.classinfo !is null)
               PatchObject(cast(void*)o, o.classinfo);
+            return;
           }
+
+          if(rttiInfo.length <= 1)
+            return;
 
           foreach(ref info; rttiInfo[1..$])
           {
@@ -433,12 +460,6 @@ else
             switch(plainType.type)
             {
               case TypeInfo.Type.Class:
-                {
-                  void* p = *cast(void**)(addr + info.offset);
-                  if(p !is null)
-                    PatchObject(p, plainType);
-                }
-                break;
               case TypeInfo.Type.Interface:
                 {
                   void* p = *cast(void**)(addr + info.offset);
@@ -464,9 +485,30 @@ else
 
                   void* cur = array.ptr;
                   void* end = cur + (elementSize * array.length);
-                  for(; cur < end; cur += elementSize)
+                  if(elementType.type == TypeInfo.Type.Class || elementType.type == TypeInfo.Type.Interface)
                   {
-                    PatchObject(cur, elementType);
+                    for(; cur < end; cur += elementSize)
+                    {
+                      void* p = *cast(void**)cur;
+                      if(p !is null)
+                        PatchObject(p, elementType);
+                    }
+                  }
+                  else if(elementType.type == TypeInfo.Type.Pointer)
+                  {
+                    for(; cur < end; cur += elementSize)
+                    {
+                      void* p = *cast(void**)cur;
+                      if(p !is null)
+                        PatchObject(p, elementType.next);
+                    }
+                  }
+                  else
+                  {
+                    for(; cur < end; cur += elementSize)
+                    {
+                      PatchObject(cur, elementType);
+                    }
                   }
                 }
                 break;
@@ -478,9 +520,30 @@ else
 
                   void* cur = addr + info.offset;
                   void* end = cur + (t.len * elementSize);
-                  for(; cur < end; cur += elementSize)
+                  if(elementType.type == TypeInfo.Type.Class || elementType.type == TypeInfo.Type.Interface)
                   {
-                    PatchObject(cur, elementType);
+                    for(; cur < end; cur += elementSize)
+                    {
+                      void* p = *cast(void**)cur;
+                      if(p !is null)
+                        PatchObject(p, elementType);
+                    }
+                  }
+                  else if(elementType.type == TypeInfo.Type.Pointer)
+                  {
+                    for(; cur < end; cur += elementSize)
+                    {
+                      void* p = *cast(void**)cur;
+                      if(p !is null)
+                        PatchObject(p, elementType.next);
+                    }
+                  }
+                  else
+                  {
+                    for(; cur < end; cur += elementSize)
+                    {
+                      PatchObject(cur, elementType);
+                    }
                   }
                 }
                 break;
@@ -515,7 +578,7 @@ else
             if(types.exists(rttiInfo[0].name))
               return;
             types[rttiInfo[0].name] = rttiInfo;
-            writefln("%s => %s", rttiInfo[0].name, (cast(TypeInfo)rttiInfo[0].type).toString()[]);
+            //writefln("%s => %s", rttiInfo[0].name, (cast(TypeInfo)rttiInfo[0].type).toString()[]);
             foreach(ref info; rttiInfo[1..$])
             {
               if(info.next !is null)
@@ -817,10 +880,16 @@ else
 
   PluginRegistry g_pluginRegistry;
 
+  bool IsDThread(uint id)
+  {
+    return (thread_findByAddr(id) !is null);
+  }
+
   shared static this()
   {
     g_pluginRegistry = New!PluginRegistry();
     g_pluginRegistry.AddValue("StdAllocator", cast(void*)cast(IAdvancedAllocator)(StdAllocator.globalInstance));
+    g_pluginRegistry.AddValue("thBase.plugin.IsDThread", cast(void*)&IsDThread);
   }
 
   shared static ~this()
