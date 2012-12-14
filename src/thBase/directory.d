@@ -1,24 +1,31 @@
 module thBase.directory;
 
 import core.sys.windows.windows;
+import core.stdc.string;
 import core.stdc.stdlib;
+
 import thBase.windows;
+import thBase.enumbitfield;
+import thBase.string;
+import thBase.format;
 
 class DirectoryWatcher
 {
   private:
     HANDLE m_directoryHandle;
     HANDLE m_completionPort;
-    void[] m_buffer;
     WatchSubdirs m_watchSubdirs;
     DWORD m_filter;
     OVERLAPPED m_overlapped;
+    void[4096] m_buffer = void;
 
   public:
     enum Watch : uint
     {
       Reads =  1 << 0,
-      Writes = 1 << 1
+      Writes = 1 << 1,
+      Creates = 1 << 2,
+      Renames = 1 << 3
     }
 
     enum WatchSubdirs
@@ -36,23 +43,28 @@ class DirectoryWatcher
       RenamedNewName = FILE_ACTION_RENAMED_NEW_NAME
     }
 
-    this(const(char)[] path, WatchSubdirs watchSubdirs)
+    this(const(char)[] path, WatchSubdirs watchSubdirs, EnumBitfield!Watch watch)
     {
       m_watchSubdirs = watchSubdirs;
-      //TODO do filter
+      m_filter = 0;
+      if(watch.IsSet(Watch.Reads))
+        m_filter |= FILE_NOTIFY_CHANGE_LAST_ACCESS;
+      if(watch.IsSet(Watch.Writes))
+        m_filter |= FILE_NOTIFY_CHANGE_LAST_WRITE;
+      if(watch.IsSet(Watch.Creates))
+        m_filter |= FILE_NOTIFY_CHANGE_CREATION;
+      if(watch.IsSet(Watch.Renames))
+        m_filter |= FILE_NOTIFY_CHANGE_FILE_NAME | FILE_NOTIFY_CHANGE_DIR_NAME;
 
       mixin(stackCString("path", "cstrPath"));
       m_directoryHandle = CreateFileA(
-                 cstrPath.ptr,					// pointer to the file name
-                 FILE_LIST_DIRECTORY,                // access (read/write) mode
-                 FILE_SHARE_READ						// share mode
-                 | FILE_SHARE_WRITE
-                 | FILE_SHARE_DELETE,
-                 NULL,                               // security descriptor
-                 OPEN_EXISTING,                      // how to create
-                 FILE_FLAG_BACKUP_SEMANTICS			// file attributes
-                 | FILE_FLAG_OVERLAPPED,
-                 NULL); 
+                 cstrPath.ptr,
+                 FILE_LIST_DIRECTORY,               
+                 FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+                 null,                               
+                 OPEN_EXISTING,                      
+                 FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OVERLAPPED,
+                 null); 
       if(m_directoryHandle == INVALID_HANDLE_VALUE)
       {
         throw New!RCException(format("Couldn't open directory '%s'. Maybe it does not exist?", path));
@@ -64,8 +76,14 @@ class DirectoryWatcher
         throw New!RCException(format("Couldn't create io completion port for directory '%s'", path));
       }
 
-      m_buffer = NewArray!void(4096); //4kb buffer
       DoRead();
+    }
+
+    ~this()
+    {
+      CancelIo(m_directoryHandle);
+      CloseHandle(m_completionPort);
+      CloseHandle(m_directoryHandle);
     }
 
     private final DoRead()
@@ -75,10 +93,11 @@ class DirectoryWatcher
                             m_filter, null, &m_overlapped, null);
     }
 
-    final void EnumerateChanges(scope void function(const(char)[] filename, Action action) func)
+    final void EnumerateChanges(scope void delegate(const(char)[] filename, Action action) func)
     {
       OVERLAPPED* lpOverlapped;
       uint numberOfBytes;
+      uint completionKey;
       if( GetQueuedCompletionStatus(m_completionPort, &numberOfBytes, &completionKey, &lpOverlapped, 0) != 0)
       {
         //Copy the buffer
@@ -91,13 +110,21 @@ class DirectoryWatcher
 
         //Progress the messages
         auto info = cast(const(FILE_NOTIFY_INFORMATION)*)buffer.ptr;
-        do
+        while(true)
         {
-          //TODO convert wchar[] to char[]
-          WCHAR[] directory = info.FileName.ptr[0..info.FileNameLength];
-
+          const(WCHAR)[] directory = info.FileName.ptr[0..info.FileNameLength];
+          int bytesNeeded = WideCharToMultiByte(CP_UTF8, 0, directory.ptr, directory.length, null, 0, null, null);
+          if(bytesNeeded > 0)
+          {
+            char[] dir = (cast(char*)alloca(bytesNeeded))[0..bytesNeeded];
+            WideCharToMultiByte(CP_UTF8, 0, directory.ptr, directory.length, dir.ptr, dir.length, null, null);
+            func(dir, cast(Action)info.Action);
+          }
+          if(info.NextEntryOffset == 0)
+            break;
+          else
+            info = cast(const(FILE_NOTIFY_INFORMATION)*)((cast(void*)info) + info.NextEntryOffset);
         }
-        while(info.NextEntryOffset != 0);
       }
     }
 }

@@ -261,7 +261,7 @@ body
 * Subsequently it uses a pointer instead of an array to avoid
 * redundant bounds checking.
 */
-private dchar decodeReverseImpl(immutable(char)* pstr, size_t len, ref size_t index) @trusted
+private dchar decodeReverseImpl(const(char)* pstr, size_t len, ref size_t index) @trusted
 {
   /* The following encodings are valid, except for the 5 and 6 byte
   * combinations:
@@ -314,7 +314,7 @@ private dchar decodeReverseImpl(immutable(char)* pstr, size_t len, ref size_t in
   return result;
 
 
-  static UTFException exception(string str, rcstring msg)
+  static UTFException exception(const(char)[] str, rcstring msg)
   {
     uint[4] sequence = void;
     size_t i=0;

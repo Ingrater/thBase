@@ -443,6 +443,7 @@ cd %CWD%</preBuildCommand>
    <File path="thBase\dds.d" />
    <File path="thBase\debugconnection.d" />
    <File path="thBase\devhelper.d" />
+   <File path="thBase\directory.d" />
    <File path="thBase\enumbitfield.d" />
    <File path="thBase\error.d" />
    <File path="thBase\file.d" />
@@ -468,6 +469,7 @@ cd %CWD%</preBuildCommand>
    <File path="thBase\traits.d" />
    <File path="thBase\types.d" />
    <File path="thBase\utf.d" />
+   <File path="thBase\windows.d" />
   </Folder>
   <File path="coretest.d" />
   <File path="test.d" />

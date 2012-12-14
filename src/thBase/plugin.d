@@ -11,6 +11,9 @@ import rtti;
 import thBase.stream;
 import thBase.io;
 import thBase.file;
+import thBase.directory;
+import thBase.enumbitfield;
+import thBase.string;
 import core.thread : thread_findByAddr;
 
 import core.stdc.string;
@@ -164,6 +167,7 @@ else
         PluginDeinitFunc PluginDeinit;
       }
       composite!(Vector!(PluginInfo)) m_loadedPlugins;
+      DirectoryWatcher m_directoryWatcher;
 
 
     public:
@@ -173,6 +177,7 @@ else
         m_storage.construct();
         m_loadedPlugins = typeof(m_loadedPlugins)();
         m_loadedPlugins.construct();
+        m_directoryWatcher = New!DirectoryWatcher("plugins", DirectoryWatcher.WatchSubdirs.No, Flags(DirectoryWatcher.Watch.Writes));
       }
 
       ~this()
@@ -181,6 +186,7 @@ else
         {
           info.PluginDeinit();
         }
+        Delete(m_directoryWatcher);
       }
 
       final void AddValue(string key, void* value)
@@ -283,7 +289,29 @@ else
 
       final void CheckForModifiedPlugins()
       {
-
+        m_directoryWatcher.EnumerateChanges(
+          (filename, action){
+            if(filename.endsWith(".dll", CaseSensitive.no))
+            {
+              const(char)[] pluginName = filename[0..$-4];
+              bool found = false;
+              foreach(ref info; m_loadedPlugins)
+              {
+                if(info.name[] == pluginName)
+                {
+                  found = true;
+                  //logInfo("Reloading plugin '%s'", filename);
+                  ReloadPlugin(pluginName);
+                  break;
+                }
+              }
+              if(!found)
+              {
+                //logWarning("Plugin '%s' changed but is not yet loaded", filename);
+              }
+            }
+          }
+        );
       }
 
       final IPlugin ReloadPlugin(const(char)[] pluginName)
