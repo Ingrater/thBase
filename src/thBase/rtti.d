@@ -2,9 +2,9 @@ module thBase.rtti;
 
 struct thMemberInfo 
 {
-  string m_name;
-  TypeInfo m_type;
-  size_t m_offset;
+  string name;
+  TypeInfo type;
+  size_t offset;
 }
 
 template RttiInfo(alias T)
@@ -81,7 +81,7 @@ struct bla
 __gshared int g_test;
 static int s_test;
 
-unittest
+/*unittest
 {
   static struct TestStruct
   {
@@ -99,4 +99,4 @@ unittest
   {
     writefln("member name: %s, type info %s, offset %d", t.name, t.type.toString()[], t.offset);
   }
-}
+}*/

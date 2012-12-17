@@ -177,7 +177,8 @@ else
         m_storage.construct();
         m_loadedPlugins = typeof(m_loadedPlugins)();
         m_loadedPlugins.construct();
-        m_directoryWatcher = New!DirectoryWatcher("plugins", DirectoryWatcher.WatchSubdirs.No, Flags(DirectoryWatcher.Watch.Writes));
+        if(thBase.directory.exists("..\\plugins"))
+          m_directoryWatcher = New!DirectoryWatcher("..\\plugins", DirectoryWatcher.WatchSubdirs.No, Flags(DirectoryWatcher.Watch.Writes));
       }
 
       ~this()
@@ -218,9 +219,9 @@ else
 
         char[512] dirName;
         size_t dirNameLength = formatStatic(dirName, "plugin%d", tempCounter++);
-        if(!thBase.file.dirExists(dirName[0..dirNameLength]))
+        if(!thBase.directory.exists(dirName[0..dirNameLength]))
         {
-          if(!thBase.file.mkDir(dirName[0..dirNameLength]))
+          if(!thBase.directory.create(dirName[0..dirNameLength]))
           {
             throw New!RCException(format("Creating the directory '%s' failed", dirName[0..dirNameLength]));
           }
@@ -289,6 +290,9 @@ else
 
       final void CheckForModifiedPlugins()
       {
+        if(m_directoryWatcher is null)
+          return;
+
         m_directoryWatcher.EnumerateChanges(
           (filename, action){
             if(filename.endsWith(".dll", CaseSensitive.no))

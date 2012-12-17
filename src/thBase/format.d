@@ -8,6 +8,15 @@ import thBase.file;
 import thBase.utf;
 import thBase.constref;
 import core.stdc.string;
+import core.vararg;
+
+const(TypeInfo) unqualTypeInfo(const(TypeInfo) info)
+{
+  auto tt = info.type;
+  if(tt == TypeInfo.Type.Const || tt == TypeInfo.Type.Immutable || tt == TypeInfo.Type.Shared)
+    return unqualTypeInfo(info.next);
+  return info;
+}
 
 class FormatException : RCException
 {
@@ -221,8 +230,7 @@ unittest {
 
 private void formatArray(T,PP)(ref PP putPolicy, ref void* argptr, ref size_t needed)
 {
-  auto data = *cast(const(T)[]*)argptr;
-  argptr += (const(T)[]).sizeof;
+  auto data = va_arg!(const(T)[])(argptr);
   putPolicy.put('[');
   if(data.length > 0)
   {
@@ -277,389 +285,280 @@ size_t formatDo(PP)(ref PP putPolicy, const(char)[] fmt, TypeInfo[] arguments, v
 
         if(fmt[i+1] == 'f')
         {
-		      ConstRef!(const(TypeInfo)) strippedType = arguments[argNum];
+		      auto strippedType = unqualTypeInfo(arguments[argNum]);
           TypeInfo.Type tt = strippedType.type;
-          while(tt == TypeInfo.Type.Const || tt == TypeInfo.Type.Immutable || tt == TypeInfo.Type.Shared)
-          {
-            strippedType = strippedType.next();
-            if(strippedType.get is null)
-            {
-              throw New!FormatException(_T("Invalid TypeInfo"));
-            }
-            tt = strippedType.type();
-          }
 
-          if(strippedType.get == typeid(float))
+          switch(tt)
           {
-            needed += formatImpl(*cast(float*)argptr,6,putPolicy,true);
-            argptr += float.sizeof;
-          }
-          else if(strippedType.get == typeid(double))
-          {
-            needed += formatImpl(*cast(double*)argptr,6,putPolicy,true);
-            argptr += double.sizeof;
-          }
-          else
-          {
-            throw New!FormatException(_T("Wrong type '") ~ arguments[argNum].toString() ~ _T("' for format specifier %f"));
+            case TypeInfo.Type.Float:
+              needed += formatImpl(va_arg!float(argptr), 6, putPolicy, true);
+              break;
+            case TypeInfo.Type.Double:
+              needed += formatImpl(va_arg!double(argptr), 6, putPolicy, true);
+              break;
+            case TypeInfo.Type.Real:
+              needed += formatImpl(va_arg!real(argptr), 6, putPolicy, true);
+              break;
+            default:
+              throw New!FormatException(_T("Wrong type '") ~ arguments[argNum].toString() ~ _T("' for format specifier %f"));
           }
           i++;
         }
         else if(fmt[i+1] == 'd' || fmt[i+1] == 'i')
         {
-		      ConstRef!(const(TypeInfo)) strippedType = arguments[argNum];
+		      auto strippedType = unqualTypeInfo(arguments[argNum]);
           TypeInfo.Type tt = strippedType.type;
-          while(tt == TypeInfo.Type.Const || tt == TypeInfo.Type.Immutable || tt == TypeInfo.Type.Shared)
+
+          switch(tt)
           {
-            strippedType = strippedType.next();
-            if(strippedType.get is null)
-            {
-              throw New!FormatException(_T("Invalid TypeInfo"));
-            }
-            tt = strippedType.type();
-          }
-          if(strippedType.get == typeid(byte))
-          {
-            needed += formatImpl(*cast(byte*)argptr,putPolicy);
-            argptr += byte.sizeof;
-          }
-          else if(strippedType.get == typeid(ubyte))
-          {
-            needed += formatImpl(*cast(ubyte*)argptr,putPolicy);
-            argptr += ubyte.sizeof;
-          }
-          else if(strippedType.get == typeid(short))
-          {
-            needed += formatImpl(*cast(short*)argptr,putPolicy);
-            argptr += short.sizeof;
-          }
-          else if(strippedType.get == typeid(ushort))
-          {
-            needed += formatImpl(*cast(ushort*)argptr,putPolicy);
-            argptr += ushort.sizeof;
-          }
-          else if(strippedType.get == typeid(int))
-          {
-            needed += formatImpl(*cast(int*)argptr,putPolicy);
-            argptr += int.sizeof;
-          }
-          else if(strippedType.get == typeid(uint))
-          {
-            needed += formatImpl(*cast(uint*)argptr,putPolicy);
-            argptr += uint.sizeof;
-          }
-          else if(strippedType.get == typeid(long))
-          {
-            needed += formatImpl(*cast(long*)argptr,putPolicy);
-            argptr += long.sizeof;
-          }
-          else if(strippedType.get == typeid(ulong))
-          {
-            needed += formatImpl(*cast(ulong*)argptr,putPolicy);
-            argptr += ulong.sizeof;
-          }
-          else
-          {
-            throw New!FormatException(_T("Wrong type '") ~ arguments[argNum].toString() ~ _T("' for format specifier %") ~ fmt[i+1]);
+            case TypeInfo.Type.Byte:
+              needed += formatImpl(va_arg!byte(argptr), putPolicy);
+              break;
+            case TypeInfo.Type.UByte:
+              needed += formatImpl(va_arg!ubyte(argptr), putPolicy);
+              break;
+            case TypeInfo.Type.Short:
+              needed += formatImpl(va_arg!short(argptr), putPolicy);
+              break;
+            case TypeInfo.Type.UShort:
+              needed += formatImpl(va_arg!ushort(argptr), putPolicy);
+              break;
+            case TypeInfo.Type.Int:
+              needed += formatImpl(va_arg!int(argptr), putPolicy);
+              break;
+            case TypeInfo.Type.UInt:
+              needed += formatImpl(va_arg!uint(argptr), putPolicy);
+              break;
+            case TypeInfo.Type.Long:
+              needed += formatImpl(va_arg!long(argptr), putPolicy);
+              break;
+            case TypeInfo.Type.ULong:
+              needed += formatImpl(va_arg!ulong(argptr), putPolicy);
+              break;
+            default:
+              throw New!FormatException(_T("Wrong type '") ~ arguments[argNum].toString() ~ _T("' for format specifier %") ~ fmt[i+1]);
           }
           i++;
         }
         else if(fmt[i+1] == 's')
         {
-		      ConstRef!(const(TypeInfo)) strippedType = arguments[argNum];
+		      auto strippedType = unqualTypeInfo(arguments[argNum]);
           TypeInfo.Type tt = strippedType.type;
-          while(tt == TypeInfo.Type.Const || tt == TypeInfo.Type.Immutable || tt == TypeInfo.Type.Shared)
+
+          switch(tt)
           {
-            strippedType = strippedType.next();
-            if(strippedType.get is null)
+            case TypeInfo.Type.Array:
             {
-              throw New!FormatException(_T("Invalid TypeInfo"));
-            }
-            tt = strippedType.type();
-          }
+              auto elementType = unqualTypeInfo(strippedType.next());
+              auto et = elementType.type;
 
-          if(strippedType.type == TypeInfo.Type.Array)
-          {
-            do {
-			        strippedType = strippedType.next();
-              if(strippedType.get is null)
-              {
-                throw New!FormatException(_T("Invalid TypeInfo"));
-              }
-              tt = strippedType.type();
-		        }
-            while(tt == TypeInfo.Type.Const || tt == TypeInfo.Type.Immutable || tt == TypeInfo.Type.Shared);
-
-            switch(tt)
-            { 
-              case TypeInfo.Type.Char:
-                {
-                  auto str = *cast(const(char)[]*)argptr;
-                  argptr += (const(char)[]).sizeof;
-                  needed += str.length;
-                  foreach(c;str)
-                    putPolicy.put(c);
-                }
-                break;
-              case TypeInfo.Type.DChar:
-                {
-                  auto str = *cast(const(dchar)[]*)argptr;
-                  argptr += (const(dchar)[]).sizeof;
-                  char[4] cs;
-                  foreach(dchar c; str)
+              switch(et)
+              { 
+                case TypeInfo.Type.Char:
                   {
-                    size_t len = encode(cs, c);
-                    for(size_t j=0; j<len; j++)
-                      putPolicy.put(cs[j]);
-                    needed += len;
+                    auto str = *cast(const(char)[]*)argptr;
+                    argptr += (const(char)[]).sizeof;
+                    needed += str.length;
+                    foreach(c;str)
+                      putPolicy.put(c);
                   }
-                }
-                break;
-              case TypeInfo.Type.Float:
-                formatArray!(float, PP)(putPolicy, argptr, needed);
-                break;
-              case TypeInfo.Type.Double:
-                formatArray!(double, PP)(putPolicy, argptr, needed);
-                break;
-              case TypeInfo.Type.Int:
-                formatArray!(int, PP)(putPolicy, argptr, needed);
-                break;
-              case TypeInfo.Type.UInt:
-                formatArray!(uint, PP)(putPolicy, argptr, needed);
-                break;
-              case TypeInfo.Type.Short:
-                formatArray!(short, PP)(putPolicy, argptr, needed);
-                break;
-              case TypeInfo.Type.UShort:
-                formatArray!(ushort, PP)(putPolicy, argptr, needed);
-                break;
-              case TypeInfo.Type.Long:
-                formatArray!(long, PP)(putPolicy, argptr, needed);
-                break;
-              case TypeInfo.Type.ULong:
-                formatArray!(ulong, PP)(putPolicy, argptr, needed);
-                break;
-              case TypeInfo.Type.Byte:
-                formatArray!(byte, PP)(putPolicy, argptr, needed);
-                break;
-              case TypeInfo.Type.UByte:
-                formatArray!(ubyte, PP)(putPolicy, argptr, needed);
-                break;
-              default:
-                {
-                   throw New!FormatException(_T("Wrong type '") ~ arguments[argNum].toString() ~ _T("' for format specifier %") ~ fmt[i+1]);
-                }
-            }
-          }
-          else if(strippedType.type == TypeInfo.Type.Pointer)
-          {
-            auto value = *cast(const(char)**)argptr;
-            argptr += (const(char)*).sizeof;
-            strippedType = strippedType.next();
-            tt = strippedType.type;
-            while(tt == TypeInfo.Type.Const || tt == TypeInfo.Type.Immutable || tt == TypeInfo.Type.Shared)
-            {
-              strippedType = strippedType.next();
-              if(strippedType is null)
-              {
-                throw New!FormatException(_T("Invalid TypeInfo"));
+                  break;
+                case TypeInfo.Type.DChar:
+                  {
+                    auto str = *cast(const(dchar)[]*)argptr;
+                    argptr += (const(dchar)[]).sizeof;
+                    char[4] cs;
+                    foreach(dchar c; str)
+                    {
+                      size_t len = encode(cs, c);
+                      for(size_t j=0; j<len; j++)
+                        putPolicy.put(cs[j]);
+                      needed += len;
+                    }
+                  }
+                  break;
+                case TypeInfo.Type.Float:
+                  formatArray!(float, PP)(putPolicy, argptr, needed);
+                  break;
+                case TypeInfo.Type.Double:
+                  formatArray!(double, PP)(putPolicy, argptr, needed);
+                  break;
+                case TypeInfo.Type.Int:
+                  formatArray!(int, PP)(putPolicy, argptr, needed);
+                  break;
+                case TypeInfo.Type.UInt:
+                  formatArray!(uint, PP)(putPolicy, argptr, needed);
+                  break;
+                case TypeInfo.Type.Short:
+                  formatArray!(short, PP)(putPolicy, argptr, needed);
+                  break;
+                case TypeInfo.Type.UShort:
+                  formatArray!(ushort, PP)(putPolicy, argptr, needed);
+                  break;
+                case TypeInfo.Type.Long:
+                  formatArray!(long, PP)(putPolicy, argptr, needed);
+                  break;
+                case TypeInfo.Type.ULong:
+                  formatArray!(ulong, PP)(putPolicy, argptr, needed);
+                  break;
+                case TypeInfo.Type.Byte:
+                  formatArray!(byte, PP)(putPolicy, argptr, needed);
+                  break;
+                case TypeInfo.Type.UByte:
+                  formatArray!(ubyte, PP)(putPolicy, argptr, needed);
+                  break;
+                default:
+                  {
+                     throw New!FormatException(_T("Wrong type '") ~ arguments[argNum].toString() ~ _T("' for format specifier %") ~ fmt[i+1]);
+                  }
               }
-              tt = strippedType.type();
             }
+            break;
+          case TypeInfo.Type.Pointer:
+            {
+              auto value = va_arg!(const(char)*)(argptr);
+              auto targetType = unqualTypeInfo(strippedType.next());
+              auto t = targetType.type;
             
-            if(tt == TypeInfo.Type.Char)
+              if(t == TypeInfo.Type.Char)
+              {
+                auto len = strlen(value);
+                foreach(c; value[0..len])
+                  putPolicy.put(c);
+                needed += len;
+              }
+              else
+              {
+                throw New!FormatException(_T("Wrong type '") ~ arguments[argNum].toString() ~ _T("' for format specifier %") ~ fmt[i+1]);
+              }
+            }
+            break;
+          case TypeInfo.Type.Bool:
             {
-              auto len = strlen(value);
-              foreach(c; value[0..len])
+              string value = va_arg!bool(argptr) ? "true" : "false";
+              foreach(c; value)
                 putPolicy.put(c);
-              needed += len;
+              needed += value.length;
             }
-            else
-            {
-              throw New!FormatException(_T("Wrong type '") ~ arguments[argNum].toString() ~ _T("' for format specifier %") ~ fmt[i+1]);
-            }
-          }
-          else if(strippedType.get == typeid(bool))
-          {
-            string value = *cast(bool*)argptr ? "true" : "false";
-            argptr += bool.sizeof;
-            foreach(c; value)
-              putPolicy.put(c);
-            needed += value.length;
-          }
-          else if(strippedType.get == typeid(float))
-          {
-            needed += formatImpl(*cast(float*)argptr, 6, putPolicy, true);
-            argptr += float.sizeof;
-          }
-          else if(strippedType.get == typeid(double))
-          {
-            needed += formatImpl(*cast(double*)argptr, 6, putPolicy, true);
-            argptr += double.sizeof;
-          }
-          else if(strippedType.get == typeid(byte))
-          {
-            needed += formatImpl(*cast(byte*)argptr,putPolicy);
-            argptr += byte.sizeof;
-          }
-          else if(strippedType.get == typeid(ubyte))
-          {
-            needed += formatImpl(*cast(ubyte*)argptr,putPolicy);
-            argptr += ubyte.sizeof;
-          }
-          else if(strippedType.get == typeid(short))
-          {
-            needed += formatImpl(*cast(short*)argptr,putPolicy);
-            argptr += short.sizeof;
-          }
-          else if(strippedType.get == typeid(ushort))
-          {
-            needed += formatImpl(*cast(ushort*)argptr,putPolicy);
-            argptr += ushort.sizeof;
-          }
-          else if(strippedType.get == typeid(int))
-          {
-            needed += formatImpl(*cast(int*)argptr,putPolicy);
-            argptr += int.sizeof;
-          }
-          else if(strippedType.get == typeid(uint))
-          {
-            needed += formatImpl(*cast(uint*)argptr,putPolicy);
-            argptr += uint.sizeof;
-          }
-          else if(strippedType.get == typeid(long))
-          {
-            needed += formatImpl(*cast(long*)argptr,putPolicy);
-            argptr += long.sizeof;
-          }
-          else if(strippedType.get == typeid(ulong))
-          {
+            break;
+          case TypeInfo.Type.Float:
+            needed += formatImpl(va_arg!float(argptr), 6, putPolicy, true);
+            break;
+          case TypeInfo.Type.Double:
+            needed += formatImpl(va_arg!double(argptr), 6, putPolicy, true);
+            break;
+          case TypeInfo.Type.Byte:
+            needed += formatImpl(va_arg!byte(argptr), putPolicy);
+            break;
+          case TypeInfo.Type.UByte:
+            needed += formatImpl(va_arg!ubyte(argptr), putPolicy);
+            break;  
+          case TypeInfo.Type.Short:
+            needed += formatImpl(va_arg!short(argptr), putPolicy);
+            break;
+          case TypeInfo.Type.UShort:
+            needed += formatImpl(va_arg!ushort(argptr), putPolicy);
+            break;
+          case TypeInfo.Type.Int:
+            needed += formatImpl(va_arg!int(argptr), putPolicy);
+            break;
+          case TypeInfo.Type.UInt:
+            needed += formatImpl(va_arg!uint(argptr), putPolicy);
+            break;
+          case TypeInfo.Type.Long:
+            needed += formatImpl(va_arg!long(argptr), putPolicy);
+            break;
+          case TypeInfo.Type.ULong:
             needed += formatImpl(*cast(ulong*)argptr,putPolicy);
-            argptr += ulong.sizeof;
-          }
-          else {
-            auto tio = cast(TypeInfo_Class)arguments[argNum];
-            if(tio !is null)
+            break;
+          case TypeInfo.Type.Class:
             {
-              auto o = cast(Object)argptr;
-              argptr += tio.tsize();
-              auto str = o.toString();
-              needed += str.length;
-              foreach(c;str[])
-                putPolicy.put(c);
+              auto tio = cast(TypeInfo_Class)arguments[argNum];
+              if(tio !is null)
+              {
+                auto o = cast(Object)argptr;
+                argptr += tio.tsize();
+                auto str = o.toString();
+                needed += str.length;
+                foreach(c;str[])
+                  putPolicy.put(c);
+              }
+              else {
+                throw New!FormatException(_T("Wrong type '") ~ arguments[argNum].toString() ~ _T("' for format specifier %s"));
+              }
             }
-            else {
-              //TODO printing structs is not possible because it will leak
-              //auto tis = cast(TypeInfo_Struct)arguments[argNum];
-
-              throw New!FormatException(_T("Wrong type '") ~ arguments[argNum].toString() ~ _T("' for format specifier %s"));
-            }
+            break;
+          default:
+            throw New!FormatException(_T("Wrong type '") ~ arguments[argNum].toString() ~ _T("' for format specifier %s"));
           }
           i++;
         }
         else if(fmt[i+1] == 'x')
         {
-          ConstRef!(const(TypeInfo)) type = arguments[argNum];
-          while(type.classinfo is typeid(TypeInfo_Const) || type.classinfo is typeid(TypeInfo_Invariant) || type.classinfo is typeid(TypeInfo_Shared))
-          {
-            type = type.next;
-          }
+          auto strippedType = unqualTypeInfo(arguments[argNum]);
+          auto tt = strippedType.type;
 
-          if(type.get == typeid(byte))
+          switch(tt)
           {
-            needed += formatHex(*cast(ubyte*)argptr,putPolicy);
-            argptr += byte.sizeof;
-          }
-          else if(type.get == typeid(ubyte))
-          {
-            needed += formatHex(*cast(ubyte*)argptr,putPolicy);
-            argptr += ubyte.sizeof;
-          }
-          else if(type.get == typeid(short))
-          {
-            needed += formatHex(*cast(ushort*)argptr,putPolicy);
-            argptr += short.sizeof;
-          }
-          else if(type.get == typeid(ushort))
-          {
-            needed += formatHex(*cast(ushort*)argptr,putPolicy);
-            argptr += ushort.sizeof;
-          }
-          else if(type.get == typeid(int))
-          {
-            needed += formatHex(*cast(uint*)argptr,putPolicy);
-            argptr += int.sizeof;
-          }
-          else if(type.get == typeid(uint))
-          {
-            needed += formatHex(*cast(uint*)argptr,putPolicy);
-            argptr += uint.sizeof;
-          }
-          else if(type.get == typeid(long))
-          {
-            needed += formatHex(*cast(ulong*)argptr,putPolicy);
-            argptr += long.sizeof;
-          }
-          else if(type.get == typeid(ulong))
-          {
-            needed += formatHex(*cast(ulong*)argptr,putPolicy);
-            argptr += ulong.sizeof;
-          }
-          else if(type.classinfo is typeid(TypeInfo_Pointer) || type.classinfo is typeid(TypeInfo_Class) || type.classinfo is typeid(TypeInfo_Interface))
-          {
-            needed += formatHex(*cast(size_t*)argptr,putPolicy);
-            argptr += size_t.sizeof;
-          }
-          else
-          {
-            throw New!FormatException(_T("Wrong type '") ~ arguments[argNum].toString() ~ _T("' for format specifier %") ~ fmt[i+1]);
+            case TypeInfo.Type.Byte:
+            case TypeInfo.Type.UByte:
+              needed += formatHex(va_arg!ubyte(argptr), putPolicy);
+              break;
+            case TypeInfo.Type.Short:
+            case TypeInfo.Type.UShort:
+              needed += formatHex(va_arg!ushort(argptr), putPolicy);
+              break;
+            case TypeInfo.Type.Int:
+            case TypeInfo.Type.UInt:
+              needed += formatHex(va_arg!uint(argptr), putPolicy);
+              break;
+            case TypeInfo.Type.Long:
+            case TypeInfo.Type.ULong:
+              needed += formatHex(va_arg!ulong(argptr), putPolicy);
+              break;
+            case TypeInfo.Type.Pointer:
+            case TypeInfo.Type.Class:
+            case TypeInfo.Type.Interface:
+              needed += formatHex(va_arg!size_t(argptr), putPolicy);
+              break;
+            default: 
+              throw New!FormatException(_T("Wrong type '") ~ arguments[argNum].toString() ~ _T("' for format specifier %") ~ fmt[i+1]);
           }
           i++;
         }
         else if(fmt[i+1] == 'c')
         {
-		      ConstRef!(const(TypeInfo)) strippedType = arguments[argNum];
-          TypeInfo.Type tt = strippedType.type;
-          while(tt == TypeInfo.Type.Const || tt == TypeInfo.Type.Immutable)
-          {
-            strippedType = strippedType.next();
-            if(strippedType is null)
-            {
-              throw New!FormatException(_T("Invalid TypeInfo"));
-            }
-            tt = strippedType.type();
-          }
+		      auto strippedType = unqualTypeInfo(arguments[argNum]);
+          auto tt = strippedType.type;
 
-          if(strippedType.get == typeid(char))
+          switch(tt)
           {
-            auto c = *cast(const(char)*)argptr;
-            argptr += (const(char)).sizeof;
-            putPolicy.put(c);
-            needed++;
-          }
-          else if(strippedType.get == typeid(wchar))
-          {
-            auto c = *cast(const(wchar)*)argptr;
-            argptr += (const(wchar)).sizeof;
-            char[4] cs;
-            size_t len = encode(cs, c);
-            for(size_t j=0; j<len; j++)
-              putPolicy.put(cs[j]);
-            needed++;
-          }
-          else if(strippedType.get == typeid(dchar))
-          {
-            auto c = *cast(const(dchar)*)argptr;
-            argptr += (const(dchar)).sizeof;
-            char[4] cs;
-            size_t len = encode(cs, c);
-            for(size_t j=0; j<len; j++)
-              putPolicy.put(cs[j]);
-            needed++;
-          }
-          else
-          {
-            throw New!FormatException(_T("Wrong type '") ~ arguments[argNum].toString() ~ _T("' for format specifier %") ~ fmt[i+1]);
+            case TypeInfo.Type.Char:
+              putPolicy.put(va_arg!char(argptr));
+              needed++;
+              break;
+            case TypeInfo.Type.WChar:
+              {
+                auto c = va_arg!wchar(argptr);
+                char[4] cs;
+                size_t len = encode(cs, c);
+                for(size_t j=0; j<len; j++)
+                  putPolicy.put(cs[j]);
+                needed += len;
+              }
+              break;
+            case TypeInfo.Type.DChar:
+              {
+                auto c = va_arg!dchar(argptr);
+                char[4] cs;
+                size_t len = encode(cs, c);
+                for(size_t j=0; j<len; j++)
+                  putPolicy.put(cs[j]);
+                needed += len;
+              }
+              break;
+            default:
+              throw New!FormatException(_T("Wrong type '") ~ arguments[argNum].toString() ~ _T("' for format specifier %") ~ fmt[i+1]);
           }
           i++;
         }
@@ -678,23 +577,27 @@ size_t formatDo(PP)(ref PP putPolicy, const(char)[] fmt, TypeInfo[] arguments, v
           }
 
           uint percision = 0;
-          if(to(fmt[(i+2)..(fpos)],percision) == thResult.FAILURE)
+          if(to(fmt[(i+2)..(fpos)], percision) == thResult.FAILURE)
           {
             throw New!FormatException(_T("Invalid number for %.<number>f format specifier"));
           }
 
-          if(arguments[argNum] == typeid(float))
+          auto strippedType = unqualTypeInfo(arguments[argNum]);
+          auto tt = strippedType.type;
+
+          switch(tt)
           {
-            needed += formatImpl(*cast(float*)argptr, percision, putPolicy, false);
-            argptr += float.sizeof;
-          }
-          else if(arguments[argNum] == typeid(double))
-          {
-            needed += formatImpl(*cast(double*)argptr, percision, putPolicy, false);
-            argptr += double.sizeof;
-          }
-          else {
-            throw New!FormatException(_T("Wrong type '") ~ arguments[argNum].toString() ~ _T("' for format specifier %.<number>f"));
+            case TypeInfo.Type.Float:
+              needed += formatImpl(va_arg!float(argptr), percision, putPolicy, false);
+              break;
+            case TypeInfo.Type.Double:
+              needed += formatImpl(va_arg!double(argptr), percision, putPolicy, false);
+              break;
+            case TypeInfo.Type.Real:
+              needed += formatImpl(va_arg!real(argptr), percision, putPolicy, false);
+              break;
+            default:
+              throw New!FormatException(_T("Wrong type '") ~ arguments[argNum].toString() ~ _T("' for format specifier %.<number>f"));
           }
           i += fpos - i;
         }
@@ -731,6 +634,10 @@ unittest {
 
   needed = formatStatic(buf, "Hello %s World", "beautiful");
   assert(buf[0..needed] == "Hello beautiful World");
+
+  ubyte value = 123;
+  needed = formatStatic(buf, "%s %d", true, value);
+  assert(buf[0..needed] == "true 123");
 }
 
 rcstring format(const(char)[] fmt, ...)

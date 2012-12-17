@@ -205,14 +205,6 @@ version(Windows)
             !(attributes & FILE_ATTRIBUTE_DIRECTORY));
   }
 
-  bool dirExists(const(char)[] filename)
-  {
-    mixin(stackCString("filename", "cstr"));
-    DWORD attributes = GetFileAttributesA(cstr.ptr);
-    return (attributes != 0xFFFFFFFF && 
-           (attributes & FILE_ATTRIBUTE_DIRECTORY));
-  }
-
   enum OverwriteIfExists
   {
     No = 0,
@@ -224,12 +216,6 @@ version(Windows)
     mixin(stackCString("from", "cstrFrom"));
     mixin(stackCString("to","cstrTo"));
     return CopyFileA(cstrFrom.ptr, cstrTo.ptr, (overwrite == OverwriteIfExists.No)) != 0;
-  }
-
-  bool mkDir(const(char)[] path)
-  {
-    mixin(stackCString("path", "cstr"));
-    return CreateDirectoryA(cstr.ptr, null) != 0;
   }
 }
 else

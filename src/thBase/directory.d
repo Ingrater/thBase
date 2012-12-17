@@ -9,6 +9,9 @@ import thBase.enumbitfield;
 import thBase.string;
 import thBase.format;
 
+version(Windows)
+{
+
 class DirectoryWatcher
 {
   private:
@@ -98,7 +101,7 @@ class DirectoryWatcher
       OVERLAPPED* lpOverlapped;
       uint numberOfBytes;
       uint completionKey;
-      if( GetQueuedCompletionStatus(m_completionPort, &numberOfBytes, &completionKey, &lpOverlapped, 0) != 0)
+      while( GetQueuedCompletionStatus(m_completionPort, &numberOfBytes, &completionKey, &lpOverlapped, 0) != 0)
       {
         //Copy the buffer
         assert(numberOfBytes > 0);
@@ -112,7 +115,7 @@ class DirectoryWatcher
         auto info = cast(const(FILE_NOTIFY_INFORMATION)*)buffer.ptr;
         while(true)
         {
-          const(WCHAR)[] directory = info.FileName.ptr[0..info.FileNameLength];
+          const(WCHAR)[] directory = info.FileName.ptr[0..(info.FileNameLength/2)];
           int bytesNeeded = WideCharToMultiByte(CP_UTF8, 0, directory.ptr, directory.length, null, 0, null, null);
           if(bytesNeeded > 0)
           {
@@ -127,4 +130,20 @@ class DirectoryWatcher
         }
       }
     }
+}
+
+bool exists(const(char)[] filename)
+{
+  mixin(stackCString("filename", "cstr"));
+  DWORD attributes = GetFileAttributesA(cstr.ptr);
+  return (attributes != 0xFFFFFFFF && 
+          (attributes & FILE_ATTRIBUTE_DIRECTORY));
+}
+
+bool create(const(char)[] path)
+{
+  mixin(stackCString("path", "cstr"));
+  return CreateDirectoryA(cstr.ptr, null) != 0;
+}
+
 }
