@@ -33,7 +33,8 @@ struct Triangle {
 		
 		if((d1 < FloatEpsilon && d2 < FloatEpsilon && d3 < FloatEpsilon) || 
 		   (d1 > -FloatEpsilon && d2 > -FloatEpsilon && d3 > -FloatEpsilon) || 
-		   (d1 == d2 && d2 == d3))
+		   (d1.epsilonCompare(d2) && d2.epsilonCompare(d3))
+      )
 		{
 			return false;
 		}
@@ -107,41 +108,41 @@ struct Triangle {
 		if(sgn(t1) + sgn(t2) + sgn(t3) > 0){
 			//one negative and 2 positive
 			if(t1 < 0){
-				v1 = v0;
-				v2 = v1;
-				v3 = v2;
+				v1 = this.v0;
+				v2 = this.v1;
+				v3 = this.v2;
 			}
 			else if(t2 < 0){
 				swap(t1,t2);
-				v1 = v1;
-				v2 = v0;
-				v3 = v2;
+				v1 = this.v1;
+				v2 = this.v0;
+				v3 = this.v2;
 			}
 			else {
 				swap(t1,t3);
-				v1 = v2;
-				v2 = v1;
-				v3 = v0;
+				v1 = this.v2;
+				v2 = this.v1;
+				v3 = this.v0;
 			}
 		}
 		else {
 			//one positive and 2 negative
 			if(t1 >= 0){
-				v1 = v0;
-				v2 = v1;
-				v3 = v2;
+				v1 = this.v0;
+				v2 = this.v1;
+				v3 = this.v2;
 			}
 			else if(t2 >= 0){
 				swap(t1,t2);
-				v1 = v1;
-				v2 = v0;
-				v3 = v2;
+				v1 = this.v1;
+				v2 = this.v0;
+				v3 = this.v2;
 			}
 			else {
 				swap(t1,t3);
-				v1 = v2;
-				v2 = v1;
-				v3 = v0;
+				v1 = this.v2;
+				v2 = this.v1;
+				v3 = this.v0;
 			}
 		}
 		
@@ -302,6 +303,15 @@ unittest
                      vec3(-1,-1, 1),
                      vec3( 1,-1, 1));
   Ray intersectionRay;
+  assert(!t1.intersects(t2, intersectionRay));
+
+  t1 = Triangle(vec3(4.0100098,-0.40002441,1.0100098),
+                         vec3(2.0100098,-0.40002441,1.0100098),
+                         vec3(4.0100098,-0.40002441,-0.98999023));
+  t2 = Triangle(vec3(1.0000000,1.0000000,1.0000000),
+                         vec3(-1.0000000,1.0000000,1.0000000),
+                         vec3(-1.0000000,-1.0000000,1.0000000));
+
   assert(!t1.intersects(t2, intersectionRay));
 }
 

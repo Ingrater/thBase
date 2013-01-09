@@ -372,7 +372,6 @@ else
         size_t numNewRoots = newPlugin.GetScanRoots(newRoots);
         if(numOldRoots != numNewRoots)
         {
-          asm { int 3; }
           throw New!RCException(format("Error reloading plugin '%s': number of roots does not match", pluginName));
         }
 
@@ -390,7 +389,7 @@ else
           }
         }
 
-        //Now patch all vtbls and stuff
+        //Now patch all vptrs
         {
           auto context = PatchObjectsContext(types, oldPlugin);
           foreach(ref root; oldRoots[0..numOldRoots])
@@ -425,6 +424,7 @@ else
           Delete(alreadyPatched);
         }
 
+        //returns the TypeInfo for the given address and TypeInfo object. For class instances a additional lookup has to be done.
         static const(TypeInfo) resolveType(void* addr, const TypeInfo type)
         {
           if(type.type != TypeInfo.Type.Class)
@@ -433,6 +433,7 @@ else
           return o.classinfo;
         }
 
+        //casts a interface to an object
         static Object resolveInterface(void* addr)
         {
           auto pi = **cast(Interface***)addr;
@@ -440,6 +441,7 @@ else
           return o;
         }
 
+        //Patches an object
         void PatchObject(void* addr, const TypeInfo type)
         {
           if(addr is null)
@@ -461,7 +463,7 @@ else
               asm { int 3; } //type not found in type list
             }
             TypeInfo_Class newType = cast(TypeInfo_Class)cast(void*)(types[mangeledTypeName][0].type);
-            writefln("Patching %s at %x", newType.GetName(), addr);
+            debug writefln("Patching %s at %x", newType.GetName(), addr);
             //Patch the vtbl and the rest of the object header
             void[] initMem = newType.init;
             memcpy(addr, initMem.ptr, __traits(classInstanceSize, Object)); 
@@ -478,7 +480,7 @@ else
           else if(type.type == TypeInfo.Type.Interface)
           {
             auto o = resolveInterface(addr);
-            if(o.classinfo !is null)
+            if(o.classinfo !is null) //if the object has already been deleted the classinfo is null
               PatchObject(cast(void*)o, o.classinfo);
             return;
           }
@@ -607,10 +609,12 @@ else
         {
           if(rttiInfo.length > 0)
           {
+            //avoid endless recursion
             if(types.exists(rttiInfo[0].name))
               return;
             types[rttiInfo[0].name] = rttiInfo;
-            //writefln("%s => %s", rttiInfo[0].name, (cast(TypeInfo)rttiInfo[0].type).toString()[]);
+
+            //iterate all members
             foreach(ref info; rttiInfo[1..$])
             {
               if(info.next !is null)
@@ -618,6 +622,7 @@ else
               else
               {
                 auto tt = info.type.type;
+                //For compond types use the next type
                 if(tt == TypeInfo.Type.Array || tt == TypeInfo.Type.StaticArray || tt == TypeInfo.Type.Pointer)
                 {
                   buildInfo(getRttiInfo(info.type.next));
