@@ -17,6 +17,7 @@ import thBase.string;
 import core.thread : thread_findByAddr;
 
 import core.stdc.string;
+import core.stdc.stdio : printf;
 
 //from core.allocator
 extern(C) void _initStdAllocator(bool allowMemoryTracking);
@@ -32,6 +33,7 @@ interface IPlugin
   @property string name();
   bool isInPluginMemory(void* ptr);
   size_t GetScanRoots(ScanPair[] results);
+  void* GetPluginAllocator();
 }
 
 interface IPluginRegistry
@@ -165,6 +167,7 @@ else
         rcstring name;
         IPlugin plugin;
         PluginDeinitFunc PluginDeinit;
+        bool reloaded;
       }
       composite!(Vector!(PluginInfo)) m_loadedPlugins;
       DirectoryWatcher m_directoryWatcher;
@@ -293,6 +296,13 @@ else
         if(m_directoryWatcher is null)
           return;
 
+        //Reset the reload states of all plugins
+        foreach(ref info; m_loadedPlugins)
+        {
+          info.reloaded = false;
+        }
+
+        //reload all plugins that changed
         m_directoryWatcher.EnumerateChanges(
           (filename, action){
             if(filename.endsWith(".dll", CaseSensitive.no))
@@ -304,8 +314,19 @@ else
                 if(info.name[] == pluginName)
                 {
                   found = true;
-                  //logInfo("Reloading plugin '%s'", filename);
-                  ReloadPlugin(pluginName);
+                  
+                  if(!info.reloaded)
+                  {
+                    debug {
+                      char[1024] debugOut;
+                      debugOut[0..pluginName.length] = pluginName[];
+                      debugOut[pluginName.length] = '\0';
+                      printf("reloading plugin %s\n", debugOut.ptr);
+                    }
+
+                    ReloadPlugin(pluginName);
+                    info.reloaded = true;
+                  }
                   break;
                 }
               }
@@ -349,7 +370,7 @@ else
                                        (deinitFunc is null) ? "DeinitPlugin entry point not found " : ""));
         }
 
-        if(!initFunc(g_pluginRegistry, null))
+        if(!initFunc(g_pluginRegistry, oldPlugin.GetPluginAllocator()))
         {
           throw New!RCException(format("Initializing plugin '%s' failed", pluginName));
         }
@@ -385,7 +406,7 @@ else
               asm { int 3; } //root type does not match
             }
             //Patch the root
-            memcpy(newRoots[i].addr, oldRoots[i].addr, oldRoots[i].type.tsize);
+            memcpy(newRoots[i].addr, oldRoots[i].addr, size_t.sizeof);
           }
         }
 

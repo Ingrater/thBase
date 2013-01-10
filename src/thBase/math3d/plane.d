@@ -135,7 +135,7 @@ struct Plane {
 			
 			pos.x = (m_Eq.z*other.m_Eq.w - other.m_Eq.z*m_Eq.w) / d;
 			pos.y = 0.0f;
-			pos.z = (m_Eq.x+other.m_Eq.w - other.m_Eq.x*m_Eq.w) / d;
+			pos.z = (m_Eq.w*other.m_Eq.x - other.m_Eq.w*m_Eq.x) / d;
 			
 			return Ray(pos, dir);
 		}
@@ -145,8 +145,8 @@ struct Plane {
 		dir.y = (other.m_Eq.x*m_Eq.z - m_Eq.x*other.m_Eq.z) / d;
 		dir.z = 1.0f;
 		
-		pos.x = (other.m_Eq.y*m_Eq.w - m_Eq.y*other.m_Eq.w) / d;
-		pos.y = (other.m_Eq.x*m_Eq.w - m_Eq.x*other.m_Eq.w) / d;
+		pos.x = (m_Eq.y*other.m_Eq.w - other.m_Eq.y*m_Eq.w) / d;
+		pos.y = (m_Eq.w*other.m_Eq.x - other.m_Eq.w*m_Eq.x) / d;
 		pos.z = 0.0f;
 		
 		return Ray(pos, dir);
@@ -190,4 +190,22 @@ unittest {
   Ray result2 = p3.intersect(p4);
   assert(result2.pos.epsilonCompare(vec3(0.0f, 0.5f, 1.0f)));
   assert(result2.dir.epsilonCompare(vec3(1.0f, 0.0f, 0.0f)));
+
+  p1 = Plane(vec4(0,1,0,-1));
+  p2 = Plane(vec4(1,0,0,1));
+  result = p1.intersect(p2);
+  assert(result.pos.epsilonCompare(vec3(1,-1,0)));
+  assert(result.dir.epsilonCompare(vec3(0,0,1)));
+
+  p1 = Plane(vec4(0,0,1,-1));
+  p2 = Plane(vec4(0,1,0,1));
+  result = p1.intersect(p2);
+  assert(result.pos.epsilonCompare(vec3(0,1,-1)));
+  assert(result.dir.epsilonCompare(vec3(1,0,0)));
+
+  p1 = Plane(vec4(0,0,1,-1));
+  p2 = Plane(vec4(1,0,0,1));
+  result = p1.intersect(p2);
+  assert(result.pos.epsilonCompare(vec3(1,0,-1)));
+  assert(result.dir.epsilonCompare(vec3(0,1,0)));
 }
