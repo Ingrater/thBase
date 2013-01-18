@@ -18,6 +18,7 @@ extern (C) void onAssertErrorMsg( string file, size_t line, string msg )
 }
 
 import core.stdc.string;
+import thBase.timer;
 
   int main(string[] args)
   { 

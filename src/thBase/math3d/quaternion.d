@@ -154,6 +154,34 @@ struct Quaternion {
 	  mat.f[15] = 1.0f;
 	  return mat;
 	}
+
+	mat3 toMat3() const
+    in {
+      assert(isValid());
+    }
+	body {
+	  mat3 mat;
+	  Quaternion norm = normalize();
+	  float xx  = norm.x * norm.x;
+	  float xy  = norm.x * norm.y;
+	  float xz  = norm.x * norm.z;
+	  float xw  = norm.x * norm.angle;
+	  float yy  = norm.y * norm.y;
+	  float yz  = norm.y * norm.z;
+	  float yw  = norm.y * norm.angle;
+	  float zz  = norm.z * norm.z;
+	  float zw  = norm.z * norm.angle;
+	  mat.f[0] = 1.0f - 2.0f * ( yy + zz );
+	  mat.f[1] =        2.0f * ( xy - zw );
+	  mat.f[2] =        2.0f * ( xz + yw );
+	  mat.f[3] =        2.0f * ( xy + zw );
+	  mat.f[4] = 1.0f - 2.0f * ( xx + zz );
+	  mat.f[5] =        2.0f * ( yz - xw );
+	  mat.f[6] =        2.0f * ( xz - yw );
+	  mat.f[7] =        2.0f * ( yz + xw );
+	  mat.f[8] = 1.0f - 2.0f * ( xx + yy );
+	  return mat;
+	}
 	
 	/// * operator
 	Quaternion opBinary(string op)(in Quaternion rh) const if(op == "*"){
@@ -164,6 +192,38 @@ struct Quaternion {
 	  res.angle = this.angle * rh.angle - this.x * rh.x     - this.y * rh.y - this.z * rh.z;
 	  return res;		
 	}
+
+  /// * operator
+  Quaternion opBinary(string op)(in vec3 rh) const if(op == "*")
+  {
+    Quaternion temp;
+    temp.x = rh.x;
+    temp.y = rh.y;
+    temp.z = rh.z;
+    temp.angle = 0.0f;
+    return this.opBinary!"*"(temp);
+  }
+
+  Quaternion opBinaryRight(string op)(in vec3 rh) const if(op == "*")
+  {
+    Quaternion temp;
+    temp.x = rh.x;
+    temp.y = rh.y;
+    temp.z = rh.z;
+    temp.angle = 0.0f;
+    return temp.opBinary!"*"(this);
+  }
+
+  Quaternion opBinary(string op)(in float rh) const if(op == "*")
+  {
+    //TODO check if correct
+    Quaternion res;
+    res.x = this.x * rh;
+    res.y = this.y * rh;
+    res.z = this.z * rh;
+    res.angle = this.angle * rh;
+    return res;
+  }
 	
 	bool isValid() const {
 		return (!(x != x) && !(y != y) && !(z != z) && !(angle != angle) &&

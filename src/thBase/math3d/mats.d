@@ -47,6 +47,23 @@ struct mat3 {
 	    res.f[7] = f[5];
 	    return res;
 	}
+
+  mat3 Inverse() const {
+    float det = this.Det();
+    if(det > -FloatEpsilon && det < FloatEpsilon)
+      return mat3.Identity();
+
+    mat3 res;
+    res.f[0] =    this.f[4]*this.f[8] - this.f[5]*this.f[7]   / det;
+    res.f[1] = -( this.f[1]*this.f[8] - this.f[7]*this.f[2] ) / det;
+    res.f[2] =    this.f[1]*this.f[5] - this.f[4]*this.f[2]   / det;
+    res.f[3] = -( this.f[3]*this.f[8] - this.f[5]*this.f[6] ) / det;
+    res.f[4] =    this.f[0]*this.f[8] - this.f[6]*this.f[2]   / det;
+    res.f[5] = -( this.f[0]*this.f[5] - this.f[3]*this.f[2] ) / det;
+    res.f[6] =    this.f[3]*this.f[7] - this.f[6]*this.f[4]   / det;
+    res.f[7] = -( this.f[0]*this.f[7] - this.f[6]*this.f[1] ) / det;
+    res.f[8] =    this.f[0]*this.f[4] - this.f[1]*this.f[3]   / det;
+  }
 	
 	/**
 	 * constructor
