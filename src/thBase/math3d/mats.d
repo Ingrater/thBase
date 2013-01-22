@@ -2,6 +2,7 @@ module thBase.math3d.mats;
 
 import thBase.math3d.vecs;
 import std.math;
+import thBase.math;
 
 /**
  * 2x2 matrix
@@ -26,7 +27,7 @@ struct mat3 {
 	/**
 	 * Returns:  the determinant of this matrix
 	 */
-	float Det() const
+	float Det() const pure
 	{
 		float det = f[0] * ( f[4] * f[8] - f[7] * f[5] )
 		          - f[1] * ( f[3] * f[8] - f[6] * f[5] )
@@ -37,7 +38,7 @@ struct mat3 {
 	/**
 	 * Returns: The transposed version of this matrix
 	 */
-	mat3 Transpose() const {
+	mat3 Transpose() const pure {
 		mat3 res = this;
 	    res.f[1] = f[3];
 	    res.f[3] = f[1];
@@ -48,21 +49,22 @@ struct mat3 {
 	    return res;
 	}
 
-  mat3 Inverse() const {
+  mat3 Inverse() const pure {
     float det = this.Det();
     if(det > -FloatEpsilon && det < FloatEpsilon)
       return mat3.Identity();
 
     mat3 res;
-    res.f[0] =    this.f[4]*this.f[8] - this.f[5]*this.f[7]   / det;
-    res.f[1] = -( this.f[1]*this.f[8] - this.f[7]*this.f[2] ) / det;
-    res.f[2] =    this.f[1]*this.f[5] - this.f[4]*this.f[2]   / det;
+    res.f[0] =    this.f[4]*this.f[8] - this.f[7]*this.f[5]   / det;
     res.f[3] = -( this.f[3]*this.f[8] - this.f[5]*this.f[6] ) / det;
-    res.f[4] =    this.f[0]*this.f[8] - this.f[6]*this.f[2]   / det;
-    res.f[5] = -( this.f[0]*this.f[5] - this.f[3]*this.f[2] ) / det;
-    res.f[6] =    this.f[3]*this.f[7] - this.f[6]*this.f[4]   / det;
-    res.f[7] = -( this.f[0]*this.f[7] - this.f[6]*this.f[1] ) / det;
-    res.f[8] =    this.f[0]*this.f[4] - this.f[1]*this.f[3]   / det;
+    res.f[6] =    this.f[3]*this.f[7] - this.f[4]*this.f[6]   / det;
+    res.f[1] = -( this.f[1]*this.f[8] - this.f[7]*this.f[2] ) / det;
+    res.f[4] =    this.f[0]*this.f[8] - this.f[2]*this.f[6]   / det;
+    res.f[7] = -( this.f[0]*this.f[7] - this.f[1]*this.f[6] ) / det;
+    res.f[2] =    this.f[1]*this.f[5] - this.f[2]*this.f[4]   / det;
+    res.f[5] = -( this.f[0]*this.f[5] - this.f[2]*this.f[3] ) / det;
+    res.f[8] =    this.f[0]*this.f[4] - this.f[3]*this.f[1]   / det;
+    return res;
   }
 	
 	/**
@@ -81,7 +83,7 @@ struct mat3 {
 	/**
 	 * Returns: a identity mat3 matrix
 	 */
-	static mat3 Identity(){
+	static mat3 Identity() pure {
 		mat3 res;
 		res.f[0] = 1.0f; res.f[1] = 0.0f; res.f[2] = 0.0f;
 		res.f[3] = 0.0f; res.f[4] = 0.0f; res.f[5] = 0.0f;
@@ -95,12 +97,23 @@ struct mat3 {
 
 	 *  v = the vector
 	 */ 
-	vec3 opMul(const vec3 v) const {
+	vec3 opMul(const vec3 v) const pure {
 		vec3 temp;
 		temp.x = v.x * this.f[0] + v.y * this.f[3] + v.z * this.f[6];
 		temp.y = v.x * this.f[1] + v.y * this.f[4] + v.z * this.f[7];
 		temp.z = v.x * this.f[2] + v.y * this.f[5] + v.z * this.f[8];
 		return temp;
+	}
+
+	mat3 opMul(mat3 m) const pure
+	{
+		mat3 result;
+    for(int i=0;i<3;i++){
+			result.f[i*3]   = m.f[0] * this.f[i*3] + m.f[3] * this.f[i*3+1] + m.f[6] * this.f[i*3+2];
+      result.f[i*3+1] = m.f[1] * this.f[i*3] + m.f[4] * this.f[i*3+1] + m.f[7] * this.f[i*3+2];
+      result.f[i*3+2] = m.f[2] * this.f[i*3] + m.f[5] * this.f[i*3+1] + m.f[8] * this.f[i*3+2];
+    }	
+		return result;	
 	}
 }
 
@@ -133,7 +146,7 @@ struct mat4 {
 	 * Params:
 	 *  m = other matrix
 	 */
-	mat4 opMul(mat4 m) const
+	mat4 opMul(mat4 m) const pure
 	{
 		mat4 result;
 	  	for(int i=0;i<4;i++){
@@ -150,7 +163,7 @@ struct mat4 {
 	 * Params:
 	 *  v = the vector
 	 */ 
-	vec4 opMul(vec4 v) const
+	vec4 opMul(vec4 v) const pure
 	{
 		vec4 temp;
 		temp.x = v.x * this.f[0] + v.y * this.f[4] + v.z * this.f[8]  + v.w * this.f[12];
@@ -165,7 +178,7 @@ struct mat4 {
    * Params:
    *  v = the direction to transform
    */
-  vec3 transformDirection(vec3 v) const
+  vec3 transformDirection(vec3 v) const pure
   {
 		vec3 temp;
 		temp.x = v.x * this.f[0] + v.y * this.f[4] + v.z * this.f[8];
@@ -180,7 +193,7 @@ struct mat4 {
 	 * Params:
 	 *  v = the vector
 	 */ 
-	vec3 opMul(vec3 v) const
+	vec3 opMul(vec3 v) const pure
 	{
     vec3 temp;
 		temp.x = v.x * this.f[0] + v.y * this.f[4] + v.z * this.f[8]  + this.f[12];
@@ -194,7 +207,8 @@ struct mat4 {
 	 * Params:
 	 *  value = the value to set
 	 */
-	void Set(float value){
+	void Set(float value) pure
+  {
 		foreach(ref e;f)
 			e = value;
 	}
@@ -205,7 +219,7 @@ struct mat4 {
 	 *  i = x shift
 	 *  j = y shift
 	 */
-	const(mat3) Submat(int i, int j) const
+	const(mat3) Submat(int i, int j) const pure
 	{
 		mat3 mb;
 		int di, dj, si, sj;
@@ -225,7 +239,7 @@ struct mat4 {
 	/**
 	 * Returns: the determinant of this matirx
 	 */
-	float Det() const 
+	float Det() const pure
 	{
 		float det = 0.0f, result = 0, i = 1;
 		mat3 msub3;
@@ -241,7 +255,7 @@ struct mat4 {
 	/**
 	 * Returns: The inverse of this matrix
 	 */
-	const(mat4) Inverse() const
+	const(mat4) Inverse() const pure
 	{
 		mat4 mr;
 		float mdet = this.Det();
@@ -261,7 +275,7 @@ struct mat4 {
 	/**
 	 * Returns: The transposed version of this matrix
 	 */
-	const(mat4) Transpose() const
+	const(mat4) Transpose() const pure
 	{
 		mat4 mr;
 		mr.f[0] = f[0];
@@ -286,7 +300,7 @@ struct mat4 {
 	/**
 	 * Returns: The normal matrix of this matrix
 	 */
-	const(mat3) NormalMatrix() const
+	const(mat3) NormalMatrix() const pure
 	{
 		mat4 mr = this;
 		mr.f[3] = 0;
@@ -307,7 +321,7 @@ struct mat4 {
 		return m3;		
 	}
 
-  @property const(mat3) rotationPart() const
+  @property const(mat3) rotationPart() const pure
   {
     mat3 result;
     for(int y=0; y<3; y++)
@@ -323,7 +337,7 @@ struct mat4 {
 	/**
 	 * Returns: A conversion from Left to Right handed coordinate system and vise versa
 	 */
-	const(mat4) Right2Left() const
+	const(mat4) Right2Left() const pure
 	{
 		mat4 mr = this;
 		for(int i=0;i<4;i++){
@@ -336,7 +350,7 @@ struct mat4 {
 	/**
 	 * Returns: a mat4 identity matrix
 	 */
-	static const(mat4) Identity()
+	static const(mat4) Identity() pure
 	{
 		mat4 mat;
 		mat.f[ 0]=1.0f; mat.f[ 1]=0.0f; mat.f[ 2]=0.0f; mat.f[ 3]=0.0f;
@@ -354,7 +368,7 @@ struct mat4 {
 	 *  pNear = near clipping plane distance
 	 *  pFar = far clipping plane distance
 	 */
-	static const(mat4) ProjectionMatrix(float pViewAngle, float pAspectRatio, float pNear, float pFar) {
+	static const(mat4) ProjectionMatrix(float pViewAngle, float pAspectRatio, float pNear, float pFar) pure {
 	  mat4 res;
 	  res.Set(0.0f);
 	  pViewAngle = pViewAngle / 180.0f * PI;
@@ -388,7 +402,7 @@ struct mat4 {
 	 *  pNear = near clipping plane distance
 	 *  pFar = far clipping plane distance
 	 */
-	static const(mat4) Frustrum(float pLeft, float pRight, float pBottom, float pTop, float pNear, float pFar){
+	static const(mat4) Frustrum(float pLeft, float pRight, float pBottom, float pTop, float pNear, float pFar) pure {
 	  mat4 res;
 	  res.f[0] = (2.0f*pNear) / (pRight - pLeft);
 	  res.f[1] = 0.0f;
@@ -422,7 +436,8 @@ struct mat4 {
 	 *  pNear = near clipping plane distance
 	 *  pFar = far clipping plane distance
 	 */
-	static mat4 Ortho(float pLeft, float pRight, float pBottom, float pTop, float pNear, float pFar){
+	static mat4 Ortho(float pLeft, float pRight, float pBottom, float pTop, float pNear, float pFar) pure
+  {
 		mat4 res;
 		res.f[0] = 2.0f / (pRight - pLeft);
 		res.f[1] = 0.0f;
@@ -453,7 +468,8 @@ struct mat4 {
 	 *  pTo = position to look at
 	 *  pUp = up vector
 	 */
-	static mat4 LookAtMatrix(ref const(vec4) pFrom,ref  const(vec4) pTo, ref const(vec4) pUp){
+	static mat4 LookAtMatrix(ref const(vec4) pFrom,ref  const(vec4) pTo, ref const(vec4) pUp) pure
+  {
 	  vec4 x,y,z;
 	  mat4 res;
 	  z = (pTo - pFrom).normalize();
@@ -495,7 +511,8 @@ struct mat4 {
 	 *  pTo = position to look at
 	 *  pUp = up vector
 	 */
-	static mat4 LookDirMatrix(ref const(vec4) dir, ref const(vec4) pUp){
+	static mat4 LookDirMatrix(ref const(vec4) dir, ref const(vec4) pUp) pure
+  {
 	  vec4 x,y,z;
 	  mat4 res;
 	  z = dir.normalize();

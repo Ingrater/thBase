@@ -3,6 +3,7 @@ module thBase.math3d.plane;
 import thBase.math3d.vecs;
 import thBase.math3d.ray;
 import std.math;
+import thBase.math : FloatEpsilon;
 
 /**
  * A plane in 3d space
@@ -101,8 +102,20 @@ struct Plane {
 	 *  other = the other plane to intersect with
 	 * Returns: the intersection ray
 	 */
-	const(Ray) intersect(const(Plane) other) const{
-		vec3 dir,pos;
+	const(Ray) intersect(const(Plane) other) const {
+    float dot = this.m_Eq.dot(other.m_Eq);
+    if(abs(dot) >= 1.0f - FloatEpsilon)
+    {
+      //the planes are paralell
+      return Ray(vec3(float.nan),vec3(float.nan));
+    }
+
+    float invDet = 1.0f / (1.0f - dot * dot);
+    float cThis = (this.m_Eq.w - other.m_Eq.w) * invDet;
+    float cOther = (other.m_Eq.w - this.m_Eq.w) * invDet;
+    return Ray(cThis * this.m_Eq.xyz + cOther * other.m_Eq.xyz, this.m_Eq.xyz.cross(other.m_Eq.xyz).normalize());
+
+		/*vec3 dir,pos;
 		float d = (other.m_Eq.x * m_Eq.y) - (m_Eq.x * other.m_Eq.y);
 		
 		//if divisor is to small, try a different axis
@@ -149,7 +162,7 @@ struct Plane {
 		pos.y = (m_Eq.w*other.m_Eq.x - other.m_Eq.w*m_Eq.x) / d;
 		pos.z = 0.0f;
 		
-		return Ray(pos, dir);
+		return Ray(pos, dir);*/
 	}
 	
 	/**

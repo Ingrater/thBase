@@ -140,7 +140,7 @@ struct vec3_t(T) if(is(T == float) || is(T == short) || is(T == int)){
 	 *  y = y value
 	 *  z = z value
 	 */
-	this(T x, T y, T z){
+	this(T x, T y, T z) pure { 
 		this.x = x; this.y = y; this.z = z;
 	}
 	
@@ -149,12 +149,12 @@ struct vec3_t(T) if(is(T == float) || is(T == short) || is(T == int)){
 	 * Params:
 	 *  v4 = takes x,y,z from this argument
 	 */
-	this(ref const(vec4_t!(T)) v4){
+	this(ref const(vec4_t!(T)) v4) pure {
 		this.f[0..3] = v4.f[0..3];
 	}
 	
 	/// ditto
-	this(vec4_t!(T) v4){
+	this(vec4_t!(T) v4) pure {
 		this.f[0..3] = v4.f[0..3];
 	}
 	
@@ -163,7 +163,7 @@ struct vec3_t(T) if(is(T == float) || is(T == short) || is(T == int)){
 	 * Params:
 	 *  f = data
 	 */
-	this(const(T)[] f)
+	this(const(T)[] f) pure
 	in {
 		assert(f.length == 3);
 	}
@@ -177,14 +177,14 @@ struct vec3_t(T) if(is(T == float) || is(T == short) || is(T == int)){
 	 * Params:
 	 *  f = uses this value for all dimensions
 	 */
-	this(T f){
+	this(T f) pure {
 		this.x = f; this.y = f; this.z = f;
 	}
 	
 	/**
 	 * adds this vector and another one
 	 */
-	vec3_t!(T) opAdd(const(vec3_t!(T)) v) const {
+	vec3_t!(T) opAdd(const(vec3_t!(T)) v) const pure {
 		return vec3_t!(T)(cast(T)(this.x + v.x), cast(T)(this.y + v.y), cast(T)(this.z + v.z));
 	}
 	
@@ -196,7 +196,7 @@ struct vec3_t(T) if(is(T == float) || is(T == short) || is(T == int)){
 	/**
 	 * substracts this vector and another one
 	 */
-	vec3_t!(T) opSub(vec3_t!(T) v) const {
+	vec3_t!(T) opSub(vec3_t!(T) v) const pure {
 		return vec3_t!(T)(cast(T)(this.x - v.x),cast(T)(this.y - v.y),cast(T)(this.z - v.z));
 	}
 	
@@ -204,7 +204,7 @@ struct vec3_t(T) if(is(T == float) || is(T == short) || is(T == int)){
 	/**
 	 * multiplies this vector with an scalar
 	 */
-	vec3_t!(T) opMul(in T f) const {
+	vec3_t!(T) opMul(in T f) const pure {
 		return vec3_t!(T)(cast(T)(this.x * f),cast(T)(this.y * f),cast(T)(this.z * f));
 	}
 	
@@ -219,7 +219,7 @@ struct vec3_t(T) if(is(T == float) || is(T == short) || is(T == int)){
 	/**
 	 * multiplies this vector with another one
 	 */
-	vec3_t!(T) opMul(vec3_t!(T) v) const {
+	vec3_t!(T) opMul(vec3_t!(T) v) const pure {
       vec3_t!(T) res;
       res.x = cast(T)(this.x * v.x);
       res.y = cast(T)(this.y * v.y);
@@ -230,14 +230,14 @@ struct vec3_t(T) if(is(T == float) || is(T == short) || is(T == int)){
 	/**
 	 * divides this vector thorugh a scalar
 	 */
-	vec3_t!(T) opDiv(const(T) f) const {
+	vec3_t!(T) opDiv(const(T) f) const pure {
 		return vec3_t!(T)(cast(T)(this.x / f),cast(T)(this.y / f),cast(T)(this.z / f));
 	}
 	
 	/**
 	 * divides this vector thorugh another one
 	 */
-	vec3_t!(T) opDiv(const(vec3_t!(T)) v)const {
+	vec3_t!(T) opDiv(const(vec3_t!(T)) v) const pure {
 		return vec3_t!(T)(cast(T)(this.x / v.x),cast(T)(this.y / v.y),cast(T)(this.z / v.z));
 	}
 	
@@ -253,32 +253,39 @@ struct vec3_t(T) if(is(T == float) || is(T == short) || is(T == int)){
 	/**
 	 * Returns: the length of this vector
 	 */
-	@property float length(){
+	@property float length() const pure {
 		return sqrt(cast(double)(this.x * this.x + this.y * this.y + this.z * this.z));
 	}
+
+  /**
+   * Returns: the squared length of this vector
+   */
+  @property float squaredLength() const pure {
+    return this.x * this.x + this.y * this.y + this.z * this.z;
+  }
 	
 	/**
 	 * returns the dot product of this and another vector
 	 */
-	T dot(vec3_t!(T) v) const {
+	T dot(vec3_t!(T) v) const pure {
 		return cast(T)(this.x * v.x + this.y * v.y + this.z * v.z);
 	}
 	
 	/**
 	 * does the cross poduct of this and another vector
 	 */
-    vec3_t!(T) cross(ref const(vec3_t!(T)) v) const {
-      vec3_t!(T) res;
-      res.x = cast(T)(this.y * v.z - this.z * v.y);
-      res.y = cast(T)(this.z * v.x - this.x * v.z);
-      res.z = cast(T)(this.x * v.y - this.y * v.x);
-      return res;
-    }
+  vec3_t!(T) cross(const(vec3_t!(T)) v) const pure {
+    vec3_t!(T) res;
+    res.x = cast(T)(this.y * v.z - this.z * v.y);
+    res.y = cast(T)(this.z * v.x - this.x * v.z);
+    res.z = cast(T)(this.x * v.y - this.y * v.x);
+    return res;
+  }
 	
 	/**
 	 * Returns: a normalized copy of this vector
 	 */
-	vec3_t!(T) normalize() const {
+	vec3_t!(T) normalize() const pure {
       vec3_t!(T) temp,res=this;
       temp=(this) * (this);
       T length = cast(T)std.math.sqrt(cast(float)(temp.f[0]+temp.f[1]+temp.f[2]));
@@ -294,14 +301,15 @@ struct vec3_t(T) if(is(T == float) || is(T == short) || is(T == int)){
 	 * Params:
 	 *  f = the value to set to
 	 */
-	void set(T f){
+	void set(T f) pure {
 		this.x = f; this.y = f; this.z = f;
 	}
 	
 	/**
 	 * cast operator
 	 */
-	vec3_t!(KT) opCast(K : vec3_t!(KT), KT)(){ 
+	vec3_t!(KT) opCast(K : vec3_t!(KT), KT)() pure 
+  { 
 		vec3_t!(KT) res;
 		res.x = cast(KT)x;
 		res.y = cast(KT)y;
@@ -312,7 +320,7 @@ struct vec3_t(T) if(is(T == float) || is(T == short) || is(T == int)){
   /**
    * += and -= operator
    */
-	void opOpAssign(string op)(vec3_t!(T) rh) if( op == "-" || op == "+")
+	void opOpAssign(string op)(vec3_t!(T) rh) pure if( op == "-" || op == "+")
   {
     mixin("x"~op~"=rh.x;");
     mixin("y"~op~"=rh.y;");
@@ -323,7 +331,7 @@ struct vec3_t(T) if(is(T == float) || is(T == short) || is(T == int)){
 	/**
 	 * - unary operator
 	 */
-	vec3_t!(T) opUnary(string op)() if(op == "-")
+	vec3_t!(T) opUnary(string op)() pure if(op == "-")
 		{
 			return vec3_t!(T)(-x,-y,-z);
 		}
@@ -369,7 +377,7 @@ struct vec4_t(T) if(is(T == float) || is(T == short) || is(T == int)) {
 	 *  z = z value
 	 *  w = w value
 	 */
-	this(T x, T y, T z, T w){
+	this(T x, T y, T z, T w) pure {
 		this.x = x; this.y = y; this.z = z; this.w = w;
 	}
 	
@@ -378,7 +386,7 @@ struct vec4_t(T) if(is(T == float) || is(T == short) || is(T == int)) {
 	 * Params:
 	 *  f = initial data
 	 */
-	this(const(T)[] f)
+	this(const(T)[] f) pure
 	in {
 		assert(f.length == 3 || f.length == 4);
 	}
@@ -399,7 +407,8 @@ struct vec4_t(T) if(is(T == float) || is(T == short) || is(T == int)) {
 	 *  v3 = used for x,y,z
 	 *  w = used for w
 	 */
-	this(vec3_t!(T) v3, T w = cast(T)1){
+	this(vec3_t!(T) v3, T w = cast(T)1) pure
+  {
 		this.f[0..3] = v3.f[0..3];
 		this.w = w;
 	}
@@ -409,21 +418,22 @@ struct vec4_t(T) if(is(T == float) || is(T == short) || is(T == int)) {
 	 * Params:
 	 *  all = used for x,y,z and w
 	 */
-	this(T all){
+	this(T all) pure
+  {
 		this.x = all; this.y = all; this.z = all; this.w = all; 
 	}
 	
 	/**
 	 * adds this and another vector
 	 */
-	vec4_t!(T) opAdd(const(vec4_t!(T)) v) const {
+	vec4_t!(T) opAdd(const(vec4_t!(T)) v) const pure {
 		return vec4_t!(T)(cast(T)(this.x + v.x),cast(T)(this.y + v.y),cast(T)(this.z + v.z),cast(T)(this.w + v.w));
 	}
 	
 	/**
 	 * subtracts this and another vector
 	 */
-	vec4_t!(T) opSub(P)(auto ref const(vec4_t!(P)) v) const if(is(T == P)) {
+	vec4_t!(T) opSub(P)(auto ref const(vec4_t!(P)) v) const pure if(is(T == P)) {
 		return vec4_t!(T)(cast(T)(this.x - v.x),cast(T)(this.y - v.y),cast(T)(this.z - v.z),cast(T)(this.w - v.w));
 	}
 	
@@ -437,7 +447,7 @@ struct vec4_t(T) if(is(T == float) || is(T == short) || is(T == int)) {
 	/**
 	 * multiplies this and a scalar
 	 */
-	vec4_t!(T) opMul(in T f) const {
+	vec4_t!(T) opMul(in T f) const pure {
 		return vec4_t!(T)(cast(T)(this.x * f),cast(T)(this.y * f),cast(T)(this.z * f),cast(T)(this.w * f));
 	}
 	
@@ -453,7 +463,7 @@ struct vec4_t(T) if(is(T == float) || is(T == short) || is(T == int)) {
 	/**
 	 * multiplies this and another vector
 	 */
-	vec4_t!(T) opMul(vec4_t!(T) v) const {
+	vec4_t!(T) opMul(vec4_t!(T) v) const pure {
       vec4_t!(T) res;
       res.x = cast(T)(this.x * v.x);
       res.y = cast(T)(this.y * v.y);
@@ -465,28 +475,28 @@ struct vec4_t(T) if(is(T == float) || is(T == short) || is(T == int)) {
 	/**
 	 * divides this by a scalar
 	 */
-	vec4_t!(T) opDiv(const(float) f) const {
+	vec4_t!(T) opDiv(const(float) f) const pure {
 		return vec4_t!(T)(cast(T)(this.x / f),cast(T)(this.y / f),cast(T)(this.z / f),cast(T)(this.w / f));
 	}
 	
 	/**
 	 * divides this by another vector
 	 */
-	vec4_t!(T) opDiv(ref const(vec4_t!(T)) v) const {
+	vec4_t!(T) opDiv(ref const(vec4_t!(T)) v) const pure {
 		return vec4_t!(T)(cast(T)(this.x / v.x),cast(T)(this.y/v.y),cast(T)(this.z/v.z),cast(T)(this.w/v.w));
 	}
 	
 	/**
 	 * Returns: x,y,z
 	 */
-	vec3_t!(T) xyz() const {
+	vec3_t!(T) xyz() const pure {
 		return vec3_t!(T)(this.x, this.y, this.z);
 	}
 	
 	/**
 	 * Returns: a normalized copy of this vector
 	 */
-	vec4_t!(T) normalize() const {
+	vec4_t!(T) normalize() const pure {
       T length;
       vec4_t!(T) temp,res=this;
       temp=(this) * (this);
@@ -502,7 +512,7 @@ struct vec4_t(T) if(is(T == float) || is(T == short) || is(T == int)) {
 	 * does the cross poduct of this and another vector
 	 * $(BR) does only operate on x,y,z
 	 */
-    vec4_t!(T) cross(ref const(vec4_t!(T)) v) const {
+    vec4_t!(T) cross(ref const(vec4_t!(T)) v) const pure {
       vec4_t!(T) res;
       res.x = cast(T)(this.y * v.z - this.z * v.y);
       res.y = cast(T)(this.z * v.x - this.x * v.z);
@@ -515,7 +525,7 @@ struct vec4_t(T) if(is(T == float) || is(T == short) || is(T == int)) {
 	 * does a dot product of this and another vector
 	 * $(BR) does only operate on x,y,z
 	 */
-    T dot(ref const(vec4_t!(T)) v) const {
+    T dot(ref const(vec4_t!(T)) v) const pure {
       vec4_t!(T) res = this * v;
       return cast(T)(res.x + res.y + res.z);
     }
@@ -523,14 +533,14 @@ struct vec4_t(T) if(is(T == float) || is(T == short) || is(T == int)) {
 	/**
 	 * Returns: a vector pointing from this vector to the other vector
 	 */
-	vec4_t!(T) direction(ref const(vec4_t!(T)) v) {
+	vec4_t!(T) direction(ref const(vec4_t!(T)) v) pure {
       return (v - this).normalize();
     }
 	
 	/**
 	 * Returns: the length of this vector
 	 */
-	float length() const {
+	float length() const pure {
 		return std.math.sqrt(cast(float)this.dot(this));
 	}
 	
@@ -539,7 +549,8 @@ struct vec4_t(T) if(is(T == float) || is(T == short) || is(T == int)) {
 	 * Params:
 	 *  value = the value to set
 	 */
-	void set(T value){
+	void set(T value) pure
+  {
 		foreach(ref e;f)
 			e = value;
 	}
@@ -547,7 +558,7 @@ struct vec4_t(T) if(is(T == float) || is(T == short) || is(T == int)) {
 	/**
 	 * - unary operator
 	 */
-	vec4_t!(T) opUnary(string op)() const if(op == "-")
+	vec4_t!(T) opUnary(string op)() const pure if(op == "-")
 		{
 			return vec4_t!(T)(-x,-y,-z,-w);
 		}
@@ -607,16 +618,18 @@ vec3_t!(T) floor(V : vec3_t!(T), T)(V v) if(is(T == float) || is(T == double)) {
  * does ceil on all 4 dimensions
  * Returns: the resulting vector
  */
-vec4 ceil(vec4 v){
+vec4 ceil(vec4 v)
+{
 	return vec4(std.math.ceil(v.x),std.math.ceil(v.y),std.math.ceil(v.z),std.math.ceil(v.w));
 }
 
 /// ditto
-vec4 ceil(ref const(vec4) v){
+vec4 ceil(ref const(vec4) v)
+{
 	return vec4(std.math.ceil(v.x),std.math.ceil(v.y),std.math.ceil(v.z),std.math.ceil(v.w));
 }
 
-inout(T) minimum(T)(ref inout(T) v1,ref inout(T) v2)
+inout(T) minimum(T)(ref inout(T) v1,ref inout(T) v2) pure
 {
   T result;
   result.x = (v1.x < v2.x) ? v1.x : v2.x;
@@ -628,7 +641,7 @@ inout(T) minimum(T)(ref inout(T) v1,ref inout(T) v2)
   return result;
 }
 
-inout(T) maximum(T)(ref inout(T) v1,ref inout(T) v2)
+inout(T) maximum(T)(ref inout(T) v1,ref inout(T) v2) pure
 {
   T result;
   result.x = (v1.x > v2.x) ? v1.x : v2.x;

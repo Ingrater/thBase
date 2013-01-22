@@ -3,11 +3,19 @@ module thBase.math3d.quaternion;
 import thBase.math3d.vecs;
 import thBase.math3d.mats;
 import std.math;
+import thBase.math : FloatEpsilon;
 import core.stdc.stdio;
 import rtti;
 
 struct Quaternion {
-	float x,y,z,angle;
+  union
+  {
+    struct
+    {
+	    float x,y,z,angle;
+    }
+    float[4] f;
+  }
 	
 	/**
 	 * constructor
@@ -97,14 +105,14 @@ struct Quaternion {
 	 * Normalizes the quaternion
 	 * Returns: the normalized quaternion
 	 */
-	Quaternion normalize() const {
+	Quaternion normalize() const pure {
 	  Quaternion res;
 	  float length = sqrt(x * x + y * y + z * z + angle * angle);
 	  if(length != 0){
-		res.x = x / length;
-		res.y = y / length;
-		res.z = z / length;
-		res.angle = angle / length;
+		  res.x = x / length;
+		  res.y = y / length;
+		  res.z = z / length;
+		  res.angle = angle / length;
 	  }
 	  return res;		
 	}
@@ -112,7 +120,7 @@ struct Quaternion {
 	/**
 	 * Returns: the inverse of this quaternion
 	 */
-	Quaternion inverse() const {
+	Quaternion inverse() const pure {
 		Quaternion res;
 		res.x = x * -1;
 		res.y = y * -1;
@@ -125,7 +133,7 @@ struct Quaternion {
 	 * Converts this quaternion into a rotation matrix
 	 * Returns: the matrix
 	 */
-	mat4 toMat4() const
+	mat4 toMat4() const pure
 	in {
 		assert(isValid());
 	}
@@ -155,7 +163,7 @@ struct Quaternion {
 	  return mat;
 	}
 
-	mat3 toMat3() const
+	mat3 toMat3() const pure
     in {
       assert(isValid());
     }
@@ -184,7 +192,7 @@ struct Quaternion {
 	}
 	
 	/// * operator
-	Quaternion opBinary(string op)(in Quaternion rh) const if(op == "*"){
+	Quaternion opBinary(string op)(in Quaternion rh) const pure if(op == "*"){
 	  Quaternion res;
 	  res.x     = this.angle * rh.x     + this.x * rh.angle + this.y * rh.z - this.z * rh.y;
 	  res.y     = this.angle * rh.y     + this.y * rh.angle + this.z * rh.x - this.x * rh.z;
@@ -193,30 +201,8 @@ struct Quaternion {
 	  return res;		
 	}
 
-  /// * operator
-  Quaternion opBinary(string op)(in vec3 rh) const if(op == "*")
+  Quaternion opBinary(string op)(in float rh) const pure if(op == "*")
   {
-    Quaternion temp;
-    temp.x = rh.x;
-    temp.y = rh.y;
-    temp.z = rh.z;
-    temp.angle = 0.0f;
-    return this.opBinary!"*"(temp);
-  }
-
-  Quaternion opBinaryRight(string op)(in vec3 rh) const if(op == "*")
-  {
-    Quaternion temp;
-    temp.x = rh.x;
-    temp.y = rh.y;
-    temp.z = rh.z;
-    temp.angle = 0.0f;
-    return temp.opBinary!"*"(this);
-  }
-
-  Quaternion opBinary(string op)(in float rh) const if(op == "*")
-  {
-    //TODO check if correct
     Quaternion res;
     res.x = this.x * rh;
     res.y = this.y * rh;
@@ -225,7 +211,7 @@ struct Quaternion {
     return res;
   }
 	
-	bool isValid() const {
+	bool isValid() const pure {
 		return (!(x != x) && !(y != y) && !(z != z) && !(angle != angle) &&
 				x != float.infinity && y != float.infinity && z != float.infinity && angle != float.infinity);
 	}
@@ -242,7 +228,35 @@ struct Quaternion {
 		angle = value.angle;
 	}
 	
-	XmlValue XmlGetValue(){
+	XmlValue XmlGetValue() const pure {
 		return XmlValue(x, y, z, angle);
 	}
+
+  Quaternion Integrate(in vec3 angularVelocity, float deltaTime) const pure
+  {
+    Quaternion deltaQ;
+    vec3 scaledAngularVelocity = angularVelocity * (deltaTime * 0.5f);
+    float squaredVelocityLength = scaledAngularVelocity.squaredLength;
+
+    float s = 1.0f;
+
+    if(squaredVelocityLength * squaredVelocityLength / 24.0f < FloatEpsilon)
+    {
+      deltaQ.angle = 1.0f - squaredVelocityLength / 2.0f;
+      s = 1.0f - squaredVelocityLength / 6.0f;
+    }
+    else
+    {
+      float velocityLength = sqrt(squaredVelocityLength);
+
+      deltaQ.angle = cos(velocityLength);
+      s = sin(velocityLength) / velocityLength;
+    }
+
+    deltaQ.x = scaledAngularVelocity.x * s;
+    deltaQ.y = scaledAngularVelocity.y * s;
+    deltaQ.z = scaledAngularVelocity.z * s;
+
+    return deltaQ * this;
+  }
 }
