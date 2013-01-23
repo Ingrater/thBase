@@ -66,6 +66,19 @@ struct mat3 {
     res.f[8] =    this.f[0]*this.f[4] - this.f[3]*this.f[1]   / det;
     return res;
   }
+
+  unittest
+  {
+    mat3 scale;
+    scale.f[0..9] = 0.0f;
+    scale.f[0] = 5.0f;
+    scale.f[4] = 5.0f;
+    scale.f[8] = 5.0f;
+
+    mat3 inverseScale = scale.Inverse();
+    mat3 identity = scale * inverseScale;
+    assert(scale.f[0] == 1.0f);
+  }
 	
 	/**
 	 * constructor

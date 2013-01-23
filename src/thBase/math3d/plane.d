@@ -9,7 +9,7 @@ import thBase.math : FloatEpsilon;
  * A plane in 3d space
  */
 struct Plane {
-	vec4 m_Eq; // the plane equation (a * x + b * y + c * z + d = 0)
+	vec4 m_Eq; // the plane equation (a * x + b * y + c * z - d = 0)
 	
 	/**
 	 * constructor
@@ -111,8 +111,8 @@ struct Plane {
     }
 
     float invDet = 1.0f / (1.0f - dot * dot);
-    float cThis = (this.m_Eq.w - other.m_Eq.w) * invDet;
-    float cOther = (other.m_Eq.w - this.m_Eq.w) * invDet;
+    float cThis =  (this.m_Eq.w - dot * other.m_Eq.w) * invDet;
+    float cOther = (other.m_Eq.w - dot * this.m_Eq.w) * invDet;
     return Ray(cThis * this.m_Eq.xyz + cOther * other.m_Eq.xyz, this.m_Eq.xyz.cross(other.m_Eq.xyz).normalize());
 
 		/*vec3 dir,pos;
@@ -208,13 +208,13 @@ unittest {
   p2 = Plane(vec4(1,0,0,1));
   result = p1.intersect(p2);
   assert(result.pos.epsilonCompare(vec3(1,-1,0)));
-  assert(result.dir.epsilonCompare(vec3(0,0,1)));
+  assert(result.dir.epsilonCompare(vec3(0,0,-1)));
 
   p1 = Plane(vec4(0,0,1,-1));
   p2 = Plane(vec4(0,1,0,1));
   result = p1.intersect(p2);
   assert(result.pos.epsilonCompare(vec3(0,1,-1)));
-  assert(result.dir.epsilonCompare(vec3(1,0,0)));
+  assert(result.dir.epsilonCompare(vec3(-1,0,0)));
 
   p1 = Plane(vec4(0,0,1,-1));
   p2 = Plane(vec4(1,0,0,1));

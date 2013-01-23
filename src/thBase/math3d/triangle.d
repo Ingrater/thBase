@@ -27,6 +27,13 @@ struct Triangle {
 	}
 	
 	bool intersects(ref const(Triangle) other, ref Ray intersection) const {
+    float dot = this.plane.m_Eq.dot(other.plane.m_Eq);
+    if(abs(dot) >= 1.0f - FloatEpsilon)
+    {
+      //the two triangles are coplanar
+      return false;
+    }
+
 		float d1 = plane.distance(other.v0);
 		float d2 = plane.distance(other.v1);
 		float d3 = plane.distance(other.v2);
