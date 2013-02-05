@@ -348,7 +348,7 @@ class Chunkfile
       assert(m_writeInfo.size > 0, "there is no chunk to end");
       auto length = m_writeInfo.top.length;
       m_file.seek(m_writeInfo.top.lengthPosition);
-      m_file.write!uint(length);
+      m_file.write!uint(cast(uint)length);
       m_file.seekEnd();
       m_writeInfo.pop();
       if(m_writeInfo.size > 0)

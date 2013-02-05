@@ -100,7 +100,7 @@ class DirectoryWatcher
     {
       OVERLAPPED* lpOverlapped;
       uint numberOfBytes;
-      uint completionKey;
+      ULONG_PTR completionKey;
       while( GetQueuedCompletionStatus(m_completionPort, &numberOfBytes, &completionKey, &lpOverlapped, 0) != 0)
       {
         //Copy the buffer

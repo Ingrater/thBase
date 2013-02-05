@@ -318,7 +318,7 @@ class TemporaryAllocator(LockingPolicy, Allocator, size_t ALIGNMENT = size_t.siz
       }
     }
     //find a free block
-    uint memoryBlockIndex = m_blocks.length; //block index that can serve the memory request
+    size_t memoryBlockIndex = m_blocks.length; //block index that can serve the memory request
     bool allocate = false;
     size_t alignmentOffset = 0;
 
@@ -353,9 +353,9 @@ class TemporaryAllocator(LockingPolicy, Allocator, size_t ALIGNMENT = size_t.siz
     return mem;
   }
 
-  void AllocateMemoryBlock(uint index)
+  void AllocateMemoryBlock(size_t index)
   {
-    uint numMemoryBlocks = 0;
+    size_t numMemoryBlocks = 0;
     if(index >= m_blocks.length || m_blocks is null)
     {
       numMemoryBlocks = m_blocks.length * 2;
@@ -365,7 +365,7 @@ class TemporaryAllocator(LockingPolicy, Allocator, size_t ALIGNMENT = size_t.siz
     }
     void[] initialMem = m_allocator.AllocateMemory(m_memBlockSize);
     assert(m_memBlockSize > numMemoryBlocks * BlockInfo.sizeof, "out of memory");
-    uint dataSize = m_memBlockSize - numMemoryBlocks * BlockInfo.sizeof;
+    size_t dataSize = m_memBlockSize - numMemoryBlocks * BlockInfo.sizeof;
     assert(initialMem.ptr !is null, "couldn't allocate more memory");
 
     //Do we need to allocate a new block array?

@@ -6,19 +6,31 @@ EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug Lib|Win32 = Debug Lib|Win32
+		Debug Lib|x64 = Debug Lib|x64
 		Debug|Win32 = Debug|Win32
+		Debug|x64 = Debug|x64
 		Release Lib|Win32 = Release Lib|Win32
+		Release Lib|x64 = Release Lib|x64
 		Release|Win32 = Release|Win32
+		Release|x64 = Release|x64
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{AC6B556F-2AE2-4C7A-9FA0-5E09DEBEE5B6}.Debug Lib|Win32.ActiveCfg = Debug Lib|Win32
 		{AC6B556F-2AE2-4C7A-9FA0-5E09DEBEE5B6}.Debug Lib|Win32.Build.0 = Debug Lib|Win32
+		{AC6B556F-2AE2-4C7A-9FA0-5E09DEBEE5B6}.Debug Lib|x64.ActiveCfg = Debug Lib|x64
+		{AC6B556F-2AE2-4C7A-9FA0-5E09DEBEE5B6}.Debug Lib|x64.Build.0 = Debug Lib|x64
 		{AC6B556F-2AE2-4C7A-9FA0-5E09DEBEE5B6}.Debug|Win32.ActiveCfg = Debug|Win32
 		{AC6B556F-2AE2-4C7A-9FA0-5E09DEBEE5B6}.Debug|Win32.Build.0 = Debug|Win32
+		{AC6B556F-2AE2-4C7A-9FA0-5E09DEBEE5B6}.Debug|x64.ActiveCfg = Debug|x64
+		{AC6B556F-2AE2-4C7A-9FA0-5E09DEBEE5B6}.Debug|x64.Build.0 = Debug|x64
 		{AC6B556F-2AE2-4C7A-9FA0-5E09DEBEE5B6}.Release Lib|Win32.ActiveCfg = Release Lib|Win32
 		{AC6B556F-2AE2-4C7A-9FA0-5E09DEBEE5B6}.Release Lib|Win32.Build.0 = Release Lib|Win32
+		{AC6B556F-2AE2-4C7A-9FA0-5E09DEBEE5B6}.Release Lib|x64.ActiveCfg = Release Lib|x64
+		{AC6B556F-2AE2-4C7A-9FA0-5E09DEBEE5B6}.Release Lib|x64.Build.0 = Release Lib|x64
 		{AC6B556F-2AE2-4C7A-9FA0-5E09DEBEE5B6}.Release|Win32.ActiveCfg = Release|Win32
 		{AC6B556F-2AE2-4C7A-9FA0-5E09DEBEE5B6}.Release|Win32.Build.0 = Release|Win32
+		{AC6B556F-2AE2-4C7A-9FA0-5E09DEBEE5B6}.Release|x64.ActiveCfg = Release|x64
+		{AC6B556F-2AE2-4C7A-9FA0-5E09DEBEE5B6}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

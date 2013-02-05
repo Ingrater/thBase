@@ -99,7 +99,7 @@ unittest
     uint hash = 0;
     int value = 0;
     
-    this(size_t hash, int value)
+    this(uint hash, int value)
     {
       this.value = value;
       this.hash = hash;

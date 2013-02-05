@@ -22,3 +22,10 @@ auto static_cast(T,U)(U source)
     static assert(0, "not implemented");
   }
 }
+
+auto int_cast(T, U)(U source)
+{
+  static assert(IsIntegral!T, "Target Type " ~ T.stringof ~ " is not a integral type");
+  static assert(IsIntegral!U, "Source Type " ~ U.stringof ~ " is not a integral type");
+  //TODO check if cast will lead to a overflow
+}

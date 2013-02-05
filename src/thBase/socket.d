@@ -12,7 +12,7 @@ import core.refcounted;
  * - http://msdn.microsoft.com/en-us/library/ms740668(v=vs.85).aspx
  * - http://pubs.opengroup.org/onlinepubs/009695399/functions/recv.html
  */
-version(Win32)
+version(Windows)
 	enum { EINTR = 10004, EWOULDBLOCK = 10035, ECONNRESET = 10054 }
 else
 	enum { EINTR = 4, EWOULDBLOCK = 11, ECONNRESET = 104 }
@@ -68,7 +68,7 @@ version(Posix)
         version = BsdSockets;
 }
 
-version(Win32)
+version(Windows)
 {
         pragma (lib, "ws2_32.lib");
         pragma (lib, "wsock32.lib");
@@ -1117,7 +1117,7 @@ enum SocketOptionLevel: int
 extern(C) struct linger
 {
         // D interface
-        version(Win32)
+        version(Windows)
         {
                 uint16_t on;    /// Nonzero for on.
                 uint16_t time;  /// Linger time.

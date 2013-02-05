@@ -365,7 +365,7 @@ cd %CWD%</preBuildCommand>
   <debuglevel>0</debuglevel>
   <debugids />
   <versionlevel>0</versionlevel>
-  <versionids>NOGCSAFE USE_SSE Plugin</versionids>
+  <versionids>NOGCSAFE USE_SSE Plugin RTTI</versionids>
   <dump_source>0</dump_source>
   <mapverbosity>0</mapverbosity>
   <createImplib>0</createImplib>
@@ -387,7 +387,7 @@ cd %CWD%</preBuildCommand>
   <deffile />
   <resfile />
   <exefile>..\lib\thBasePlugin.lib</exefile>
-  <useStdLibPath>1</useStdLibPath>
+  <useStdLibPath>0</useStdLibPath>
   <additionalOptions />
   <preBuildCommand>set CWD=%CD%
 cd $(ProjectDir)\..\..\druntime
