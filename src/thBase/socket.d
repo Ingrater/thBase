@@ -1,6 +1,7 @@
 module thBase.socket;
 
 import thBase.string;
+import thBase.casts;
 import core.allocator;
 import core.refcounted;
 
@@ -975,7 +976,7 @@ class SocketSet
         fd_set set;
 
 
-        version(Win32)
+        version(Windows)
         {
                 uint count()
                 {
@@ -1086,7 +1087,7 @@ class SocketSet
 
         int selectn()
         {
-                version(Win32)
+                version(Windows)
                 {
                         return count;
                 }
@@ -1171,7 +1172,7 @@ class Socket
         socket_t sock;
         AddressFamily _family;
 
-        version(Win32)
+        version(Windows)
             bool _blocking = false;     /// Property to get or set whether the socket is blocking or nonblocking.
 
 
@@ -1246,7 +1247,7 @@ class Socket
          */
         bool blocking()
         {
-                version(Win32)
+                version(Windows)
                 {
                         return _blocking;
                 }
@@ -1320,7 +1321,7 @@ class Socket
 
                         if(!blocking)
                         {
-                                version(Win32)
+                                version(Windows)
                                 {
                                         if(WSAEWOULDBLOCK == err)
                                                 return;
@@ -1500,7 +1501,7 @@ class Socket
         {
           flags |= MSG_NOSIGNAL;
         }
-        auto sent = .send(sock, buf.ptr, buf.length, cast(int)flags);
+        auto sent = .send(sock, buf.ptr, int_cast!int(buf.length), cast(int)flags);
                 return sent;
         }
 
@@ -1527,7 +1528,7 @@ class Socket
         {
           flags |= SocketFlags.NOSIGNAL;
         }
-        return .sendto(sock, buf.ptr, buf.length, cast(int)flags, to.name(), to.nameLen());
+        return .sendto(sock, buf.ptr, int_cast!int(buf.length), cast(int)flags, to.name(), to.nameLen());
         }
 
         /// ditto
@@ -1545,7 +1546,7 @@ class Socket
           {
             flags |= MSG_NOSIGNAL;
           }
-          return .sendto(sock, buf.ptr, buf.length, cast(int)flags, null, 0);
+          return .sendto(sock, buf.ptr, int_cast!int(buf.length), cast(int)flags, null, 0);
         }
 
 
@@ -1567,7 +1568,7 @@ class Socket
         sizediff_t receive(void[] buf, SocketFlags flags)
         {
         return buf.length
-            ? .recv(sock, buf.ptr, buf.length, cast(int)flags)
+            ? .recv(sock, buf.ptr, int_cast!int(buf.length), cast(int)flags)
             : 0;
         }
 
@@ -1591,7 +1592,7 @@ class Socket
                         return 0;
                 from = newFamilyObject();
                 socklen_t nameLen = cast(socklen_t) from.nameLen();
-                auto read = .recvfrom(sock, buf.ptr, buf.length, cast(int)flags, from.name(), &nameLen);
+                auto read = .recvfrom(sock, buf.ptr, int_cast!int(buf.length), cast(int)flags, from.name(), &nameLen);
                 assert(from.addressFamily() == _family);
                 // if(!read) //connection closed
                 return read;
@@ -1612,7 +1613,7 @@ class Socket
         {
                 if(!buf.length) //return 0 and don't think the connection closed
                         return 0;
-                auto read = .recvfrom(sock, buf.ptr, buf.length, cast(int)flags, null, null);
+                auto read = .recvfrom(sock, buf.ptr, int_cast!int(buf.length), cast(int)flags, null, null);
                 // if(!read) //connection closed
                 return read;
         }
@@ -1750,7 +1751,7 @@ class Socket
 
                 int result = .select(n, fr, fw, fe, cast(_ctimeval*)tv);
 
-                version(Win32)
+                version(Windows)
                 {
                         if(_SOCKET_ERROR == result && WSAGetLastError() == WSAEINTR)
                                 return -1;

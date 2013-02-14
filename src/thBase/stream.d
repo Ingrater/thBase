@@ -24,7 +24,7 @@ interface IInputStream
 
     final size_t read(T)(T data) if(thBase.traits.isArray!T)
     {
-      static assert(!is(typeof(T[0]) == const) && !is(typeof(T[0]) == immutable), "can not read into const / immutable array");
+      static assert(!is(typeof(data[0]) == const) && !is(typeof(data[0]) == immutable), "can not read into const / immutable array");
       return readImpl((cast(void*)data.ptr)[0..(arrayType!T.sizeof * data.length)]);
     }
 

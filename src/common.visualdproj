@@ -444,8 +444,8 @@ cd %CWD%</preBuildCommand>
   <Dversion>2</Dversion>
   <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
   <compiler>0</compiler>
-  <otherDMD>0</otherDMD>
-  <program>$(DMDInstallDir)windows\bin\dmd.exe</program>
+  <otherDMD>1</otherDMD>
+  <program>$(DMDInstallDir)windows\bin-nostd\dmd_msc.exe</program>
   <imppath>$(ProjectDir)\..\..\druntime\import;$(ProjectDir)\..\..\phobos;</imppath>
   <fileImppath />
   <outdir>$(ConfigurationName)</outdir>
@@ -474,7 +474,7 @@ cd %CWD%</preBuildCommand>
   <moduleDepsFile />
   <run>0</run>
   <runargs />
-  <runCv2pdb>1</runCv2pdb>
+  <runCv2pdb>0</runCv2pdb>
   <pathCv2pdb>$(VisualDInstallDir)cv2pdb\cv2pdb.exe</pathCv2pdb>
   <cv2pdbPre2043>0</cv2pdbPre2043>
   <cv2pdbNoDemangle>0</cv2pdbNoDemangle>
@@ -488,13 +488,13 @@ cd %CWD%</preBuildCommand>
   <resfile />
   <exefile>$(OutDir)\$(ProjectName).exe</exefile>
   <useStdLibPath>1</useStdLibPath>
-  <additionalOptions>-defaultlib=phobosnogc64d -debuglib=phobosnogc64d -m64</additionalOptions>
+  <additionalOptions>-defaultlib=phobosnogc64d -debuglib=phobosnogc64d -m64 -op</additionalOptions>
   <preBuildCommand>set CWD=%CD%
 cd $(ProjectDir)\..\..\druntime
-$(DMDInstallDir)windows\bin\make -f win32nogc.mak
+$(DMDInstallDir)windows\bin\make -f win64nogc.mak
 if errorlevel 1 goto reportError
 cd $(ProjectDir)\..\..\phobos
-$(DMDInstallDir)windows\bin\make -f win32nogc.mak
+$(DMDInstallDir)windows\bin\make -f win64nogc.mak
 if errorlevel 1 goto reportError
 cd %CWD%</preBuildCommand>
   <postBuildCommand />

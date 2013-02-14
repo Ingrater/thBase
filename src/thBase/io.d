@@ -25,7 +25,7 @@ class InitHelper
 struct StdOutPutPolicy
 {
   char[2048] buffer;
-  size_t pos = 0;
+  uint pos = 0;
 
   void put(char character)
   {

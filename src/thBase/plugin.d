@@ -176,9 +176,9 @@ else
     public:
       this()
       {
-        m_storage = typeof(m_storage)();
+        m_storage = typeof(m_storage)(DefaultCtor());
         m_storage.construct();
-        m_loadedPlugins = typeof(m_loadedPlugins)();
+        m_loadedPlugins = typeof(m_loadedPlugins)(DefaultCtor());
         m_loadedPlugins.construct();
         if(thBase.directory.exists("..\\plugins"))
           m_directoryWatcher = New!DirectoryWatcher("..\\plugins", DirectoryWatcher.WatchSubdirs.No, Flags(DirectoryWatcher.Watch.Writes));

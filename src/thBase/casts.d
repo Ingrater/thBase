@@ -1,5 +1,7 @@
 module thBase.casts;
 
+import std.traits;
+
 auto static_cast(T,U)(U source)
 {
   static if(is(T == class))
@@ -25,7 +27,38 @@ auto static_cast(T,U)(U source)
 
 auto int_cast(T, U)(U source)
 {
-  static assert(IsIntegral!T, "Target Type " ~ T.stringof ~ " is not a integral type");
-  static assert(IsIntegral!U, "Source Type " ~ U.stringof ~ " is not a integral type");
-  //TODO check if cast will lead to a overflow
+  static assert(isIntegral!T, "Target Type " ~ T.stringof ~ " is not a integral type");
+  static assert(isIntegral!U, "Source Type " ~ U.stringof ~ " is not a integral type");
+  static if(is(T == U))
+    return source;
+  else
+  {
+    static if(isSigned!T)
+    {
+      static if(isSigned!U)
+      {
+        //both target and source are signed
+        assert(source >= T.min && source <= T.max, "integer overflow during conversion");
+      }
+      else
+      {
+        //target is signed, source is unsigned
+        assert(source <= T.max, "integer overflow during conversion");
+      }
+    }
+    else
+    {
+      static if(isSigned!U)
+      {
+        //target is unsigned, source is signed
+        assert(source >= 0 && source <= T.max, "integer overflow during conversion");
+      }
+      else
+      {
+        //target is unsigned, source is unsinged
+        assert(source <= T.max, "integer overflow during conversion");
+      }
+    }
+    return cast(T)source;
+  }
 }

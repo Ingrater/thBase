@@ -5,6 +5,7 @@ import thBase.traits;
 import core.stdc.stdio;
 import core.stdc.stdlib;
 import thBase.string;
+import thBase.casts;
 
 version(Windows)
 {
@@ -161,7 +162,7 @@ struct RawFile {
   {
     if( m_Handle != null)
     {
-      fseek(m_Handle, position, SEEK_SET);
+      fseek(m_Handle, int_cast!int(position), SEEK_SET);
     }
   }
 
@@ -183,7 +184,7 @@ struct RawFile {
   {
     if(m_Handle != null)
     {
-      fseek(m_Handle, bytes, SEEK_CUR);
+      fseek(m_Handle, int_cast!int(bytes), SEEK_CUR);
     }
   }
 

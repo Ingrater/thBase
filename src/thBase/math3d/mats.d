@@ -22,16 +22,25 @@ struct mat2 {
  * $(BR) [2] [5] [8] 
  */
 struct mat3 {
-	float[9] f; /// data
+
+  union
+  {
+    struct {
+      float m00, m10, m20, 
+            m01, m11, m21,
+            m02, m12, m22;
+    }
+	  float[9] f; /// data
+  }
 	
 	/**
 	 * Returns:  the determinant of this matrix
 	 */
 	float Det() const pure
 	{
-		float det = f[0] * ( f[4] * f[8] - f[7] * f[5] )
-		          - f[1] * ( f[3] * f[8] - f[6] * f[5] )
-		          + f[2] * ( f[3] * f[7] - f[6] * f[4] );
+    float det = f[0] * ( f[4]*f[8] - f[5]*f[7] )
+              - f[3] * ( f[1]*f[8] - f[2]*f[7] )
+              + f[6] * ( f[1]*f[5] - f[2]*f[4] );
 		return det;
 	}
 	
@@ -55,19 +64,19 @@ struct mat3 {
       return mat3.Identity();
 
     mat3 res;
-    res.f[0] =    this.f[4]*this.f[8] - this.f[7]*this.f[5]   / det;
-    res.f[3] = -( this.f[3]*this.f[8] - this.f[5]*this.f[6] ) / det;
-    res.f[6] =    this.f[3]*this.f[7] - this.f[4]*this.f[6]   / det;
-    res.f[1] = -( this.f[1]*this.f[8] - this.f[7]*this.f[2] ) / det;
-    res.f[4] =    this.f[0]*this.f[8] - this.f[2]*this.f[6]   / det;
-    res.f[7] = -( this.f[0]*this.f[7] - this.f[1]*this.f[6] ) / det;
-    res.f[2] =    this.f[1]*this.f[5] - this.f[2]*this.f[4]   / det;
-    res.f[5] = -( this.f[0]*this.f[5] - this.f[2]*this.f[3] ) / det;
-    res.f[8] =    this.f[0]*this.f[4] - this.f[3]*this.f[1]   / det;
+    res.m00 =  (m11*m22-m21*m12) / det;
+    res.m10 = -(m01*m22-m02*m21) / det;
+    res.m20 =  (m01*m12-m02*m11) / det;
+    res.m01 = -(m10*m22-m12*m20) / det;
+    res.m11 =  (m00*m22-m02*m20) / det;
+    res.m21 = -(m00*m12-m10*m02) / det;
+    res.m02 =  (m10*m21-m20*m11) / det;
+    res.m12 = -(m00*m21-m20*m01) / det;
+    res.m22 =  (m00*m11-m10*m01) / det;
     return res;
   }
 
-  /*unittest
+  unittest
   {
     mat3 scale;
     scale.f[0..9] = 0.0f;
@@ -77,8 +86,8 @@ struct mat3 {
 
     mat3 inverseScale = scale.Inverse();
     mat3 identity = scale * inverseScale;
-    assert(scale.f[0] == 1.0f);
-  }*/
+    assert(identity.m00.epsilonCompare(1.0f) && identity.m11.epsilonCompare(1.0f) && identity.m22.epsilonCompare(1.0f));
+  }
 	
 	/**
 	 * constructor
@@ -99,7 +108,7 @@ struct mat3 {
 	static mat3 Identity() pure {
 		mat3 res;
 		res.f[0] = 1.0f; res.f[1] = 0.0f; res.f[2] = 0.0f;
-		res.f[3] = 0.0f; res.f[4] = 0.0f; res.f[5] = 0.0f;
+		res.f[3] = 0.0f; res.f[4] = 1.0f; res.f[5] = 0.0f;
 		res.f[6] = 0.0f; res.f[7] = 0.0f; res.f[8] = 1.0f;
 		return res;
 	}

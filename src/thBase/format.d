@@ -356,17 +356,15 @@ size_t formatDo(PP)(ref PP putPolicy, const(char)[] fmt, TypeInfo[] arguments, v
               { 
                 case TypeInfo.Type.Char:
                   {
-                    auto str = *cast(const(char)[]*)argptr;
-                    argptr += (const(char)[]).sizeof;
-                    needed += str.length;
-                    foreach(c;str)
+                    auto dstr = va_arg!(const(char)[])(argptr);
+                    needed += dstr.length;
+                    foreach(c;dstr)
                       putPolicy.put(c);
                   }
                   break;
                 case TypeInfo.Type.DChar:
                   {
-                    auto str = *cast(const(dchar)[]*)argptr;
-                    argptr += (const(dchar)[]).sizeof;
+                    auto str = va_arg!(const(dchar)[])(argptr);
                     char[4] cs;
                     foreach(dchar c; str)
                     {

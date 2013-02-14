@@ -8,6 +8,7 @@ import thBase.windows;
 import thBase.enumbitfield;
 import thBase.string;
 import thBase.format;
+import thBase.casts;
 
 version(Windows)
 {
@@ -116,11 +117,11 @@ class DirectoryWatcher
         while(true)
         {
           const(WCHAR)[] directory = info.FileName.ptr[0..(info.FileNameLength/2)];
-          int bytesNeeded = WideCharToMultiByte(CP_UTF8, 0, directory.ptr, directory.length, null, 0, null, null);
+          int bytesNeeded = WideCharToMultiByte(CP_UTF8, 0, directory.ptr, int_cast!int(directory.length), null, 0, null, null);
           if(bytesNeeded > 0)
           {
             char[] dir = (cast(char*)alloca(bytesNeeded))[0..bytesNeeded];
-            WideCharToMultiByte(CP_UTF8, 0, directory.ptr, directory.length, dir.ptr, dir.length, null, null);
+            WideCharToMultiByte(CP_UTF8, 0, directory.ptr, int_cast!int(directory.length), dir.ptr, int_cast!int(dir.length), null, null);
             func(dir, cast(Action)info.Action);
           }
           if(info.NextEntryOffset == 0)
