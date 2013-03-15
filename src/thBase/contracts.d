@@ -6,7 +6,10 @@ void enforce(bool condition, rcstring message)
   if(!condition)
   {
     debug {
-      asm { int 3; }
+      version(GNU)
+        asm { "int $0x3"; }
+      else
+        asm { int 3; }
     }
     throw New!RCException(message);
   }

@@ -228,7 +228,7 @@ unittest {
   assert(buf[0..needed] == "9734");
 }
 
-private void formatArray(T,PP)(ref PP putPolicy, ref void* argptr, ref size_t needed)
+private va_list formatArray(T,PP)(ref PP putPolicy, va_list argptr, ref size_t needed)
 {
   auto data = va_arg!(const(T)[])(argptr);
   putPolicy.put('[');
@@ -252,9 +252,10 @@ private void formatArray(T,PP)(ref PP putPolicy, ref void* argptr, ref size_t ne
   }
   putPolicy.put(']');
   needed += 2;
+  return argptr;
 }
 
-size_t formatDo(PP)(ref PP putPolicy, const(char)[] fmt, TypeInfo[] arguments, void* argptr)
+size_t formatDo(PP)(ref PP putPolicy, const(char)[] fmt, TypeInfo[] arguments, va_list argptr)
 {
   size_t needed = 0;
   size_t argNum = 0;
@@ -376,34 +377,34 @@ size_t formatDo(PP)(ref PP putPolicy, const(char)[] fmt, TypeInfo[] arguments, v
                   }
                   break;
                 case TypeInfo.Type.Float:
-                  formatArray!(float, PP)(putPolicy, argptr, needed);
+                  argptr = formatArray!(float, PP)(putPolicy, argptr, needed);
                   break;
                 case TypeInfo.Type.Double:
-                  formatArray!(double, PP)(putPolicy, argptr, needed);
+                  argptr = formatArray!(double, PP)(putPolicy, argptr, needed);
                   break;
                 case TypeInfo.Type.Int:
-                  formatArray!(int, PP)(putPolicy, argptr, needed);
+                  argptr = formatArray!(int, PP)(putPolicy, argptr, needed);
                   break;
                 case TypeInfo.Type.UInt:
-                  formatArray!(uint, PP)(putPolicy, argptr, needed);
+                  argptr = formatArray!(uint, PP)(putPolicy, argptr, needed);
                   break;
                 case TypeInfo.Type.Short:
-                  formatArray!(short, PP)(putPolicy, argptr, needed);
+                  argptr = formatArray!(short, PP)(putPolicy, argptr, needed);
                   break;
                 case TypeInfo.Type.UShort:
-                  formatArray!(ushort, PP)(putPolicy, argptr, needed);
+                  argptr = formatArray!(ushort, PP)(putPolicy, argptr, needed);
                   break;
                 case TypeInfo.Type.Long:
-                  formatArray!(long, PP)(putPolicy, argptr, needed);
+                  argptr = formatArray!(long, PP)(putPolicy, argptr, needed);
                   break;
                 case TypeInfo.Type.ULong:
-                  formatArray!(ulong, PP)(putPolicy, argptr, needed);
+                  argptr = formatArray!(ulong, PP)(putPolicy, argptr, needed);
                   break;
                 case TypeInfo.Type.Byte:
-                  formatArray!(byte, PP)(putPolicy, argptr, needed);
+                  argptr = formatArray!(byte, PP)(putPolicy, argptr, needed);
                   break;
                 case TypeInfo.Type.UByte:
-                  formatArray!(ubyte, PP)(putPolicy, argptr, needed);
+                  argptr = formatArray!(ubyte, PP)(putPolicy, argptr, needed);
                   break;
                 default:
                   {
@@ -610,7 +611,7 @@ size_t formatDo(PP)(ref PP putPolicy, const(char)[] fmt, TypeInfo[] arguments, v
   return needed;
 }
 
-size_t formatDoStatic(char[] buffer, const(char)[] fmt, TypeInfo[] arguments, void* argptr)
+size_t formatDoStatic(char[] buffer, const(char)[] fmt, TypeInfo[] arguments, va_list argptr)
 {
   auto put = BufferPutPolicy!char(buffer);
   return formatDo(put,fmt,arguments,argptr);

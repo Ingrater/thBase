@@ -205,7 +205,12 @@ else
         debug
         {
           if(result is null)
-            asm { int 3; }
+          {
+            version(GNU)
+              asm { "int $0x3"; }
+            else
+              asm { int 3; }
+          }
         }
         return result;
       }
@@ -403,7 +408,10 @@ else
           {
             if(oldRoots[i].type != newRoots[i].type)
             {
-              asm { int 3; } //root type does not match
+              version(GNU)
+                asm { "int $0x3"; }
+              else
+                asm { int 3; } //root type does not match
             }
             //Patch the root
             memcpy(newRoots[i].addr, oldRoots[i].addr, size_t.sizeof);
@@ -425,6 +433,7 @@ else
         }
 
         m_loadedPlugins[pluginIndex].plugin = newPlugin;
+        return newPlugin;
       }
 
       struct PatchObjectsContext
@@ -481,7 +490,10 @@ else
             string mangeledTypeName = rttiInfo[0].name;
             if(!types.exists(mangeledTypeName))
             {
-              asm { int 3; } //type not found in type list
+              version(GNU)
+                asm { "int $0x3"; }
+              else
+                asm { int 3; } //type not found in type list
             }
             TypeInfo_Class newType = cast(TypeInfo_Class)cast(void*)(types[mangeledTypeName][0].type);
             debug writefln("Patching %s at %x", newType.GetName(), addr);
@@ -801,7 +813,10 @@ else
               serialize(addr, name, type.next);
               break;
             default:
-              asm { int 3; }
+              version(GNU)
+                asm { "int $0x3"; }
+              else
+                asm { int 3; }
               break;
           }
         }

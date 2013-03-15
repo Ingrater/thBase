@@ -9,6 +9,7 @@ import thBase.format;
 import std.traits;
 import core.stdc.string;
 import core.refcounted;
+import core.vararg;
 
 version(unittest) 
 {
@@ -254,7 +255,7 @@ public:
     doFormat(fmt, _arguments, _argptr);
   }
 
-  void doFormat(string fmt, TypeInfo[] arguments, void* argptr)
+  void doFormat(string fmt, TypeInfo[] arguments, va_list argptr)
   {
     size_t needed = formatDoStatic(m_Buffer[m_CurPos..$], fmt, arguments, argptr);
     if(needed > m_Buffer.length - m_CurPos)
