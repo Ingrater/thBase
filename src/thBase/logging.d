@@ -5,6 +5,15 @@ import thBase.format;
 import thBase.enumbitfield;
 import thBase.container.vector;
 import core.sync.mutex;
+import thBase.allocator;
+import thBase.casts;
+import thBase.stream;
+
+version(Plugin) {}
+else
+{
+  import thBase.debugconnection;
+}
 
 /**
  * the log level
@@ -82,6 +91,12 @@ shared static this()
     logSubsystemFilter = ulong.max; //all bits set
     g_pluginRegistry.AddValue("thBase.logging.ForwardToHandlers", cast(void*)&ForwardToHandlers);
     g_pluginRegistry.AddValue("thBase.logging.CanLog", cast(void*)&CanLog);
+
+    registerDebugChannel("logging");
+    if(thBase.debugconnection.isActive())
+    {
+
+    }
   }
 }
 
@@ -112,11 +127,11 @@ else
 
   /// ditto
   public void RegisterLogHandler(LogHandlerFunc logHandler){
-	  LogHandler logHandlerDg;
-	  logHandlerDg.funcptr = logHandler;
+	  //LogHandler logHandlerDg;
+	  //logHandlerDg.funcptr = logHandler;
 	  g_mutex.lock();
     scope(exit) g_mutex.unlock();
-    g_logHandlers ~= (logHandlerDg);
+    g_logHandlers ~= ((LogLevel level, ulong subsystem, scope string msg){ logHandler(level, subsystem, msg); });
   }
 
   /**
@@ -154,6 +169,21 @@ else
 	  foreach(handler; g_logHandlers)
     {
 		  handler(level, g_currentSubsystem, cast(string)message);
+    }
+    if(thBase.debugconnection.isActive())
+    {
+      auto buffer = AllocatorNewArray!void(ThreadLocalStackAllocator.globalInstance, message.length + 16);
+      auto outStream = AllocatorNew!MemoryOutStream(ThreadLocalStackAllocator.globalInstance, buffer, MemoryOutStream.TakeOwnership.No);
+      scope(exit)
+      {
+        AllocatorDelete(ThreadLocalStackAllocator.globalInstance, outStream);
+        AllocatorDelete(ThreadLocalStackAllocator.globalInstance, buffer);
+      }
+      outStream.write!uint(level);
+      outStream.write(g_currentSubsystem);
+      outStream.write(int_cast!uint(message.length));
+      outStream.write(message);
+      sendDebugMessage("logging", outStream.writtenData);
     }
   }
 }

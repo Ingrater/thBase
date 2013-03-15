@@ -12,6 +12,7 @@ import thBase.types;
 import thBase.conv;
 import thBase.stream;
 import thBase.allocator;
+import thBase.casts;
 
 __gshared Socket g_debugConnection;
 __gshared Mutex g_debugConnectionMutex;
@@ -95,8 +96,9 @@ shared static this()
     {
       g_remoteDebugConnection = g_debugConnection.accept();
       Thread.sleep(dur!"msecs"(100));
-      g_debugCommunicationThread = New!Thread(&debugSendAndRecieve);
     }
+    g_remoteDebugConnection.setOption(SocketOptionLevel.TCP, SocketOption.TCP_NODELAY, 1);
+    g_debugCommunicationThread = New!Thread(&debugSendAndRecieve);
   }
 }
 
@@ -124,7 +126,23 @@ shared static ~this()
   Delete(g_debugData);
 }
 
-void registerDebugChannel(scope string name)
+thResult debugConnect(scope string ip, ushort port)
+{
+  try {
+    SmartPtr!Address address = New!InternetAddress(ip, port).ptr;
+    g_remoteDebugConnection = New!TcpSocket(address);
+    g_remoteDebugConnection.setOption(SocketOptionLevel.TCP, SocketOption.TCP_NODELAY, 1);
+    g_remoteDebugConnection.blocking = false;
+    return thResult.SUCCESS;
+  }
+  catch(SocketException ex)
+  {
+    Delete(ex);
+  }
+  return thResult.FAILURE;
+}
+
+void registerDebugChannel(string name)
 {
   if(g_debugConnection is null)
     return;
@@ -141,6 +159,7 @@ private void debugSendAndRecieve()
 {
   loop:while(g_debugCommunicationWorking)
   {
+    //recieve data
     if(g_debugRecieveBufferSize < g_debugRecieveBuffer.length)
     {
       sizediff_t bytesRecieved = g_remoteDebugConnection.receive(g_debugRecieveBuffer[g_debugRecieveBufferSize..$]);
@@ -242,12 +261,44 @@ private void debugSendAndRecieve()
         }
       }
     }
+
+    //Send data
+    foreach(const(char)[] channelName, ref bucket; g_debugData)
+    {
+      bucket.mutex.lock();
+      scope(exit) bucket.mutex.unlock();
+      if(bucket.toSend.length > 0)
+      {
+        size_t totalBytesSend = 0;
+        auto data = bucket.toSend.toArray();
+        while(totalBytesSend < data.length)
+        {
+          ptrdiff_t bytesSend = g_remoteDebugConnection.send(data[totalBytesSend..$]);
+          if (bytesSend == -1){
+            if( !(g_remoteDebugConnection.errno == EWOULDBLOCK || g_remoteDebugConnection.errno == ECONNRESET) )
+            {
+              //logWarning("net: socket send failed with error %s", g_remoteDebugConnection.errno);
+              break loop;
+            }
+            break;
+          }
+          else
+            totalBytesSend += bytesSend;
+        }
+        if(totalBytesSend < data.length && totalBytesSend > 0)
+        {
+          data[0..$-totalBytesSend] = data[totalBytesSend..$];
+          bucket.toSend.resize(data.length - totalBytesSend);
+        }
+      }
+    }
+
     Thread.sleep(dur!"msecs"(10));
   }
   g_debugCommunicationWorking = false;
 }
 
-void recieveDebugMessages(const(char)[] channelName, scope void delegate(void[] msg) callback)
+void recieveDebugMessages(scope const(char)[] channelName, scope void delegate(void[] msg) callback)
 {
   DataBucket bucket;
   {
@@ -287,5 +338,39 @@ void recieveDebugMessages(const(char)[] channelName, scope void delegate(void[] 
       callback(data[start..end]);
     }
     bucket.recieved.resize(0);
+  }
+}
+
+bool isActive()
+{
+  return g_remoteDebugConnection !is null;
+}
+
+void sendDebugMessage(scope const(char)[] channelName, const(void[]) data)
+{
+  if(g_remoteDebugConnection !is null)
+    return;
+  DataBucket bucket;
+  {
+    g_debugConnectionMutex.lock();
+    scope(exit) g_debugConnectionMutex.unlock();
+
+    g_debugData.ifExists(channelName,
+                         (ref entry)
+                         {
+                           bucket = entry;
+                         },
+                         (){
+                           assert(0, "the channel does not exist. Use registerDebugChannel firsts");
+                         });
+  }
+  if(bucket.mutex !is null)
+  {
+    bucket.mutex.lock();
+    scope(exit) bucket.mutex.unlock();
+
+    uint dataLength = int_cast!uint(data.length);
+    bucket.toSend ~= (cast(byte*)&dataLength)[0..typeof(dataLength).sizeof];
+    bucket.toSend ~= cast(const(byte[]))data;
   }
 }

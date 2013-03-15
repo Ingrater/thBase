@@ -445,7 +445,7 @@ cd %CWD%</preBuildCommand>
   <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
   <compiler>0</compiler>
   <otherDMD>1</otherDMD>
-  <program>$(DMDInstallDir)windows\bin-nostd\dmd_msc.exe</program>
+  <program>$(DMDInstallDir)windows\bin-nostd\dmd.exe</program>
   <imppath>$(ProjectDir)\..\..\druntime\import;$(ProjectDir)\..\..\phobos;</imppath>
   <fileImppath />
   <outdir>$(ConfigurationName)</outdir>
@@ -612,7 +612,7 @@ cd %CWD%</preBuildCommand>
   <quiet>0</quiet>
   <verbose>0</verbose>
   <vtls>0</vtls>
-  <symdebug>0</symdebug>
+  <symdebug>1</symdebug>
   <optimize>0</optimize>
   <cpu>0</cpu>
   <isX86_64>1</isX86_64>
@@ -632,7 +632,7 @@ cd %CWD%</preBuildCommand>
   <useSwitchError>0</useSwitchError>
   <useUnitTests>0</useUnitTests>
   <useInline>0</useInline>
-  <release>1</release>
+  <release>0</release>
   <preservePaths>0</preservePaths>
   <warnings>0</warnings>
   <infowarnings>0</infowarnings>
@@ -665,7 +665,7 @@ cd %CWD%</preBuildCommand>
   <debuglevel>0</debuglevel>
   <debugids />
   <versionlevel>0</versionlevel>
-  <versionids>NOGCSAFE USE_SSE</versionids>
+  <versionids>NOGCSAFE</versionids>
   <dump_source>0</dump_source>
   <mapverbosity>0</mapverbosity>
   <createImplib>0</createImplib>
@@ -686,9 +686,9 @@ cd %CWD%</preBuildCommand>
   <libpaths>$(SolutionDir)\..\phobos;$(SolutionDir)\..\thBase\lib</libpaths>
   <deffile />
   <resfile />
-  <exefile>..\lib\thBased.lib</exefile>
+  <exefile>..\lib\thBase64d.lib</exefile>
   <useStdLibPath>0</useStdLibPath>
-  <additionalOptions />
+  <additionalOptions>-op</additionalOptions>
   <preBuildCommand>set CWD=%CD%
 cd $(ProjectDir)\..\..\druntime
 $(DMDInstallDir)windows\bin\make -f win32nogc.mak
@@ -786,7 +786,7 @@ cd %CWD%</preBuildCommand>
   <libpaths>$(SolutionDir)\..\phobos;$(SolutionDir)\..\thBase\lib</libpaths>
   <deffile />
   <resfile />
-  <exefile>..\lib\thBase.lib</exefile>
+  <exefile>..\lib\thBase64.lib</exefile>
   <useStdLibPath>1</useStdLibPath>
   <additionalOptions />
   <preBuildCommand>set CWD=%CD%

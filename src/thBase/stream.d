@@ -16,7 +16,7 @@ class StreamException : RCException
 interface IInputStream
 {
   public:
-    final size_t read(T)(T data) if(!thBase.traits.isArray!T)
+    final size_t read(T)(ref T data) if(!thBase.traits.isArray!T)
     {
       static assert(!is(T == const) && !is(T == immutable), "can not read into const / immutable value");
       return readImpl((cast(void*)&data)[0..T.sizeof]);
@@ -154,6 +154,21 @@ unittest
   static assert(__traits(compiles, dummy.write(mutableValue)), "passing a mutable value to write should compile");
 }
 
+interface ISeekableOutputStream : IOutputStream
+{
+  /**
+  * the current position in the stream
+  */
+  @property size_t position();
+
+  /**
+  * seek to a certain point in the stream
+  * Params:
+  *   position = the position to seek to
+  */
+  void seek(size_t position);
+}
+
 /** unbuffered file stream **/
 class FileOutStream : IOutputStream
 {
@@ -273,3 +288,64 @@ class MemoryInStream : ISeekableInputStream
       return m_data.length;
     }
 }
+
+class MemoryOutStream : ISeekableOutputStream
+{
+  private:
+    void[] m_data;
+    TakeOwnership m_own;
+    size_t m_curPosition;
+    IAllocator m_allocator;
+
+  public:
+    enum TakeOwnership
+    {
+      No,
+      Yes
+    }
+
+    invariant()
+    {
+      assert(m_curPosition <= m_data.length);
+    }
+
+    this(void[] data, TakeOwnership own, IAllocator allocator = null)
+    {
+      assert(own == TakeOwnership.No || allocator !is null, "allocator required when taking ownership");
+      m_own = own;
+      m_data = data;
+      m_allocator = allocator;
+    }
+
+    ~this()
+    {
+      if(m_own == TakeOwnership.Yes)
+      {
+        AllocatorDelete(m_allocator, m_data);
+      }
+    }
+
+    override size_t position()
+    {
+      return m_curPosition;
+    }
+
+    override void seek(size_t position)
+    {
+      assert(position <= m_data.length);
+      m_curPosition = position;
+    }
+
+    override size_t writeImpl(const(void[]) data)
+    {
+      size_t bytesToWrite = min(data.length, m_data.length - m_curPosition);
+      m_data[m_curPosition..m_curPosition+bytesToWrite] = data[0..bytesToWrite];
+      m_curPosition += bytesToWrite;
+      return bytesToWrite;
+    }
+
+    @property final void[] writtenData()
+    {
+      return m_data[0..m_curPosition];
+    }
+};

@@ -9,6 +9,7 @@ import thBase.enumbitfield;
 import thBase.string;
 import thBase.format;
 import thBase.casts;
+import thBase.allocator;
 
 version(Windows)
 {

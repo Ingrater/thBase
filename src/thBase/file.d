@@ -6,6 +6,7 @@ import core.stdc.stdio;
 import core.stdc.stdlib;
 import thBase.string;
 import thBase.casts;
+import thBase.allocator;
 
 version(Windows)
 {

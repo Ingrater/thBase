@@ -662,8 +662,12 @@ struct ZeroTerminatedStringHolder
 
 string stackCString(string invar, string outvar)
 {
-  string result = "import core.stdc.stdlib;";
-  result ~=       "auto " ~ outvar ~ " = (cast(char*)alloca(" ~ invar ~ ".length+1))[0.." ~ invar ~ ".length+1];";
+  string result = "char[] " ~ outvar ~ "; char[256] "~outvar~"smallBuf;";
+  result ~=       "if(" ~ invar ~ ".length < "~outvar~"smallBuf.length)";
+  result ~=         outvar ~ " = "~outvar~"smallBuf;";
+  result ~=       "else ";
+  result ~=         outvar ~ " = (cast(char*)ThreadLocalStackAllocator.globalInstance.AllocateMemory(" ~ invar ~ ".length+1))[0.." ~ invar ~ ".length+1];";
+  result ~=       "scope(exit) if(" ~ invar ~ ".length >= "~outvar~"smallBuf.length) ThreadLocalStackAllocator.globalInstance.FreeMemory(" ~ outvar ~ ".ptr);";
   result ~=       outvar ~ "[0.."~invar~".length] = "~invar~"[];";
   result ~=       outvar ~ "[$-1] = 0;";
   return result;
