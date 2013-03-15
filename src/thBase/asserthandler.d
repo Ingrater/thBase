@@ -13,5 +13,8 @@ void Init()
 
 void AssertHandler( string file, size_t line, string msg )
 {
-  asm { int 3; }
+  version(GNU)
+    asm { "int $0x3"; }
+  else
+    asm { int 3; }
 }

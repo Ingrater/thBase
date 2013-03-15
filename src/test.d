@@ -12,7 +12,10 @@ extern (C) void onAssertErrorMsg( string file, size_t line, string msg )
 {
   debug
   {
-    asm { int 3; }
+    version(GNU)
+      asm { "int $0x3"; }
+    else
+      asm { int 3; }
   }
   throw New!Exception( msg, file, line );
 }

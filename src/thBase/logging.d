@@ -8,6 +8,7 @@ import core.sync.mutex;
 import thBase.allocator;
 import thBase.casts;
 import thBase.stream;
+import core.vararg;
 
 version(Plugin) {}
 else
@@ -188,15 +189,15 @@ else
   }
 }
 
-private void log(LogLevel level, string fmt, TypeInfo[] arg_types, void* args){	
+private void log(LogLevel level, string fmt, TypeInfo[] arg_types, va_list argptr){	
   char[2048] buf;
   char[] message;
 
-  auto needed = formatDoStatic(buf, fmt, arg_types, args);
+  auto needed = formatDoStatic(buf, fmt, arg_types, argptr);
   if(needed > buf.length)
   {
     message = NewArray!char(needed);
-    formatDoStatic(message, fmt, arg_types, args);
+    formatDoStatic(message, fmt, arg_types, argptr);
   }
   else
   {
