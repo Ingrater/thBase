@@ -661,4 +661,8 @@ unittest {
 	vec3 v2 = vec3(-0.1f,-0.1f,-0.1f);
 	vec3 res2 = floor(v2);
 	assert(res2.x == -1.0f && res2.y == -1.0f && res2.z == -1.0f);
+
+  vec3 v3 = vec3(0.1f, 0.1f, 0.1f);
+  vec3 res3 = floor(v3);
+  assert(res3.x == 0.0f && res3.y == 0.0f && res3.z == 0.0f);
 }

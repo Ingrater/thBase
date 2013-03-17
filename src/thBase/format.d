@@ -695,8 +695,7 @@ string formatBufferAllocator(AT)(AT allocator, const(char)[] fmt, ...)
 unittest
 {
   void* test = cast(void*)(0x1234ABCD);
-  auto cstr = "cstr";
-  auto str = format("a %d b %f c %.3f d %s e %x %s",123,123.12345678,345.6789,"bla",test,cstr.ptr);
+  auto str = format("a %d b %f c %.3f d %s e %x %s",123,123.12345678,345.6789,"bla",test,"cstr".ptr);
   assert(str[] == "a 123 b 123.123456 c 345.678 d bla e 0x1234ABCD cstr");
   float[3] farray;
   farray[0] = 1.25f;

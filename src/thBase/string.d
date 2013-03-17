@@ -670,7 +670,7 @@ string stackCString(string invar, string outvar)
   result ~=         outvar ~ " = (cast(char*)ThreadLocalStackAllocator.globalInstance.AllocateMemory(" ~ invar ~ ".length+1))[0.." ~ invar ~ ".length+1];";
   result ~=       "scope(exit) if(" ~ invar ~ ".length >= "~outvar~"smallBuf.length) ThreadLocalStackAllocator.globalInstance.FreeMemory(" ~ outvar ~ ".ptr);";
   result ~=       outvar ~ "[0.."~invar~".length] = "~invar~"[];";
-  result ~=       outvar ~ "[$-1] = 0;";
+  result ~=       outvar ~ "["~invar~".length] = 0;";
   return result;
 }
 
