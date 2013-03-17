@@ -944,8 +944,8 @@ cd %CWD%</preBuildCommand>
   <Dversion>2</Dversion>
   <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
   <compiler>1</compiler>
-  <otherDMD>0</otherDMD>
-  <program>$(DMDInstallDir)windows\bin-nostd\dmd_msc.exe</program>
+  <otherDMD>1</otherDMD>
+  <program>C:\Users\Benjamin\Documents\d-projects\visuald\tools\pipedmd.exe</program>
   <imppath>$(ProjectDir)\..\..\druntime\import;$(ProjectDir)\..\..\phobos;</imppath>
   <fileImppath />
   <outdir>$(ConfigurationName)</outdir>
@@ -983,12 +983,12 @@ cd %CWD%</preBuildCommand>
   <objfiles />
   <linkswitches />
   <libfiles />
-  <libpaths>$(ProjectDir)\..\..\phobos;$(ProjectDir)\..\..\thBase\lib</libpaths>
+  <libpaths>$(ProjectDir)\..\..\phobos</libpaths>
   <deffile />
   <resfile />
   <exefile>$(OutDir)\$(ProjectName).exe</exefile>
   <useStdLibPath>1</useStdLibPath>
-  <additionalOptions>-nophoboslib -lphobosnogc64d_mingw -nostdinc</additionalOptions>
+  <additionalOptions>-defaultlib=phobosnogc64d_mingw -debuglib=phobosnogc64d_mingw -nostdinc -O0</additionalOptions>
   <preBuildCommand>set CWD=%CD%
 cd $(ProjectDir)\..\..\druntime
 $(DMDInstallDir)windows\bin\make -f win64nogc.mak

@@ -8,16 +8,16 @@ version(thBase_test)
   import thBase.conv;
   import core.stdc.stdio;
 
-extern (C) void onAssertErrorMsg( string file, size_t line, string msg )
+version(DigitalMars)
 {
-  debug
+  extern (C) void onAssertErrorMsg( string file, size_t line, string msg )
   {
-    version(GNU)
-      asm { "int $0x3"; }
-    else
+    debug
+    {
       asm { int 3; }
+    }
+    throw New!Exception( msg, file, line );
   }
-  throw New!Exception( msg, file, line );
 }
 
 import core.stdc.string;

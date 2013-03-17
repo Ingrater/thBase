@@ -28,4 +28,5 @@ extern(Windows)
   HANDLE CreateIoCompletionPort(HANDLE FileHandle, HANDLE ExistingCompletionPort, ULONG_PTR CompletionKey, DWORD NumberOfConcurrentThreads);
   BOOL GetQueuedCompletionStatus(HANDLE CompletionPort, DWORD* lpNumberOfBytes, PULONG_PTR lpCompletionKey, OVERLAPPED** lpOverlapped, DWORD dwMilliseconds);
   BOOL CancelIo(HANDLE hFile);
+  void OutputDebugStringA(LPCTSTR lpOutputStr);
 }

@@ -1,5 +1,6 @@
 module thBase.asserthandler;
 import core.exception;
+import thBase.windows;
 
 shared static this()
 {
@@ -13,6 +14,7 @@ void Init()
 
 void AssertHandler( string file, size_t line, string msg )
 {
+  OutputDebugStringA(msg.ptr);
   version(GNU)
     asm { "int $0x3"; }
   else
