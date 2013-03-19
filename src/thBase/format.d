@@ -669,7 +669,7 @@ auto formatAllocator(AT)(AT allocator, const(char)[] fmt, ...)
  *  argptr = the argument pointer
  * Returns: The allocated buffer with the format results
  */
-string formatDoBufferAllocator(AT)(AT allocator, const(char)[] fmt, TypeInfo[] arguments, void* argptr)
+string formatDoBufferAllocator(AT)(AT allocator, const(char)[] fmt, TypeInfo[] arguments, va_list argptr)
 {
   assert(allocator !is null);
   auto dummy = NothingPutPolicy!char();
