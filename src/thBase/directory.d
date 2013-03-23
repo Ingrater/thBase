@@ -148,4 +148,21 @@ bool create(const(char)[] path)
   return CreateDirectoryA(cstr.ptr, null) != 0;
 }
 
+size_t getWorkingDirectory(char[] buffer)
+{
+  return int_cast!size_t(GetCurrentDirectoryA(int_cast!DWORD(buffer.length), buffer.ptr));
+}
+
+void setWorkingDirectory(const(char)[] directory)
+{
+  mixin(stackCString("directory", "cstr"));
+  SetCurrentDirectoryA(cstr.ptr);
+}
+
+void setDllDirectory(const(char)[] directory)
+{
+  mixin(stackCString("directory", "cstr"));
+  SetDllDirectoryA(cstr.ptr);
+}
+
 }

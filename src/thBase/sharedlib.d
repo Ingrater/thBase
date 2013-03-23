@@ -2,6 +2,7 @@ module thBase.sharedlib;
 
 version(Windows){
 	public import std.c.windows.windows;
+  public import thBase.windows;
 }
 
 version(linux){
@@ -68,13 +69,19 @@ private:
 				m_IsLoaded = true;
 			}
 			else {
-				string error = "Couldn't load '" ~ m_LibName ~ "'";
-				version(linux){
+				auto error = _T("Couldn't load '") ~ m_LibName ~ _T("'");
+        version(Windows)
+        {
+          char[1024] buffer;
+          size_t len = formatLastError(buffer);
+          error ~= _T("\nExtended Information: ") ~ buffer[0..len];
+        }
+				else version(linux){
 					char* extended = dlerror();
 					if(extended !is null)
-						error ~= "\nExtended Information: " ~ std.conv.to!string(extended);
+						error ~= _T("\nExtended Information: ") ~ extended[0..strlen(extended)];
 				}
-				throw new Exception(error);
+				throw New!RCException(error);
 			}
 		}
 		

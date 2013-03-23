@@ -1,6 +1,7 @@
 module thBase.windows;
 
 import core.sys.windows.windows;
+import thBase.casts;
 
 enum
 {
@@ -29,4 +30,20 @@ extern(Windows)
   BOOL GetQueuedCompletionStatus(HANDLE CompletionPort, DWORD* lpNumberOfBytes, PULONG_PTR lpCompletionKey, OVERLAPPED** lpOverlapped, DWORD dwMilliseconds);
   BOOL CancelIo(HANDLE hFile);
   void OutputDebugStringA(LPCTSTR lpOutputStr);
+  BOOL SetDllDirectoryA(LPCTSTR lpPathName);
+}
+
+size_t formatLastError(char[] buffer)
+{
+  DWORD lastError = GetLastError();
+  return int_cast!size_t(FormatMessageA(
+                                       FORMAT_MESSAGE_FROM_SYSTEM |
+                                       FORMAT_MESSAGE_IGNORE_INSERTS,
+                                       null,
+                                       lastError,
+                                       MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+                                       buffer.ptr,
+                                       int_cast!uint(buffer.length), 
+                                       null )
+                        );
 }
