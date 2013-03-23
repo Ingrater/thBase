@@ -34,6 +34,25 @@ interface IInputStream
     size_t readImpl(void[] buffer);
 }
 
+interface IPeekableInputStream
+{
+public:
+  final size_t peek(T)(ref T data) if(!thBase.traits.isArray!T)
+  {
+    static assert(!is(T == const) && !is(T == immutable), "can not read into const / immutable value");
+    return peekImpl((cast(void*)&data)[0..T.sizeof]);
+  }
+
+  final size_t peek(T)(T data) if(thBase.traits.isArray!T)
+  {
+    static assert(!is(typeof(data[0]) == const) && !is(typeof(data[0]) == immutable), "can not read into const / immutable array");
+    return peekImpl((cast(void*)data.ptr)[0..(arrayType!T.sizeof * data.length)]);
+  }
+
+protected:
+  size_t peekImpl(void[] buffer);
+}
+
 unittest
 {
 
@@ -192,7 +211,7 @@ class FileOutStream : IOutputStream
     }
 }
 
-class FileInStream : IInputStream
+class FileInStream : IInputStream, IPeekableInputStream
 {
   private:
     RawFile m_file;
@@ -229,12 +248,6 @@ class MemoryInStream : ISeekableInputStream
     IAllocator m_allocator;
 
   public:
-
-    enum TakeOwnership
-    {
-      No,
-      Yes
-    }
 
     invariant()
     {
@@ -298,11 +311,6 @@ class MemoryOutStream : ISeekableOutputStream
     IAllocator m_allocator;
 
   public:
-    enum TakeOwnership
-    {
-      No,
-      Yes
-    }
 
     invariant()
     {
@@ -347,5 +355,83 @@ class MemoryOutStream : ISeekableOutputStream
     @property final void[] writtenData()
     {
       return m_data[0..m_curPosition];
+    }
+};
+
+class PeekableInputStreamWrapper : ISeekableInputStream
+{
+  private:
+    void[256] m_buffer = void;
+    size_T m_readPos;
+    size_t m_bytesBuffered;
+    IInputStream m_stream;
+    TakeOwnership m_owns;
+    IAlloctor m_allocator;
+
+  public:
+    this(IInputStream stream, TakeOwnership own, IAllocator allocator = null)
+    {
+      assert(own == TakeOwnership.no || allocator !is null, "allocator must be given when taking ownership");
+      assert(stream !is null);
+      m_stream = stream;
+      m_own = own;
+      m_allocator = allocator;
+      m_bytesBuffered = stream.readImpl(m_buffer);
+      m_readPos = 0;
+    }
+
+    ~this()
+    {
+      if(m_own == TakeOwnership.yes)
+      {
+        m_allocator.AllocatorDelete(m_stream);
+      }
+    }
+
+    final override size_t readImpl(void[] buffer)
+    {
+      auto remainingBytesBuffered = m_bytesBuffered - m_readPos;
+      if(buffer.length > m_buffer.length)
+      {
+        buffer[0..remainingBytesBuffered] = m_buffer[m_readPos..m_bytesBuffered];
+        m_bytesBuffered = 0;
+        m_readPos = 0;
+        return remainingBytesBuffered + m_stream.readImpl(buffer[remainingBytesBuffered..$]);
+      } 
+      if(buffer.length > reaminingBytesBuffered)
+      {
+        m_buffer[0..m_readPos] = m_buffer[m_readPos..m_bytesBuffered];
+        m_bytesBuffered = remainingBytesBuffered + m_stream.readImpl(m_buffer[remainingBytesBuffered..$]);
+        m_readPos = 0;
+      }
+      auto bytesRead = min(buffer.length, m_bytesBuffered - m_readPos); 
+      buffer[0..bytesRead] = m_buffer[m_readPos..(m_readPos + bytesRead)];
+      m_readPos += bytesRead;
+      return bytesRead;
+    }
+
+    override size_t skip(size_t bytes)
+    {
+      auto remainingBytesBuffered = m_bytesBuffered - m_readPos;
+      if(bytes > m_buffer.length)
+      {
+        m_bytesBuffered = 0;
+        m_readPos = 0;
+        return remainingBytesBuffered + m_stream.skip(bytes);
+      } 
+      if(bytes > remainingBytesBuffered)
+      {
+        bytes -= remainingBytesBuffered;
+        m_bytesBuffered = m_stream.readImpl(m_buffer[]);
+        m_readPos = 0;
+      }
+      auto bytesSkipped= min(bytes, m_bytesBuffered - m_readPos);
+      m_readPos += bytesSkipped;
+      return bytesSkipped + remainingBytesBuffered;
+    }
+
+    override size_t peekImpl(void[] buffer)
+    {
+      assert(buffer.length <= m_buffer.length, "requested peek amount is to large");
     }
 };

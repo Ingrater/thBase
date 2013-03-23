@@ -10,3 +10,9 @@ enum PolicyInit
 {
   DEFAULT
 }
+
+enum TakeOwnership
+{
+  no,
+  yes
+}
