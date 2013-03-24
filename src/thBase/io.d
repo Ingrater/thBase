@@ -10,6 +10,7 @@ import thBase.casts;
 __gshared HANDLE g_hStdOut;
 __gshared Mutex g_outMutex;
 __gshared Stdin stdin;
+__gshared Stdout stdout;
 
 class InitHelper
 {
@@ -18,11 +19,13 @@ class InitHelper
     g_hStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
     g_outMutex = New!Mutex();
     stdin = New!Stdin();
+    stdout = New!Stdout();
   }
 
   shared static ~this()
   {
     Delete(stdin);
+    Delete(stdout);
     Delete(g_outMutex);
   }
 }
@@ -85,15 +88,22 @@ class Stdin : IInputStream
     void[2048] m_buffer = void;
     size_t m_remaining = 0;
     size_t m_curReadPos = 0;
+    bool m_readDone = false;
 
     void ensureBytesLeft(size_t size)
     {
-      if(size > m_remaining)
+      if(!m_readDone && size > m_remaining)
       {
         DWORD bytesRead = 0;
         m_buffer[0..m_remaining] = m_buffer[m_curReadPos..m_curReadPos + m_remaining];
         ReadConsoleA(m_stdInHandle, m_buffer.ptr + m_remaining, int_cast!uint(m_buffer.length - m_remaining), &bytesRead, null);
+        if(bytesRead < m_buffer.length - m_remaining)
+          m_readDone = true;
         m_remaining += bytesRead;
+        m_curReadPos = 0;
+        auto read = cast(char[])m_buffer;
+        if((cast(char[])m_buffer)[m_remaining-1] == '\n') m_remaining--;
+        if((cast(char[])m_buffer)[m_remaining-1] == '\r') m_remaining--;
       }
     }
 
@@ -111,6 +121,8 @@ class Stdin : IInputStream
 
     size_t skip(size_t bytes)
     {
+      m_mutex.lock();
+      scope(exit) m_mutex.unlock();
       ensureBytesLeft(bytes);
       auto oldRemaining = m_remaining;
       if(bytes > m_remaining)
@@ -128,6 +140,8 @@ class Stdin : IInputStream
 
     protected size_t readImpl(void[] buffer)
     {
+      m_mutex.lock();
+      scope(exit) m_mutex.unlock();
       ensureBytesLeft(buffer.length);
       auto oldRemaining = m_remaining;
       if(buffer.length > m_remaining)
@@ -143,4 +157,50 @@ class Stdin : IInputStream
       m_curReadPos += bytesRead;
       return bytesRead;
     }
+
+    bool stopAtEol = false;
+
+    final void resetLine()
+    {
+      m_mutex.lock();
+      scope(exit) m_mutex.unlock();
+      m_readDone = false;
+    }
 }
+
+class Stdout : IOutputStream
+{
+  private:
+    HANDLE m_stdOutHandle;
+    void[2048] m_buffer = void;
+    size_t m_bytesBuffered;
+
+  public:
+    final void flush()
+    {
+      g_outMutex.lock();
+      scope(exit) g_outMutex.unlock();
+      if(m_bytesBuffered > 0)
+      {
+        WriteFile(g_hStdOut, m_buffer.ptr, int_cast!uint(m_bytesBuffered), null, null);
+        m_bytesBuffered = 0;
+      }
+    }
+
+    final override size_t writeImpl(const(void[]) data)
+    {
+      g_outMutex.lock();
+      scope(exit) g_outMutex.unlock();
+      if(data.length > m_buffer.length)
+      {
+        flush();
+        WriteFile(g_hStdOut, data.ptr, int_cast!uint(data.length), null, null);
+        return data.length;
+      }
+      else if(m_buffer.length - m_bytesBuffered < data.length)
+        flush();
+      m_buffer[m_bytesBuffered..m_bytesBuffered + data.length] = data[];
+      m_bytesBuffered += data.length;
+      return data.length;
+    }
+};

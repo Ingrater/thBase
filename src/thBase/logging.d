@@ -174,7 +174,7 @@ else
     if(thBase.debugconnection.isActive())
     {
       auto buffer = AllocatorNewArray!void(ThreadLocalStackAllocator.globalInstance, message.length + 16);
-      auto outStream = AllocatorNew!MemoryOutStream(ThreadLocalStackAllocator.globalInstance, buffer, MemoryOutStream.TakeOwnership.No);
+      auto outStream = AllocatorNew!MemoryOutStream(ThreadLocalStackAllocator.globalInstance, buffer, TakeOwnership.no);
       scope(exit)
       {
         AllocatorDelete(ThreadLocalStackAllocator.globalInstance, outStream);

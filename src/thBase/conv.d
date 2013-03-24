@@ -5,6 +5,7 @@ import thBase.traits;
 public import thBase.types;
 import core.refcounted;
 import thBase.utf;
+import thBase.format;
 
 class ConvException : RCException
 {
@@ -61,7 +62,7 @@ TT to(TT,ST)(ST arg) if(isIntegral!TT && isSigned!TT && thBase.traits.isSomeStri
   TT result = void;
   if(to!(TT,ST)(arg,result) == thResult.FAILURE)
   {
-    throw New!ConvException(_T("Error converting string to signed integral type"));
+    throw New!ConvException(format("Error converting string '%s' to signed integral type", arg[]));
   }
   return result;
 }
@@ -146,7 +147,7 @@ TT to(TT,ST)(ST arg) if(isFloatingPoint!TT && thBase.traits.isSomeString!ST)
   TT result = void;
   if(to!(TT,ST)(arg,result) == thResult.FAILURE)
   {
-    throw New!ConvException(_T("Error converting string to floating point type"));
+    throw New!ConvException(format("Error converting string '%s' to floating point type", arg[]));
   }
   return result;
 }

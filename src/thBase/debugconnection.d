@@ -171,7 +171,7 @@ private void debugSendAndRecieve()
         size_t cur = 0;
         auto inStream = AllocatorNew!MemoryInStream(ThreadLocalStackAllocator.globalInstance, 
                                                     g_debugRecieveBuffer[0..g_debugRecieveBufferSize], 
-                                                    MemoryInStream.TakeOwnership.No);
+                                                    TakeOwnership.no);
         scope(exit) AllocatorDelete(ThreadLocalStackAllocator.globalInstance, inStream);
         uint nameLength = 0;
         char[64] name;
@@ -323,7 +323,7 @@ void recieveDebugMessages(scope const(char)[] channelName, scope void delegate(v
 
     auto inStream = AllocatorNew!MemoryInStream(ThreadLocalStackAllocator.globalInstance, 
                                                 data, 
-                                                MemoryInStream.TakeOwnership.No);
+                                                TakeOwnership.no);
     scope(exit) AllocatorDelete(ThreadLocalStackAllocator.globalInstance, inStream);
 
     while(inStream.position < data.length)
