@@ -32,6 +32,19 @@ struct mat3 {
     }
 	  float[9] f; /// data
   }
+
+  this(vec3 x, vec3 y, vec3 z)
+  {
+    this.m00 = x.x;
+    this.m01 = x.y;
+    this.m02 = x.z;
+    this.m10 = y.x;
+    this.m11 = y.y;
+    this.m12 = y.z;
+    this.m20 = z.x;
+    this.m21 = z.y;
+    this.m22 = z.z;
+  }
 	
 	/**
 	 * Returns:  the determinant of this matrix

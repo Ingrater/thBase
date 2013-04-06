@@ -287,7 +287,7 @@ class TaskQueue
         if(!executeOneTask())
           Thread.sleep(dur!"msecs"(1));
       }
-      while(condition());
+      while(!condition());
     }
 }
 
