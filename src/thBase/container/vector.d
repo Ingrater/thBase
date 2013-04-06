@@ -385,7 +385,7 @@ public:
     assert(index < m_Size, "out of bounds");
     callDtor(&m_Data[index]);
     m_Size--;
-    if(index != m_Size - 1)
+    if(index != m_Size)
     {
       //move the last element to the position of the destroyed element
       memcpy(m_Data.ptr + index, m_Data.ptr + m_Size, T.sizeof);
