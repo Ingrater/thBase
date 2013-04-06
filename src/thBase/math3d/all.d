@@ -9,6 +9,7 @@ public import thBase.math3d.position;
 public import thBase.math3d.box;
 public import thBase.math3d.quaternion;
 public import thBase.math3d.triangle;
+public import thBase.math3d.sphere;
 
 /**
  * Computes the normal for a given triangle

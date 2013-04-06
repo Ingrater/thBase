@@ -369,15 +369,42 @@ public:
 			}
 		}
 		if(pos < m_Size){
-			for(size_t i=pos;i<m_Size-1;i++){
-				m_Data[i] = m_Data[i+1];
-			}
-			m_Size--;
-			callDtor(&m_Data[m_Size]);
-			return true;
+			removeAtIndex(pos);
+      return true;
 		}
 		return false;
 	}
+
+  /**
+   * removes the element at the given index without respecting the order of the elements O(1)
+   * Params:
+   *  index = the index where the element should be removed
+   */
+  void removeAtIndexUnordered(size_t index)
+  {
+    assert(index < m_Size, "out of bounds");
+    callDtor(&m_Data[index]);
+    m_Size--;
+    if(index != m_Size - 1)
+    {
+      //move the last element to the position of the destroyed element
+      memcpy(m_Data.ptr + index, m_Data.ptr + m_Size, T.sizeof);
+    }
+  }
+
+  /**
+   * removes the element at the given index respecting the order of the elements O(N)
+   * Params:
+   *   index = the index of the element to remove
+   */
+  void removeAtIndex(size_t index)
+  {
+    for(size_t i=index;i<m_Size-1;i++){
+      m_Data[i] = m_Data[i+1];
+    }
+    m_Size--;
+    callDtor(&m_Data[m_Size]);
+  }
 	
 	void insertionSort(scope bool delegate(ref const(T) lh, ref const(T) rh) cmp){
 		for(uint sortedSize = 1;sortedSize < m_Size;sortedSize++){

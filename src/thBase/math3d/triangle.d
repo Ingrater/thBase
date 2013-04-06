@@ -266,13 +266,7 @@ struct Triangle {
     }
 	}
 	
-	//bool RayColVertex(vertex S1, vertex S2, vertex R1, vertex R2, vertex R3, float *RayValue){
-	//S1 = raypos
-	//S2 = tri pos
-	//R1 = ray dir
-	//R2 = tri dir 1
-	//R3 = tri dir 2
-	bool intersects(Ray ray, ref float rayPos){
+	bool intersects(Ray ray, ref float rayPos) const {
 	  float t1 = 0.0f,t2 = 0.0f,t3 = 0.0f,dt1 = 0.0f,dt2 = 0.0f,dt3 = 0.0f;
 	  vec3 R2 = v1 - v0;
 	  vec3 R3 = v2 - v0;

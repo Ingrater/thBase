@@ -15,6 +15,11 @@ auto max(T,U)(T x, U y)
   return (x > y) ? x : y;
 }
 
+auto saturate(float x)
+{
+  return (x > 1.0f) ? 1.0f : ((x < 0.0f) ? 0.0f : x);
+}
+
 bool epsilonCompare(T)(T x, T y)
 {
   static if(is(StripModifier!T == float))
