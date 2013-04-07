@@ -24,8 +24,11 @@ struct Sphere
 
   bool intersects(ref const(Ray) ray) const
   {
-    version(none) //USE_SSE
+    version(USE_SSE) //USE_SSE
     {
+      immutable(float) two = 2.0f;
+      immutable(float) four = 4.0f;
+      float disc;
       asm {
         mov EAX, this;
         mov EBX, ray;
@@ -33,8 +36,26 @@ struct Sphere
         movups XMM1, [EBX]; //ray.pos
         movaps XMM2, XMM1;
         subps XMM2, XMM0; // offset
-
+        movups XMM3, [EBX+12]; //ray.dir
+        movaps XMM4, XMM3;
+        dpps XMM4, XMM4, 0b0111_0001; //ray.dir.dot(ray.dir) => a
+        dpps XMM3, XMM2, 0b0111_0001; //ray.dir.dot(offset)
+        lea EBX, two;
+        movss XMM5, [EBX];
+        mulss XMM3, XMM5; // *= 2.0f => b
+        dpps XMM2, XMM2, 0b0111_0001; //offset.dot(offset)
+        movss XMM5, [EAX+12]; // load radiusSquared
+        subss XMM2, XMM5; // *= radiusSquared => c
+        mulss XMM3, XMM3; // => b*b
+        lea EBX, four;
+        movss XMM5, [EBX];
+        mulss XMM2, XMM4; // => a * c
+        mulss XMM2, XMM5; // => 4 * a * c
+        subss XMM3, XMM2; // => b * b - 4.0f * a * c
+        lea EAX, disc;
+        movss [EAX], XMM3;
       }
+      return (disc >= 0.0f);
     }
     else
     {
@@ -102,4 +123,11 @@ struct Sphere
     distanceOnRay = t0;
     return true;
   }
+}
+
+unittest
+{
+  auto r = Ray(vec3(0,0,0), vec3(2.9f,3.1f,3.2f).normalize());
+  auto s = Sphere(vec3(3,3,3), 1.0f);
+  assert(s.intersects(r) == true);
 }
