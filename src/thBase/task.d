@@ -84,6 +84,16 @@ class TaskQueue
 
         g_taskQueues.remove(this);
       }
+
+      foreach(worker; m_waitingWorkers)
+      {
+        Delete(worker);
+      }
+      while(!m_freeWorkers.empty())
+      {
+        auto worker = m_freeWorkers.pop();
+        Delete(worker);
+      }
     }
 
     final void addTask(Task task)
