@@ -90,16 +90,10 @@ struct Sphere
     if (disc < 0)
       return false;
 
-    float distSqrt = sqrt(disc);
-    float q = 0.0f;
-    if (b < 0)
-      q = (-b - distSqrt)/2.0;
-    else
-      q = (-b + distSqrt)/2.0;
+    float discSqrt = sqrt(disc);
 
-    // compute t0 and t1
-    float t0 = q / a;
-    float t1 = c / q;
+    float t0 = (-b - discSqrt) / (2.0f * a);
+    float t1 = (-b + discSqrt) / (2.0f * a);
 
     // make sure t0 is smaller than t1
     if (t0 > t1)
@@ -110,11 +104,11 @@ struct Sphere
 
     // if t1 is less than zero, the object is in the ray's negative direction
     // and consequently the ray misses the sphere
-    if (t1 < 0)
+    if (t1 < 0.0f)
       return false;
 
     // if t0 is less than zero, the intersection point is at t1
-    if (t0 < 0)
+    if (t0 < 0.0f)
     {
       distanceOnRay = t1;
       return true;
