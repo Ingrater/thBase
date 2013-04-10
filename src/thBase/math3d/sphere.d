@@ -26,9 +26,8 @@ struct Sphere
   {
     version(USE_SSE) //USE_SSE
     {
-      immutable(float) two = 2.0f;
-      immutable(float) four = 4.0f;
-      float disc;
+      immutable(float) nul = 0.0f;
+      bool result;
       asm {
         mov EAX, this;
         mov EBX, ray;
@@ -46,10 +45,17 @@ struct Sphere
         mulss XMM3, XMM3; // => b*b
         mulss XMM2, XMM4; // => a * c
         subss XMM3, XMM2; // => b * b - a * c
-        lea EAX, disc;
-        movss [EAX], XMM3;
+        lea EAX, result;
+        lea EBX, nul;
+        comiss XMM3, [EBX];
+        jb false_case;
+        mov [EAX], 1;
+        jmp end;
+        false_case:
+        mov [EAX], 0;
+        end:;
       }
-      return (disc >= 0.0f);
+      return result;
     }
     else
     {
@@ -110,6 +116,13 @@ struct Sphere
     // else the intersection point is at t0
     distanceOnRay = t0;
     return true;
+  }
+
+	bool opBinaryRight(string op)(Sphere s) const if(op == "in") 
+  {
+    float a = ((s.pos - pos).length + s.radius);
+    float b = radius;
+    return a <= b;
   }
 }
 
