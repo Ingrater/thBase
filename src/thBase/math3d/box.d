@@ -40,8 +40,8 @@ struct AlignedBox_t(T) {
 			return res;
 		}
 	
-	AlignedBox_t!T opBinary(string op)(const(Position) rh) const if(op == "+"){
-		return AlignedBox(min+rh,max+rh);
+	AlignedBox_t!T opBinary(string op)(const(T) rh) const if(op == "+"){
+		return AlignedBox_t!T(min+rh, max+rh);
 	}
 	
 	///Checks if the given type is inside this AligendBox
