@@ -39,19 +39,13 @@ struct Sphere
         movups XMM3, [EBX+12]; //ray.dir
         movaps XMM4, XMM3;
         dpps XMM4, XMM4, 0b0111_0001; //ray.dir.dot(ray.dir) => a
-        dpps XMM3, XMM2, 0b0111_0001; //ray.dir.dot(offset)
-        lea EBX, two;
-        movss XMM5, [EBX];
-        mulss XMM3, XMM5; // *= 2.0f => b
+        dpps XMM3, XMM2, 0b0111_0001; //ray.dir.dot(offset) => b
         dpps XMM2, XMM2, 0b0111_0001; //offset.dot(offset)
         movss XMM5, [EAX+12]; // load radiusSquared
         subss XMM2, XMM5; // *= radiusSquared => c
         mulss XMM3, XMM3; // => b*b
-        lea EBX, four;
-        movss XMM5, [EBX];
         mulss XMM2, XMM4; // => a * c
-        mulss XMM2, XMM5; // => 4 * a * c
-        subss XMM3, XMM2; // => b * b - 4.0f * a * c
+        subss XMM3, XMM2; // => b * b - a * c
         lea EAX, disc;
         movss [EAX], XMM3;
       }
@@ -62,11 +56,11 @@ struct Sphere
       //Compute A, B and C coefficients
       vec3 offset = ray.pos - pos;
       float a = ray.dir.dot(ray.dir);
-      float b = 2.0f * ray.dir.dot(offset);
+      float b = ray.dir.dot(offset);
       float c = offset.dot(offset) - radiusSquared;
 
       //Find discriminant
-      float disc = b * b - 4.0f * a * c;
+      float disc = b * b - a * c;
 
       // if discriminant is negative there are no real roots, so return 
       // false as ray misses sphere
