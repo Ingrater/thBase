@@ -142,6 +142,11 @@ struct Position {
 		  this.relPos -= diff * cellSize;
     }
 	}
+
+  this(float x, float y, float z)
+  {
+    this(vec3(x, y, z));
+  }
 	
 	/**
 	 * constructor (computes cell cordinates automatically)

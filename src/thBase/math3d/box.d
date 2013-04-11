@@ -4,14 +4,25 @@ import thBase.math3d.position;
 import thBase.math3d.vecs;
 import thBase.metatools;
 import thBase.format;
+import thBase.math3d.sphere;
 
 struct AlignedBox_t(T) {
-	T min,max;
+	T min, max;
 	
 	this(T min, T max){
 		this.min = min;
 		this.max = max;
 	}
+
+  static if(is(T == typeof(Sphere.pos)))
+  {
+    this(Sphere s)
+    {
+      float radius = s.radius;
+      this.min = s.pos - vec3(radius, radius, radius);
+      this.max = s.pos + vec3(radius, radius, radius);
+    }
+  }
 	
   static if(is(T == Position))
   {
