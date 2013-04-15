@@ -10,6 +10,7 @@ import thBase.policies.hashing;
 import thBase.allocator;
 import thBase.logging;
 public import thBase.types;
+import thBase.math;
 
 /**
 * Loose Octree 
@@ -142,12 +143,13 @@ public:
       m_Childs[7] = new Node(m_Center + vec3( shift, shift, shift),newsize);
 
       auto r = m_Objects[];
+      uint start = 0;
       while(!r.empty){
         auto obj = r.front();
         bool moved = false;
         //Try to move the objects into the childs, if they fit
         auto box = OctreePolicy.getBoundingBox(obj);
-        foreach(node;m_Childs){
+        foreach(node;m_Childs[start..$]){
           if(box in node.m_BoundingBox){
             node.m_Objects.moveHereBack(r);
             assert(node.m_Objects.back().front() is obj);
@@ -156,10 +158,26 @@ public:
             break;
           }
         }
+        if(!moved && start > 0)
+        {
+          foreach(node;m_Childs[0..start]){
+            if(box in node.m_BoundingBox){
+              node.m_Objects.moveHereBack(r);
+              assert(node.m_Objects.back().front() is obj);
+              changeObjectLocation(node,node.m_Objects.back());
+              moved = true;
+              break;
+            }
+          }
+        }
         //object did not fit into any of the childs
         if(!moved){
           //assert(0,"object was to big");
           r.popFront();
+        }
+        else
+        {
+          start = (start + 1) % 8;
         }
       }
 
@@ -485,6 +503,31 @@ public:
   @property Node rootNode()
   {
     return m_Root;
+  }
+
+  static struct Statistics
+  {
+    uint minDepth, maxDepth;
+    uint maxNumObjects;
+  }
+
+  Statistics ComputeStatistics()
+  {
+    Statistics result;
+
+    void recurse(Node node, uint depth)
+    {
+      if(!node.m_Objects.empty)
+      {
+        result.minDepth = min(depth, result.minDepth);
+        result.maxDepth = max(depth, result.maxDepth);
+        result.maxNumObjects = max(result.maxNumObjects, node.m_Objects.size);
+      }
+      foreach(child; node.childs)
+        recurse(child, depth+1);
+    }
+    recurse(m_Root, 0);
+    return result;
   }
 }
 
