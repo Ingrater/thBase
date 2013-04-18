@@ -267,45 +267,153 @@ struct Triangle {
 	}
 	
 	bool intersects(Ray ray, ref float rayPos) const {
-	  float t1 = 0.0f,t2 = 0.0f,t3 = 0.0f,dt1 = 0.0f,dt2 = 0.0f,dt3 = 0.0f;
-	  vec3 R2 = v1 - v0;
-	  vec3 R3 = v2 - v0;
-	  float d = R3.x*R2.y*ray.dir.z + R3.y*R2.z*ray.dir.x + R3.z*R2.x*ray.dir.y - ray.dir.x*R2.y*R3.z - ray.dir.y*R2.z*R3.x - ray.dir.z*R2.x*R3.y;
-	  if(d != 0.0f){
-	    dt1 = (ray.pos.x-v0.x)*R2.y*R3.z + (ray.pos.y-v0.y)*R2.z*R3.x + (ray.pos.z-v0.z)*R2.x*R3.y - R3.x*R2.y*(ray.pos.z-v0.z) - R3.y*R2.z*(ray.pos.x-v0.x) - R3.z*R2.x*(ray.pos.y-v0.y);
-	    dt2 = R3.x*(ray.pos.y-v0.y)*ray.dir.z + R3.y*(ray.pos.z-v0.z)*ray.dir.x + R3.z*(ray.pos.x-v0.x)*ray.dir.y - ray.dir.x*(ray.pos.y-v0.y)*R3.z - ray.dir.y*(ray.pos.z-v0.z)*R3.x - ray.dir.z*(ray.pos.x-v0.x)*R3.y;
-	    dt3 = (ray.pos.x-v0.x)*R2.y*ray.dir.z + (ray.pos.y-v0.y)*R2.z*ray.dir.x + (ray.pos.z-v0.z)*R2.x*ray.dir.y - ray.dir.x*R2.y*(ray.pos.z-v0.z) - ray.dir.y*R2.z*(ray.pos.x-v0.x) - ray.dir.z*R2.x*(ray.pos.y-v0.y);
-	    t1 = dt1 / d;
-	    t2 = dt2 / d;
-	    t3 = dt3 / d;
-	  }
-	  else{
-		  rayPos=float.nan;
-		  return false;
-	  }
-	  if((t2+t3)<= 1.0f && t2 >= 0.0f && t3 >= 0.0f){
-		  rayPos = t1;
-		  return true;
-	  }
-	  else{
-		  rayPos=float.nan;
-		  return false;
-	  }
-	  assert(0,"not reachable");
+    float u,v;
+    return intersects(ray, rayPos, u, v);
 	}
 
 	bool intersects(Ray ray, ref float rayPos, ref float u, ref float v) const {
-	  float t1 = 0.0f,t2 = 0.0f,t3 = 0.0f,dt1 = 0.0f,dt2 = 0.0f,dt3 = 0.0f;
-	  vec3 R2 = v1 - v0;
-	  vec3 R3 = v2 - v0;
-	  float d = R3.x*R2.y*ray.dir.z + R3.y*R2.z*ray.dir.x + R3.z*R2.x*ray.dir.y - ray.dir.x*R2.y*R3.z - ray.dir.y*R2.z*R3.x - ray.dir.z*R2.x*R3.y;
+	  float[4] t;
+    float[4] dt;
+    version(USE_SSE)
+    {
+      float minusOne = -1.0f;
+      float d;
+      asm {
+        mov EDX, this;
+        movups XMM0, [EDX]; //load v0
+        movups XMM1, [EDX+16]; //load v1
+        movups XMM2, [EDX+32]; //load v2
+        // vec3 R2 = v1 - v0;
+        subps XMM1, XMM0; // v1 - v0 -> R2
+        // vec3 R3 = v2 - v0;
+        subps XMM2, XMM0; // v2 - v0 -> R3
+        //d = (R3.xyz * R2.yzx).dot(ray.dir.zxy) - ((R3.xyz * R2.zxy).dot(ray.dir.yzx))
+        lea EAX, ray;
+        lea EBX, minusOne;
+        movups XMM5, [EAX+12]; //load ray.dir 
+        pshufd XMM3, XMM1, 0b11_00_10_01; //shuffle yzxw -> R2.yzx
+        pshufd XMM4, XMM1, 0b11_01_00_10; //shulfle zxyw -> R2.zxy
+        movaps XMM6, XMM5; // -> copy ray.dir 
+        pshufd XMM6, XMM6, 0b11_00_10_01; // shuffle yzxw -> ray.dir.yzx
+        pshufd XMM5, XMM5, 0b11_01_00_10; // shuffle zxyw -> ray.dir.zxy
+        mulps XMM3, XMM2; // -> (R3.xyz * R2.yzx)
+        mulps XMM4, XMM2; // -> (R3.xyz * R2.zxy)
+        dpps XMM3, XMM5, 0b0111_0001; // -> (R3.xyz * R2.yzx).dot(ray.dir.zxy)
+        dpps XMM4, XMM6, 0b0111_0001; // -> (R3.xyz * R2.zxy).dot(ray.dir.yzx)
+        subss XMM3, XMM4; // -> d
+        lea EAX, d;
+        movss [EAX], XMM3;
+      }
+    }
+    else
+    {
+	    vec3 R2 = v1 - v0;
+	    vec3 R3 = v2 - v0;
+	    float d = R3.x * R2.y * ray.dir.z + 
+        R3.y * R2.z * ray.dir.x + 
+        R3.z * R2.x * ray.dir.y - 
+        ray.dir.x * R2.y * R3.z - 
+        ray.dir.y * R2.z * R3.x - 
+        ray.dir.z * R2.x * R3.y;
+    }
 	  if(d != 0.0f){
-	    dt1 = (ray.pos.x-v0.x)*R2.y*R3.z + (ray.pos.y-v0.y)*R2.z*R3.x + (ray.pos.z-v0.z)*R2.x*R3.y - R3.x*R2.y*(ray.pos.z-v0.z) - R3.y*R2.z*(ray.pos.x-v0.x) - R3.z*R2.x*(ray.pos.y-v0.y);
-	    dt2 = R3.x*(ray.pos.y-v0.y)*ray.dir.z + R3.y*(ray.pos.z-v0.z)*ray.dir.x + R3.z*(ray.pos.x-v0.x)*ray.dir.y - ray.dir.x*(ray.pos.y-v0.y)*R3.z - ray.dir.y*(ray.pos.z-v0.z)*R3.x - ray.dir.z*(ray.pos.x-v0.x)*R3.y;
-	    dt3 = (ray.pos.x-v0.x)*R2.y*ray.dir.z + (ray.pos.y-v0.y)*R2.z*ray.dir.x + (ray.pos.z-v0.z)*R2.x*ray.dir.y - ray.dir.x*R2.y*(ray.pos.z-v0.z) - ray.dir.y*R2.z*(ray.pos.x-v0.x) - ray.dir.z*R2.x*(ray.pos.y-v0.y);
-	    t1 = dt1 / d;
-	    t2 = dt2 / d;
-	    t3 = dt3 / d;
+      version(USE_SSE)
+      {
+        asm {
+          // XMM1 = R2.yzx
+          // XMM2 = R3.zxy
+          // XMM3 = diff
+          pshufd XMM1, XMM1, 0b11_00_10_01; //shuffle yzxw -> R2.yzx
+          pshufd XMM2, XMM2, 0b11_01_00_10; //shuffle zxyw -> R3.zxy
+
+          //diff = ray.pos - v0;
+          lea EAX, ray;
+          movups XMM3, [EAX]; //load ray.pos
+          subps XMM3, XMM0; // ray.pos - v0 -> diff
+          movups XMM4, [EAX+12]; //load ray.dir
+          pshufd XMM4, XMM4, 0b11_00_10_01; // shuffle yzxw -> ray.dir.yzx
+
+          //dt1 = (diff.xyz * R2.yzx).dot(R3.zxy) - ((R3.yzx * R2.zxy).dot(diff.xyz))
+          // needs
+          //  R2.yzx, R2.zxy
+          //  R3.zxy, R3.yzx <- keep
+          movaps XMM5, XMM1;
+          mulps XMM5, XMM3; // -> diff.xyz * R2.yzx
+          pshufd XMM0, XMM1, 0b11_00_10_01; //shuffle yzxw -> R2.zxy
+          pshufd XMM7, XMM2, 0b11_01_00_10; //shuffle zxyw -> R3.yzx
+          mulps XMM0, XMM7; // -> R3.yzx * R2.zxy
+          dpps XMM5, XMM2, 0b0111_0001; // -> (diff.xyz * R2.yzx).dot(R3.zxy)
+          dpps XMM0, XMM3, 0b0111_0001; // -> ((R3.yzx * R2.zxy).dot(diff.xyz))
+          subss XMM5, XMM0; // -> dt1
+          lea EAX, dt;
+          movss [EAX], XMM5;
+        
+
+          // ray.dir.yzx -> ray.dir.zxy
+          pshufd XMM0, XMM4, 0b11_00_10_01; //shuffle yzxw -> ray.dir.zxy 
+
+          //dt2 = (R3.zxy * diff.xyz).dot(ray.dir.yzx) - ((ray.dir.zxy).dot(diff.xyz * R3.yzx))
+          // needs
+          //  R3.zxy, R3.yzx
+          //  ray.dir.yzx, ray.dir.zxy <- keep
+          
+          mulps XMM2, XMM3; // -> R3.zxy * diff.xyz
+          mulps XMM7, XMM3; // -> diff.xyz * R3.yzx
+          dpps XMM2, XMM4, 0b0111_0001; // -> (R3.zxy * diff.xyz).dot(ray.dir.yzx)
+          dpps XMM7, XMM0, 0b0111_0001; // -> (ray.dir.zxy).dot(diff.xyz * R3.yzx)
+          subss XMM2, XMM7; // -> dt2
+          lea EAX, dt;
+          movss [EAX+4], XMM2;
+
+          //dt3 = (R2.yzx).dot(ray.dir.zxy * diff.xyz) - ((R2.zxy).dot(ray.dir.yzx * diff.xyz))
+          // needs
+          //  R2.yzx, R2.zxy
+          //  ray.dir.zxy, ray.dir.yzx
+
+          pshufd XMM2, XMM1, 0b11_00_10_01; //shuffle yzxw -> R2.zxy
+          mulps XMM0, XMM3; // -> ray.dir.zxy * diff.xyz
+          mulps XMM4, XMM3; // -> ray.dir.yzx * diff.xyz
+          dpps XMM0, XMM1, 0b0111_0001; // -> (R2.yzx).dot(ray.dir.zxy * diff.xyz)
+          dpps XMM4, XMM2, 0b0111_0001; // -> (R2.zxy).dot(ray.dir.yzx * diff.xyz)
+          subss XMM0, XMM4; // -> dt3
+          lea EAX, dt;
+          movss [EAX+8], XMM0;
+
+          lea EBX, t;
+          lea EDX, d;
+          movups XMM0, [EAX];
+          movss XMM1, [EDX];
+          pshufd XMM1, XMM1, 0b00_00_00_00;
+          divps XMM0, XMM1;
+          movups [EBX], XMM0; // -> t[0..3] / d
+        }
+      }
+      else
+      {
+	      dt[0] =  (ray.pos.x-v0.x)*R2.y*R3.z 
+             + (ray.pos.y-v0.y)*R2.z*R3.x 
+             + (ray.pos.z-v0.z)*R2.x*R3.y 
+             - R3.y*R2.z*(ray.pos.x-v0.x) 
+             - R3.z*R2.x*(ray.pos.y-v0.y)
+             - R3.x*R2.y*(ray.pos.z-v0.z);
+	    
+        dt[1] = R3.z*(ray.pos.x-v0.x)*ray.dir.y 
+            + R3.x*(ray.pos.y-v0.y)*ray.dir.z 
+            + R3.y*(ray.pos.z-v0.z)*ray.dir.x 
+            - ray.dir.z*(ray.pos.x-v0.x)*R3.y
+            - ray.dir.x*(ray.pos.y-v0.y)*R3.z 
+            - ray.dir.y*(ray.pos.z-v0.z)*R3.x ;
+
+	      dt[2] = (ray.pos.x-v0.x)*R2.y*ray.dir.z 
+            + (ray.pos.y-v0.y)*R2.z*ray.dir.x 
+            + (ray.pos.z-v0.z)*R2.x*ray.dir.y 
+            - ray.dir.y*R2.z*(ray.pos.x-v0.x) 
+            - ray.dir.z*R2.x*(ray.pos.y-v0.y)
+            - ray.dir.x*R2.y*(ray.pos.z-v0.z) ;
+	      t[0] = dt[0] / d;
+	      t[1] = dt[1] / d;
+	      t[2] = dt[2] / d;
+      }
 	  }
 	  else
     {
@@ -314,10 +422,10 @@ struct Triangle {
       v = float.nan;
 		  return false;
 	  }
-	  if((t2+t3)<= 1.0f && t2 >= 0.0f && t3 >= 0.0f){
-		  rayPos = t1;
-      u = t3;
-      v = t2;
+	  if((t[1]+t[2])<= 1.0f && t[1] >= 0.0f && t[2] >= 0.0f){
+		  rayPos = t[0];
+      u = t[2];
+      v = t[1];
 		  return true;
 	  }
 		rayPos=float.nan;
@@ -327,7 +435,36 @@ struct Triangle {
 	}
 }
 
-unittest
+unittest //for triangle ray intersection
+{
+  {
+    auto tri = Triangle(vec3(-10, -10.000000, 19.984970),
+                      vec3(-10, 10, 0),
+                      vec3(-10, 10, 19.984970));
+
+    auto ray = Ray(vec3(-1, 26.5, 10), vec3(-0.43670523, -0.84072918, 0.32009855));
+    float t,u,v;
+    assert(tri.intersects(ray, t, u, v));
+    assert(t.epsilonCompare(20.608866f));
+    assert(u.epsilonCompare(0.78914368f));
+    assert(v.epsilonCompare(0.16953248f));
+  }
+
+  {
+    auto tri = Triangle(vec3(-1.0213749f, -0.19982199f, 15.151754f), 
+                        vec3(1.6758910f, 5.3727779f, 15.151754f),
+                        vec3(1.6758910f, 5.3727779f, 0.0f));
+    auto ray = Ray(vec3(2.9275560f, -10.000000f, 13.528505f), 
+                   vec3(-0.12780648f, 0.97445291f, -0.18468098f));
+    float t,u,v;
+    assert(tri.intersects(ray, t, u, v));
+    assert(t.epsilonCompare(14.500357f));
+    assert(u.epsilonCompare(0.28387401f));
+    assert(v.epsilonCompare(0.49309477f));
+  }
+}
+
+unittest //for triangle triangle intersection
 {
   auto t1 = Triangle(vec3(-25,-1,-25),
                      vec3(-25,-1, 25),
