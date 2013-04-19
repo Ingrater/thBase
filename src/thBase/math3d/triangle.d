@@ -272,9 +272,9 @@ struct Triangle {
 	}
 
 	bool intersects(Ray ray, ref float rayPos, ref float u, ref float v) const {
-	  float[4] t;
-    float[4] dt;
-    version(USE_SSE)
+	  float[4] t = void;
+    float[4] dt = void;
+    version(none) //USE_SSE
     {
       float minusOne = -1.0f;
       float d;
@@ -317,7 +317,7 @@ struct Triangle {
         ray.dir.z * R2.x * R3.y;
     }
 	  if(d != 0.0f){
-      version(USE_SSE)
+      version(none) //USE_SSE
       {
         asm {
           // XMM1 = R2.yzx
@@ -390,26 +390,27 @@ struct Triangle {
       }
       else
       {
-	      dt[0] =  (ray.pos.x-v0.x)*R2.y*R3.z 
-             + (ray.pos.y-v0.y)*R2.z*R3.x 
-             + (ray.pos.z-v0.z)*R2.x*R3.y 
-             - R3.y*R2.z*(ray.pos.x-v0.x) 
-             - R3.z*R2.x*(ray.pos.y-v0.y)
-             - R3.x*R2.y*(ray.pos.z-v0.z);
+        vec3 diff = ray.pos - v0;
+	      dt[0] =  diff.x*R2.y*R3.z 
+               + diff.y*R2.z*R3.x 
+               + diff.z*R2.x*R3.y 
+               - R3.y*R2.z*diff.x 
+               - R3.z*R2.x*diff.y
+               - R3.x*R2.y*diff.z;
 	    
-        dt[1] = R3.z*(ray.pos.x-v0.x)*ray.dir.y 
-            + R3.x*(ray.pos.y-v0.y)*ray.dir.z 
-            + R3.y*(ray.pos.z-v0.z)*ray.dir.x 
-            - ray.dir.z*(ray.pos.x-v0.x)*R3.y
-            - ray.dir.x*(ray.pos.y-v0.y)*R3.z 
-            - ray.dir.y*(ray.pos.z-v0.z)*R3.x ;
+        dt[1] = R3.z*diff.x*ray.dir.y 
+              + R3.x*diff.y*ray.dir.z 
+              + R3.y*diff.z*ray.dir.x 
+              - ray.dir.z*diff.x*R3.y
+              - ray.dir.x*diff.y*R3.z 
+              - ray.dir.y*diff.z*R3.x ;
 
-	      dt[2] = (ray.pos.x-v0.x)*R2.y*ray.dir.z 
-            + (ray.pos.y-v0.y)*R2.z*ray.dir.x 
-            + (ray.pos.z-v0.z)*R2.x*ray.dir.y 
-            - ray.dir.y*R2.z*(ray.pos.x-v0.x) 
-            - ray.dir.z*R2.x*(ray.pos.y-v0.y)
-            - ray.dir.x*R2.y*(ray.pos.z-v0.z) ;
+	      dt[2] = diff.x*R2.y*ray.dir.z 
+              + diff.y*R2.z*ray.dir.x 
+              + diff.z*R2.x*ray.dir.y 
+              - ray.dir.y*R2.z*diff.x 
+              - ray.dir.z*R2.x*diff.y
+              - ray.dir.x*R2.y*diff.z ;
 	      t[0] = dt[0] / d;
 	      t[1] = dt[1] / d;
 	      t[2] = dt[2] / d;
