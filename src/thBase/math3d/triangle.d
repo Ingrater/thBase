@@ -271,8 +271,93 @@ struct Triangle {
     return intersects(ray, rayPos, u, v);
 	}
 
-	bool intersects(Ray ray, ref float rayPos, ref float u, ref float v) const {
-	  float[4] t = void;
+	bool intersects(Ray ray, ref float rayPos, ref float u, ref float v) const {    
+    version(USE_SSE)
+    {
+      asm {
+        mov EDX, this;
+        movups XMM0, [EDX]; //load v0
+        movups XMM1, [EDX+16]; //load v1
+        movups XMM2, [EDX+32]; //load v2
+        lea EAX, ray;
+        movups XMM5, [EAX+12]; //load ray.dir 
+
+        //vec3 e1 = v1 - v0;
+        subps XMM1, XMM0; 
+        //vec3 e2 = v2 - v0;
+        subps XMM2, XMM0;
+
+        //e1.cross(e2) -> e1xe2x
+        pshufd XMM3, XMM1, 0b_11_00_10_01;
+        pshufd XMM4, XMM2, 0b_11_00_10_01;
+        mulps  XMM3, XMM2;
+        mulps  XMM4, XMM1;
+        subps  XMM4, XMM3;
+        pshufd XMM6, XMM4, 0b_11_00_10_01;
+        movaps XMM7, XMM6;
+
+        // 1.0f / ray.dir.dot(e1xe2)
+        dpps   XMM6, XMM5, 0b0111_0111; 
+        rcpps  XMM6, XMM6;
+
+        //vec3 ab = (v0 - ray.pos) * d;
+        movups XMM3, [EAX]; //load ray.pos 
+        subps  XMM0, XMM3;
+        mulps  XMM0, XMM6;
+
+        //rayPos = e1xe2.dot(ab);
+        dpps XMM7, XMM0, 0b0111_0001;
+        mov  EAX, rayPos;
+        movss [EAX], XMM7;
+
+        //shuffle ab
+        pshufd XMM0, XMM0, 0b_11_01_00_10;
+
+        // v = ray.dir.cross(e2).dot(ab);
+        pshufd XMM3, XMM5, 0b_11_00_10_01;
+        pshufd XMM7, XMM2, 0b_11_00_10_01;
+        mulps  XMM2, XMM3;
+        mulps  XMM7, XMM5;
+        subps  XMM7, XMM2; 
+        dpps   XMM7, XMM0, 0b0111_0001;
+        mov    EAX, v;
+        movss [EAX], XMM7;
+
+        // u = e1.cross(ray.dir).dot(ab);
+        pshufd XMM7, XMM1, 0b_11_00_10_01;
+        mulps  XMM3, XMM1;
+        mulps  XMM7, XMM5;
+        subps  XMM3, XMM7;
+        dpps   XMM3, XMM0, 0b0111_0001;
+        mov    EAX, u;
+        movss [EAX], XMM3;
+      }
+    }
+    else
+    {
+      vec3 e2 = v2 - v0;
+      vec3 e1 = v1 - v0;
+
+      vec3 e1xe2 = e1.cross(e2);
+
+      float d = 1.0f / ray.dir.dot(e1xe2);
+      vec3 ab = (v0 - ray.pos) * d;
+      rayPos = e1xe2.dot(ab);
+      v = ray.dir.cross(e2).dot(ab);
+      u = e1.cross(ray.dir).dot(ab);
+    }
+    if(rayPos < 0.0f)
+      return false;
+	  if((u+v)<= 1.0f && u >= 0.0f && v >= 0.0f){
+		  return true;
+	  }
+		rayPos=float.nan;
+    u = float.nan;
+    v = float.nan;
+		return false;
+
+
+	  /+float[4] t = void;
     float[4] dt = void;
     version(none) //USE_SSE
     {
@@ -432,7 +517,7 @@ struct Triangle {
 		rayPos=float.nan;
     u = float.nan;
     v = float.nan;
-		return false;
+		return false;+/
 	}
 }
 
@@ -446,9 +531,9 @@ unittest //for triangle ray intersection
     auto ray = Ray(vec3(-1, 26.5, 10), vec3(-0.43670523, -0.84072918, 0.32009855));
     float t,u,v;
     assert(tri.intersects(ray, t, u, v));
-    assert(t.epsilonCompare(20.608866f));
-    assert(u.epsilonCompare(0.78914368f));
-    assert(v.epsilonCompare(0.16953248f));
+    assert(t.epsilonCompare(20.608866f, 0.02f));
+    assert(u.epsilonCompare(0.78914368f, 0.02f));
+    assert(v.epsilonCompare(0.16953248f, 0.02f));
   }
 
   {
@@ -459,9 +544,9 @@ unittest //for triangle ray intersection
                    vec3(-0.12780648f, 0.97445291f, -0.18468098f));
     float t,u,v;
     assert(tri.intersects(ray, t, u, v));
-    assert(t.epsilonCompare(14.500357f));
-    assert(u.epsilonCompare(0.28387401f));
-    assert(v.epsilonCompare(0.49309477f));
+    assert(t.epsilonCompare(14.500357f, 0.02f));
+    assert(u.epsilonCompare(0.28387401f, 0.02f));
+    assert(v.epsilonCompare(0.49309477f, 0.02f));
   }
 }
 
