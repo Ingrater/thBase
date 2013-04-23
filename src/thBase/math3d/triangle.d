@@ -433,6 +433,15 @@ struct Triangle {
     v = float.nan;
 		return false;
 	}
+
+  /// the area of the triangle
+  @property float area() const
+  {
+    vec3 e1 = v1 - v0;
+    vec3 e2 = v2 - v0;
+    vec3 heightBase = e1.dot(e2);
+    return (e1 - e2 * heightBase).length * e2.length * 0.5f;
+  }
 }
 
 unittest //for triangle ray intersection
@@ -445,9 +454,9 @@ unittest //for triangle ray intersection
     auto ray = Ray(vec3(-1, 26.5, 10), vec3(-0.43670523, -0.84072918, 0.32009855));
     float t,u,v;
     assert(tri.intersects(ray, t, u, v));
-    assert(t.epsilonCompare(20.608866f));
-    assert(u.epsilonCompare(0.78914368f));
-    assert(v.epsilonCompare(0.16953248f));
+    assert(t.epsilonCompare(20.608866f, 0.1f));
+    assert(u.epsilonCompare(0.78914368f, 0.1f));
+    assert(v.epsilonCompare(0.16953248f, 0.1f));
   }
 
   {
@@ -458,9 +467,9 @@ unittest //for triangle ray intersection
                    vec3(-0.12780648f, 0.97445291f, -0.18468098f));
     float t,u,v;
     assert(tri.intersects(ray, t, u, v));
-    assert(t.epsilonCompare(14.500357f));
-    assert(u.epsilonCompare(0.28387401f));
-    assert(v.epsilonCompare(0.49309477f));
+    assert(t.epsilonCompare(14.500357f, 0.1f));
+    assert(u.epsilonCompare(0.28387401f, 0.1f));
+    assert(v.epsilonCompare(0.49309477f, 0.1f));
   }
 }
 
@@ -530,4 +539,11 @@ unittest
     auto time = Zeitpunkt(timer) - start;
     writefln("Triangle.transform for %d entries took %f ms", ts.length, time);
   }
+}
+
+// unittest for the area property
+unittest
+{
+  auto t1 = Triangle(vec3(1,0,0), vec3(0,1,0), vec3(1,1,0));
+  assert(t1.area.epsilonCompare(0.5f));
 }

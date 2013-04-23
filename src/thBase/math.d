@@ -44,3 +44,28 @@ bool epsilonCompare(T)(T x, T y)
     static assert(0, T.stringof ~ " is not supported by epsilonCompare");
   }
 }
+
+bool epsilonCompare(T,E)(T x, T y, E epsilon)
+{
+  static if(is(StripModifier!T == float))
+  {
+    return (x < y + epsilon) && (x > y - epsilon);
+  }
+  else static if(is(StripModifier!T == double))
+  {
+    return (x < y + epsilon) && (x > y - epsilon);
+  }
+  else static if(is(typeof(T.f)))
+  {
+    for(size_t i=0; i<T.f.length; i++)
+    {
+      if(!epsilonCompare(x.f[i], y.f[i], epsilon))
+        return false;
+    }
+    return true;
+  }
+  else
+  {
+    static assert(0, T.stringof ~ " is not supported by epsilonCompare");
+  }
+}
