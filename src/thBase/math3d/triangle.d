@@ -271,10 +271,95 @@ struct Triangle {
     return intersects(ray, rayPos, u, v);
 	}
 
-	bool intersects(Ray ray, ref float rayPos, ref float u, ref float v) const {
-	  float[4] t;
-    float[4] dt;
+	bool intersects(Ray ray, ref float rayPos, ref float u, ref float v) const {    
     version(USE_SSE)
+    {
+      asm {
+        mov EDX, this;
+        movups XMM0, [EDX]; //load v0
+        movups XMM1, [EDX+16]; //load v1
+        movups XMM2, [EDX+32]; //load v2
+        lea EAX, ray;
+        movups XMM5, [EAX+12]; //load ray.dir 
+
+        //vec3 e1 = v1 - v0;
+        subps XMM1, XMM0; 
+        //vec3 e2 = v2 - v0;
+        subps XMM2, XMM0;
+
+        //e1.cross(e2) -> e1xe2x
+        pshufd XMM3, XMM1, 0b_11_00_10_01;
+        pshufd XMM4, XMM2, 0b_11_00_10_01;
+        mulps  XMM3, XMM2;
+        mulps  XMM4, XMM1;
+        subps  XMM4, XMM3;
+        pshufd XMM6, XMM4, 0b_11_00_10_01;
+        movaps XMM7, XMM6;
+
+        // 1.0f / ray.dir.dot(e1xe2)
+        dpps   XMM6, XMM5, 0b0111_0111; 
+        rcpps  XMM6, XMM6;
+
+        //vec3 ab = (v0 - ray.pos) * d;
+        movups XMM3, [EAX]; //load ray.pos 
+        subps  XMM0, XMM3;
+        mulps  XMM0, XMM6;
+
+        //rayPos = e1xe2.dot(ab);
+        dpps XMM7, XMM0, 0b0111_0001;
+        mov  EAX, rayPos;
+        movss [EAX], XMM7;
+
+        //shuffle ab
+        pshufd XMM0, XMM0, 0b_11_01_00_10;
+
+        // v = ray.dir.cross(e2).dot(ab);
+        pshufd XMM3, XMM5, 0b_11_00_10_01;
+        pshufd XMM7, XMM2, 0b_11_00_10_01;
+        mulps  XMM2, XMM3;
+        mulps  XMM7, XMM5;
+        subps  XMM7, XMM2; 
+        dpps   XMM7, XMM0, 0b0111_0001;
+        mov    EAX, v;
+        movss [EAX], XMM7;
+
+        // u = e1.cross(ray.dir).dot(ab);
+        pshufd XMM7, XMM1, 0b_11_00_10_01;
+        mulps  XMM3, XMM1;
+        mulps  XMM7, XMM5;
+        subps  XMM3, XMM7;
+        dpps   XMM3, XMM0, 0b0111_0001;
+        mov    EAX, u;
+        movss [EAX], XMM3;
+      }
+    }
+    else
+    {
+      vec3 e2 = v2 - v0;
+      vec3 e1 = v1 - v0;
+
+      vec3 e1xe2 = e1.cross(e2);
+
+      float d = 1.0f / ray.dir.dot(e1xe2);
+      vec3 ab = (v0 - ray.pos) * d;
+      rayPos = e1xe2.dot(ab);
+      v = ray.dir.cross(e2).dot(ab);
+      u = e1.cross(ray.dir).dot(ab);
+    }
+    if(rayPos < 0.0f)
+      return false;
+	  if((u+v)<= 1.0f && u >= 0.0f && v >= 0.0f){
+		  return true;
+	  }
+		rayPos=float.nan;
+    u = float.nan;
+    v = float.nan;
+		return false;
+
+
+	  /+float[4] t = void;
+    float[4] dt = void;
+    version(none) //USE_SSE
     {
       float minusOne = -1.0f;
       float d;
@@ -317,7 +402,7 @@ struct Triangle {
         ray.dir.z * R2.x * R3.y;
     }
 	  if(d != 0.0f){
-      version(USE_SSE)
+      version(none) //USE_SSE
       {
         asm {
           // XMM1 = R2.yzx
@@ -390,26 +475,27 @@ struct Triangle {
       }
       else
       {
-	      dt[0] =  (ray.pos.x-v0.x)*R2.y*R3.z 
-             + (ray.pos.y-v0.y)*R2.z*R3.x 
-             + (ray.pos.z-v0.z)*R2.x*R3.y 
-             - R3.y*R2.z*(ray.pos.x-v0.x) 
-             - R3.z*R2.x*(ray.pos.y-v0.y)
-             - R3.x*R2.y*(ray.pos.z-v0.z);
+        vec3 diff = ray.pos - v0;
+	      dt[0] =  diff.x*R2.y*R3.z 
+               + diff.y*R2.z*R3.x 
+               + diff.z*R2.x*R3.y 
+               - R3.y*R2.z*diff.x 
+               - R3.z*R2.x*diff.y
+               - R3.x*R2.y*diff.z;
 	    
-        dt[1] = R3.z*(ray.pos.x-v0.x)*ray.dir.y 
-            + R3.x*(ray.pos.y-v0.y)*ray.dir.z 
-            + R3.y*(ray.pos.z-v0.z)*ray.dir.x 
-            - ray.dir.z*(ray.pos.x-v0.x)*R3.y
-            - ray.dir.x*(ray.pos.y-v0.y)*R3.z 
-            - ray.dir.y*(ray.pos.z-v0.z)*R3.x ;
+        dt[1] = R3.z*diff.x*ray.dir.y 
+              + R3.x*diff.y*ray.dir.z 
+              + R3.y*diff.z*ray.dir.x 
+              - ray.dir.z*diff.x*R3.y
+              - ray.dir.x*diff.y*R3.z 
+              - ray.dir.y*diff.z*R3.x ;
 
-	      dt[2] = (ray.pos.x-v0.x)*R2.y*ray.dir.z 
-            + (ray.pos.y-v0.y)*R2.z*ray.dir.x 
-            + (ray.pos.z-v0.z)*R2.x*ray.dir.y 
-            - ray.dir.y*R2.z*(ray.pos.x-v0.x) 
-            - ray.dir.z*R2.x*(ray.pos.y-v0.y)
-            - ray.dir.x*R2.y*(ray.pos.z-v0.z) ;
+	      dt[2] = diff.x*R2.y*ray.dir.z 
+              + diff.y*R2.z*ray.dir.x 
+              + diff.z*R2.x*ray.dir.y 
+              - ray.dir.y*R2.z*diff.x 
+              - ray.dir.z*R2.x*diff.y
+              - ray.dir.x*R2.y*diff.z ;
 	      t[0] = dt[0] / d;
 	      t[1] = dt[1] / d;
 	      t[2] = dt[2] / d;
@@ -431,7 +517,7 @@ struct Triangle {
 		rayPos=float.nan;
     u = float.nan;
     v = float.nan;
-		return false;
+		return false;+/
 	}
 
   /// the area of the triangle
