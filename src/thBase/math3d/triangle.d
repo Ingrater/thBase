@@ -525,7 +525,7 @@ struct Triangle {
   {
     vec3 e1 = v1 - v0;
     vec3 e2 = v2 - v0;
-    vec3 heightBase = e1.dot(e2);
+    float heightBase = e1.dot(e2);
     return (e1 - e2 * heightBase).length * e2.length * 0.5f;
   }
 }
@@ -632,4 +632,7 @@ unittest
 {
   auto t1 = Triangle(vec3(1,0,0), vec3(0,1,0), vec3(1,1,0));
   assert(t1.area.epsilonCompare(0.5f));
+
+  auto t2 = Triangle(vec3(1,0,0), vec3(0,2,0), vec3(2,0,0));
+  assert(t2.area.epsilonCompare(1.0f));
 }
