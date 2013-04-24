@@ -274,6 +274,7 @@ struct Triangle {
 	bool intersects(Ray ray, ref float rayPos, ref float u, ref float v) const {    
     version(USE_SSE)
     {
+      __gshared float ZERO = 0.0f;
       asm {
         mov EDX, this;
         movups XMM0, [EDX]; //load v0
@@ -298,6 +299,8 @@ struct Triangle {
 
         // 1.0f / ray.dir.dot(e1xe2)
         dpps   XMM6, XMM5, 0b0111_0111; 
+        ucomiss XMM6, ZERO; 
+        je notHit;
         rcpps  XMM6, XMM6;
 
         //vec3 ab = (v0 - ray.pos) * d;
@@ -351,6 +354,7 @@ struct Triangle {
 	  if((u+v)<= 1.0f && u >= 0.0f && v >= 0.0f){
 		  return true;
 	  }
+    notHit:
 		rayPos=float.nan;
     u = float.nan;
     v = float.nan;
