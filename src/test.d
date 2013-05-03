@@ -20,24 +20,35 @@ version(DigitalMars)
   }
 }
 
+int convertToInt(float f)
+{
+  return cast(int)f;
+}
+
+int convertToIntSSE(float f)
+{
+  int result = void;
+  asm {
+    lea EAX, f;
+    lea EBX, result;
+    movss XMM0, [EAX];
+    cvtss2si EAX, XMM0;
+    mov [EBX], EAX;
+  }
+  return result;
+}
+
 import core.stdc.string;
 import thBase.timer;
 import thBase.math3d.all;
+import thBase.timer;
+import thBase.io;
 
   int main(string[] args)
   { 
-    auto r = vec3(0,-1,0);
-    auto v = vec3(1,0,0);
-    auto res = v.cross(r);
+    auto timer = cast(shared(Timer))New!Timer();
+    scope(exit) Delete(timer);
 
-    v = vec3(-1,0,0);
-    res = v.cross(r);
-
-    v = vec3(0,0,1);
-    res = v.cross(r);
-
-    v = vec3(0,0,-1);
-    res = v.cross(r);
     return 0;
   }
 }

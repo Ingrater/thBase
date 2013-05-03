@@ -384,3 +384,59 @@ void sort(T)(T data) if(!isRCArray!T)
     sort(data[(smallerIndex+1)..$]);
   }  
 }
+
+/**
+ * does a binary search for target
+ */
+ptrdiff_t binarySearch(alias less, T,ET)(T data, ET target) if(isRCArray!T)
+{
+  return binarySearch!(less)(data[], element);
+}
+
+/// ditto
+ptrdiff_t binarySearch(alias less, T, ET)(T data, ET target) if(!isRCArray!T)
+{
+  assert(data.length < ptrdiff_t.max, "array to big for binary search");
+  ptrdiff_t lowerBound = 0;
+  ptrdiff_t upperBound = data.length - 1;
+  while(lowerBound < upperBound)
+  {
+    ptrdiff_t middle = lowerBound + (upperBound - lowerBound) / 2;
+    
+    if(less(data[middle], target))
+      lowerBound = middle + 1;
+    else if(less(target, data[middle]))
+      upperBound = middle - 1;
+    else
+      return middle;
+  }
+  return -1;
+}
+
+/**
+* does a binary search for target, returns the index the element should be at if it is not found
+*/
+size_t binarySearchInsertIndex(alias less, T,ET)(T data, ET target) if(isRCArray!T)
+{
+  return binarySearchInsertIndex!(less)(data[], element);
+}
+
+size_t binarySearchInsertIndex(alias less, T, ET)(T data, ET target) if(!isRCArray!T)
+{
+  if(data.length == 0)
+    return 0;
+  size_t lowerBound = 0;
+  size_t upperBound = cast(size_t)(data.length - 1);
+  while(lowerBound < upperBound)
+  {
+    size_t middle = lowerBound + (upperBound - lowerBound) / 2;
+
+    if(less(data[middle], target))
+      lowerBound = middle + 1;
+    else if(less(target, data[middle]))
+      upperBound = middle - 1;
+    else
+      return middle;
+  }
+  return lowerBound;
+}

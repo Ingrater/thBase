@@ -26,7 +26,7 @@ public:
 	{
 		version(Windows){
 			if(!QueryPerformanceFrequency(cast(long*)&m_Frequency)){
-				throw new Exception("No performance timer aviable");
+				throw new Exception("No performance timer available");
 			}
 			QueryPerformanceCounter(cast(long*)&m_Start);
 			m_Resolution = 1.0 / cast(double)m_Frequency;	

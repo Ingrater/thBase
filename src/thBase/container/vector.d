@@ -400,10 +400,24 @@ public:
   void removeAtIndex(size_t index)
   {
     for(size_t i=index;i<m_Size-1;i++){
-      m_Data[i] = m_Data[i+1];
+      m_Data[i] = m_Data[i+1]; //TODO use memmove
     }
     m_Size--;
     callDtor(&m_Data[m_Size]);
+  }
+
+  void insertAtIndex(U)(size_t index, auto ref U value)
+  {
+    assert(index <= m_Size, "out of bounds access");
+    resize(m_Size + 1);
+    if(m_Size > 1)
+    {
+      for(size_t i=m_Size; i > index; i--)
+      {
+        m_Data[i] = m_Data[i-1]; //TODO use memmove
+      }
+    }
+    m_Data[index] = value;
   }
 	
 	void insertionSort(scope bool delegate(ref const(T) lh, ref const(T) rh) cmp){
