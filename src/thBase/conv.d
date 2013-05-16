@@ -183,8 +183,8 @@ string EnumToStringGenerate(T,string templateVar = "T", string pre = "")(string 
 	return res;
 }
 
-string EnumToString(T)(T value){
-	mixin(EnumToStringGenerate!(T)("value"));
+string EnumToString(string pre = "", T)(T value){
+	mixin(EnumToStringGenerate!(T, "T", pre)("value"));
 }
 
 unittest
@@ -199,4 +199,7 @@ unittest
   assert(EnumToString(Test.Value1) == "Value1");
   assert(EnumToString(Test.Value2) == "Value2");
   assert(EnumToString(Test.Value3) == "Value3");
+  assert(EnumToString!"Test."(Test.Value1) == "Test.Value1");
+  assert(EnumToString!"Test."(Test.Value2) == "Test.Value2");
+  assert(EnumToString!"Test."(Test.Value3) == "Test.Value3");
 }

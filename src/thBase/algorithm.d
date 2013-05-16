@@ -3,6 +3,7 @@ import thBase.traits;
 import core.traits;
 import core.refcounted;
 import std.traits;
+import core.stdc.string : memcpy;
 
 version(unittest) import thBase.devhelper;
 
@@ -182,7 +183,7 @@ void swap(T)(ref T value1, ref T value2)
     //if the value has a postblit operator it means that it most likley tracks a big block of memory internally
     //using memcpy to swap will avoid calling assignment or postblit operations
     //which is valid because value types don't have identity
-    void[T.sizeof] temp;
+    void[T.sizeof] temp = void;
     memcpy(temp.ptr, &value1, T.sizeof);
     memcpy(&value1, &value2, T.sizeof);
     memcpy(&value2, temp.ptr, T.sizeof);
