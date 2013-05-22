@@ -11,6 +11,7 @@ import thBase.allocator;
 import thBase.logging;
 public import thBase.types;
 import thBase.math;
+import thBase.casts;
 
 /**
 * Loose Octree 
@@ -521,7 +522,7 @@ public:
       {
         result.minDepth = min(depth, result.minDepth);
         result.maxDepth = max(depth, result.maxDepth);
-        result.maxNumObjects = max(result.maxNumObjects, node.m_Objects.size);
+        result.maxNumObjects = max(result.maxNumObjects, int_cast!uint(node.m_Objects.size));
       }
       foreach(child; node.childs)
         recurse(child, depth+1);
