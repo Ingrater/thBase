@@ -226,9 +226,9 @@ class FileInStream : IInputStream
     RawFile m_file;
 
   public:
-    this(string filename)
+    this(const(char)[] filename)
     {
-      m_file = RawFile(filename,"rb");
+      m_file = RawFile(filename, "rb");
       if(!m_file.isOpen())
       {
         throw New!StreamException(format("Couldn't open file '%s' for reading", filename));

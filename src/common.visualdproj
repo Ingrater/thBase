@@ -536,8 +536,8 @@ cd %CWD%</preBuildCommand>
   <useArrayBounds>0</useArrayBounds>
   <noboundscheck>1</noboundscheck>
   <useSwitchError>0</useSwitchError>
-  <useUnitTests>1</useUnitTests>
-  <useInline>1</useInline>
+  <useUnitTests>0</useUnitTests>
+  <useInline>0</useInline>
   <release>1</release>
   <preservePaths>0</preservePaths>
   <warnings>0</warnings>
@@ -550,8 +550,8 @@ cd %CWD%</preBuildCommand>
   <Dversion>2</Dversion>
   <ignoreUnsupportedPragmas>0</ignoreUnsupportedPragmas>
   <compiler>0</compiler>
-  <otherDMD>0</otherDMD>
-  <program>$(DMDInstallDir)windows\bin\dmd.exe</program>
+  <otherDMD>1</otherDMD>
+  <program>$(DMDInstallDir)windows\bin-nostd\dmd.exe</program>
   <imppath>$(ProjectDir)\..\..\druntime\import;$(ProjectDir)\..\..\phobos;</imppath>
   <fileImppath />
   <outdir>$(ConfigurationName)</outdir>
@@ -594,7 +594,7 @@ cd %CWD%</preBuildCommand>
   <resfile />
   <exefile>$(OutDir)\$(ProjectName).exe</exefile>
   <useStdLibPath>1</useStdLibPath>
-  <additionalOptions>-defaultlib=phobosnogc -debuglib=phobosnogc $(ProjectDir)\..\..\druntime\lib\gcstub.obj</additionalOptions>
+  <additionalOptions>-defaultlib=phobosnogc64 -debuglib=phobosnogc64 -L/LIBPATH:&quot;$(ProjectDir)\..\..\thBase\lib&quot; -L/LIBPATH:&quot;$(ProjectDir)\..\..\phobos&quot;</additionalOptions>
   <preBuildCommand>set CWD=%CD%
 cd $(ProjectDir)\..\..\druntime
 $(DMDInstallDir)windows\bin\make -f win32nogc.mak

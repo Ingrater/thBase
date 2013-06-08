@@ -93,7 +93,6 @@ class Chunkfile
     {
       assert(m_operation != Operation.Write, "can not read in write operation");
       assert(m_readInfo.size == 0 || m_readInfo.top.bytesLeft >= bytes, "reading over chunk boundary");
-      size_t size;
       if(m_operation == Operation.Read)
       {
         m_file.skip(bytes);
