@@ -1,7 +1,10 @@
 module thBase.devhelper;
 import thBase.format;
+import thBase.stream;
 import core.allocator;
 import core.refcounted;
+import core.sys.windows.stacktrace;
+import core.atomic;
 
 struct LeakChecker
 {
@@ -93,4 +96,140 @@ unittest {
     assert(0,"leak detector test did leak");
   }
 }
+}
+
+class DebugRefCounted
+{
+private:
+  shared(int) m_iRefCount = 0;
+  IAllocator m_allocator;
+
+  final void AddReference()
+  {
+    char[32] filename;
+    auto len = formatStatic(filename, "%x.log", cast(void*)this);
+    auto s = New!FileOutStream(filename[0..len], FileOutStream.Append.yes);
+    scope(exit) Delete(s);
+    atomicOp!"+="(m_iRefCount,1);
+    s.format("--------------Adding reference %d----------------\n", m_iRefCount);
+    long[20] addresses;
+    auto addr = StackTrace.traceAddresses(addresses, false, 2);
+    auto trace = StackTrace.resolveAddresses(addr);
+    foreach(t; trace)
+    {
+      s.format("%s\n", t[]);
+    }
+  }
+
+  // RemoveRefernce needs to be private otherwise the invariant handler
+  // gets called on a already destroyed and freed object
+  final void RemoveReference()
+  {
+    char[32] filename;
+    auto len = formatStatic(filename, "%x.log", cast(void*)this);
+    auto s = New!FileOutStream(filename[0..len], FileOutStream.Append.yes);
+    scope(exit) Delete(s);
+    int result = atomicOp!"-="(m_iRefCount,1);
+    s.format("--------------Removing reference %d----------------\n", m_iRefCount);
+    long[20] addresses;
+    auto addr = StackTrace.traceAddresses(addresses, false, 2);
+    auto trace = StackTrace.resolveAddresses(addr);
+    foreach(t; trace)
+    {
+      s.format("%s\n", t[]);
+    }
+    assert(result >= 0,"ref count is invalid");
+    if(result == 0)
+    {
+      this.Release(s);
+    }
+  }
+
+protected:
+  void Release(FileOutStream s)
+  {
+    s.format("------------------Deleted----------------------");
+    assert(m_allocator !is null, "no allocator given during construction!");
+    auto allocator = m_allocator;
+    clear(this);
+    allocator.FreeMemory(cast(void*)this);
+  }
+
+public:
+  final void SetAllocator(IAllocator allocator)
+  {
+    m_allocator = allocator;
+  }
+
+  @property final int refcount()
+  {
+    return m_iRefCount;
+  }
+}
+
+template DebugSmartPtrType(T : DebugSmartPtr!T)
+{
+  alias T DebugSmartPtrType;
+}
+
+struct DebugSmartPtr(T)
+{
+  static assert(is(T : DebugRefCounted),T.stringof ~ " is not a debug reference counted object");
+
+  T ptr;
+  alias ptr this;
+  alias typeof(this) this_t;
+
+  this(T obj)
+  {
+    ptr = obj;
+    ptr.AddReference();
+  }
+
+  this(this)
+  {
+    if(ptr !is null)
+      ptr.AddReference();
+  }
+
+  ~this()
+  {
+    if(ptr !is null)
+      ptr.RemoveReference();
+  }
+
+  //ugly workaround
+  private mixin template _workaround4424()
+  {
+    @disable void opAssign(typeof(this) );
+  }
+  mixin _workaround4424;
+
+  //assignment to null
+  void opAssign(U)(U obj) if(is(U == typeof(null)))
+  {
+    if(ptr !is null)
+      ptr.RemoveReference();
+    ptr = null;
+  }
+
+  //asignment from a normal reference
+  void opAssign(U)(U obj) if(!is(U == typeof(null)) && (!is(U V : DebugSmartPtr!V) && (is(U == T) || is(U : T))))
+  {
+    if(ptr !is null)
+      ptr.RemoveReference();
+    ptr = obj;
+    if(ptr !is null)
+      ptr.AddReference();
+  }
+
+  //assignment from another smart ptr
+  void opAssign(U)(auto ref U rh) if(is(U V : DebugSmartPtr!V) && is(DebugSmartPtrType!U : T))
+  {
+    if(ptr !is null)
+      ptr.RemoveReference();
+    ptr = rh.ptr;
+    if(ptr !is null)
+      ptr.AddReference();
+  }
 }

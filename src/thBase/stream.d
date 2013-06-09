@@ -200,13 +200,28 @@ interface ISeekableOutputStream : IOutputStream
 /** unbuffered file stream **/
 class FileOutStream : IOutputStream
 {
+  public:
+    enum Append
+    {
+      no,
+      yes
+    }
+
   private:
     RawFile file;
 
   public:
-    this(string filename)
+    this(const(char)[] filename)
     {
-      file = RawFile(filename,"wb");
+      this(filename, Append.no);
+    }
+
+    this(const(char)[] filename, Append append)
+    {
+      const(char)[] mode = "wb";
+      if(append == Append.yes)
+        mode = "ab";
+      file = RawFile(filename, mode);
       if(!file.isOpen())
       {
         throw New!StreamException(thBase.format.format("Couldn't open file '%s' for writing", filename));

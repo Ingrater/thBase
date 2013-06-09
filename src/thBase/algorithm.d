@@ -439,5 +439,27 @@ size_t binarySearchInsertIndex(alias less, T, ET)(T data, ET target) if(!isRCArr
     else
       return middle;
   }
+  if(less(data[lowerBound], target))
+    return lowerBound+1;
   return lowerBound;
+}
+
+unittest {
+  int[4] a;
+  a[0] = 2;
+  a[1] = 4;
+  a[2] = 6;
+  a[3] = 8;
+  assert(binarySearchInsertIndex!((x,y){return x < y;})(a[0..3], 1) == 0);
+  assert(binarySearchInsertIndex!((x,y){return x < y;})(a[0..3], 0) == 0);
+  assert(binarySearchInsertIndex!((x,y){return x < y;})(a[0..3], 3) == 1);
+  assert(binarySearchInsertIndex!((x,y){return x < y;})(a[0..3], 5) == 2);
+  assert(binarySearchInsertIndex!((x,y){return x < y;})(a[0..3], 7) == 3);
+
+  assert(binarySearchInsertIndex!((x,y){return x < y;})(a, 1) == 0);
+  assert(binarySearchInsertIndex!((x,y){return x < y;})(a, 0) == 0);
+  assert(binarySearchInsertIndex!((x,y){return x < y;})(a, 3) == 1);
+  assert(binarySearchInsertIndex!((x,y){return x < y;})(a, 5) == 2);
+  assert(binarySearchInsertIndex!((x,y){return x < y;})(a, 7) == 3);
+  assert(binarySearchInsertIndex!((x,y){return x < y;})(a, 9) == 4);
 }
