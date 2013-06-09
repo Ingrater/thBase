@@ -426,8 +426,9 @@ size_t binarySearchInsertIndex(alias less, T, ET)(T data, ET target) if(!isRCArr
 {
   if(data.length == 0)
     return 0;
-  size_t lowerBound = 0;
-  size_t upperBound = cast(size_t)(data.length - 1);
+  assert(data.length < ptrdiff_t.max, "array to big for binary search");
+  ptrdiff_t lowerBound = 0;
+  ptrdiff_t upperBound = data.length - 1;
   while(lowerBound < upperBound)
   {
     size_t middle = lowerBound + (upperBound - lowerBound) / 2;
