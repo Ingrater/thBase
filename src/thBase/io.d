@@ -176,6 +176,11 @@ class Stdout : IOutputStream
     size_t m_bytesBuffered;
 
   public:
+    ~this()
+    {
+      flush();
+    }
+
     final void flush()
     {
       g_outMutex.lock();

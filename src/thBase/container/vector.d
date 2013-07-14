@@ -270,6 +270,7 @@ public:
 	void opSliceAssign(T[] array, size_t start, size_t stop)
 	in {
 		assert(array.length == stop - start);
+    assert(start < m_Size && stop <= m_Size, "out of bounds access");
 	}
 	body
 	{
