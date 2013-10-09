@@ -7,6 +7,12 @@ import core.allocator;
 import std.traits;
 import thBase.traits;
 
+enum RemoveEntry : bool
+{
+  no = false,
+  yes = true
+}
+
 /**
  * array with dynamic size
  */
@@ -405,6 +411,22 @@ public:
     }
     m_Size--;
     callDtor(&m_Data[m_Size]);
+  }
+
+  size_t removeIf(RemoveEntry delegate(size_t, ref T) condition)
+  {
+    size_t numRemoved = 0;
+    for(size_t i=0; i < m_Size;)
+    {
+      if(condition(i, m_Data[i]) == RemoveEntry.yes)
+      {
+        removeAtIndex(i);
+        numRemoved++;
+      }
+      else
+        i++;
+    }
+    return numRemoved;
   }
 
   void insertAtIndex(U)(size_t index, auto ref U value)
