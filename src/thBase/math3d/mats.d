@@ -404,15 +404,16 @@ struct mat4 {
 	 *  pFar = far clipping plane distance
 	 */
 	static const(mat4) ProjectionMatrix(float pViewAngle, float pAspectRatio, float pNear, float pFar) pure {
+    import core.stdc.math;
 	  mat4 res;
 	  res.Set(0.0f);
 	  pViewAngle = pViewAngle / 180.0f * PI;
 	  // X-Achse
-	  res.f[0] = 1 / tan( pViewAngle/2) * pAspectRatio;
+	  res.f[0] = 1.0f / tanf( pViewAngle/2) * pAspectRatio;
 	  res.f[1] = 0.0f; res.f[2] = 0.0f; res.f[3] = 0.0f;
 
 	  // Y-Achse
-	  res.f[5] = 1 / tan( pViewAngle/2);
+	  res.f[5] = 1.0f / tanf( pViewAngle/2);
 	  res.f[4] = 0.0f; res.f[6] = 0.0f; res.f[7] = 0.0f;
 
 	  // Z-Achse
