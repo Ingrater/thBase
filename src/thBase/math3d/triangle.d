@@ -619,7 +619,7 @@ unittest
                    vec3(uniform(-100.0f, 100.0f, gen), uniform(-100.0f, 100.0f, gen), uniform(-100.0f, 100.0f, gen)),
                    vec3(uniform(-100.0f, 100.0f, gen), uniform(-100.0f, 100.0f, gen), uniform(-100.0f, 100.0f, gen)));
     }
-    shared(Timer) timer = New!(shared(Timer))();
+    shared(Timer) timer = cast(shared(Timer))New!Timer();
     scope(exit) Delete(timer);
     auto start = Zeitpunkt(timer);
     foreach(ref t; ts)

@@ -541,12 +541,12 @@ else
                 {
                   void* p = addr + info.offset;
                   if(p !is null)
-                    PatchObject(*cast(void**)p, plainType.next);
+                    PatchObject(*cast(void**)p, plainType.nextTypeInfo);
                 }
                 break;
               case TypeInfo.Type.Array:
                 {
-                  auto elementType = unqualHelper(plainType.next);
+                  auto elementType = unqualHelper(plainType.nextTypeInfo);
                   immutable elementSize = elementType.tsize();
                   void[] array = *cast(void[]*)(addr + info.offset);
 
@@ -567,7 +567,7 @@ else
                     {
                       void* p = *cast(void**)cur;
                       if(p !is null)
-                        PatchObject(p, elementType.next);
+                        PatchObject(p, elementType.nextTypeInfo);
                     }
                   }
                   else
@@ -582,7 +582,7 @@ else
               case TypeInfo.Type.StaticArray:
                 {
                   auto t = cast(const(TypeInfo_StaticArray))cast(void*)plainType;
-                  auto elementType = unqualHelper(plainType.next);
+                  auto elementType = unqualHelper(plainType.nextTypeInfo);
                   immutable elementSize = elementType.tsize();
 
                   void* cur = addr + info.offset;
@@ -602,7 +602,7 @@ else
                     {
                       void* p = *cast(void**)cur;
                       if(p !is null)
-                        PatchObject(p, elementType.next);
+                        PatchObject(p, elementType.nextTypeInfo);
                     }
                   }
                   else
@@ -691,7 +691,7 @@ else
         if(type is null) return null;
         auto tt = type.type;
         if(tt == TypeInfo.Type.Const || tt == TypeInfo.Type.Immutable || tt == TypeInfo.Type.Shared)
-          return unqualHelper(type.next());
+          return unqualHelper(type.nextTypeInfo);
         return type;
       }
 
@@ -810,7 +810,7 @@ else
               stream.format("%s%s%s%s", spaces[0..depth*2], name, fill, "function");
               break;
             case TypeInfo.Type.Enum:
-              serialize(addr, name, type.next);
+              serialize(addr, name, type.nextTypeInfo);
               break;
             default:
               version(GNU)
@@ -888,7 +888,7 @@ else
 
         void serializeArray(void* addr, const(char)[] name, const TypeInfo type)
         {
-          auto elementType = unqualHelper(type.next);
+          auto elementType = unqualHelper(type.nextTypeInfo);
           if(elementType.type == TypeInfo.Type.Char)
           {
             auto str = *cast(const(char)[]*)addr;
@@ -923,7 +923,7 @@ else
         void serializeStaticArray(void* addr, const(char)[] name, const TypeInfo type)
         {
           auto t = cast(const(TypeInfo_StaticArray))cast(void*)type;
-          auto elementType = unqualHelper(type.next);
+          auto elementType = unqualHelper(type.nextTypeInfo);
           if(elementType.type == TypeInfo.Type.Char)
           {
             auto str = (cast(const(char)*)addr)[0..t.len];

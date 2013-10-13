@@ -112,9 +112,10 @@ private:
     scope(exit) Delete(s);
     atomicOp!"+="(m_iRefCount,1);
     s.format("--------------Adding reference %d----------------\n", m_iRefCount);
-    long[20] addresses;
-    auto addr = StackTrace.traceAddresses(addresses, false, 2);
-    auto trace = StackTrace.resolveAddresses(addr);
+    ulong[20] addresses;
+    rcstring[20] lines;
+    auto addr = StackTrace.trace(addresses, 2);
+    auto trace = StackTrace.resolve(addr, lines);
     foreach(t; trace)
     {
       s.format("%s\n", t[]);
@@ -131,9 +132,10 @@ private:
     scope(exit) Delete(s);
     int result = atomicOp!"-="(m_iRefCount,1);
     s.format("--------------Removing reference %d----------------\n", m_iRefCount);
-    long[20] addresses;
-    auto addr = StackTrace.traceAddresses(addresses, false, 2);
-    auto trace = StackTrace.resolveAddresses(addr);
+    ulong[20] addresses;
+    rcstring[20] lines;
+    auto addr = StackTrace.trace(addresses, 2);
+    auto trace = StackTrace.resolve(addr, lines);
     foreach(t; trace)
     {
       s.format("%s\n", t[]);

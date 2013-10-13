@@ -29,7 +29,7 @@ void Init()
 void AssertHandler( string file, size_t line, string msg )
 {
   char[2048] buffer;
-  sprintf(buffer, "Assertion file '%.*s' line %d: %.*s\n", file.length, file.ptr, line, msg.length, msg.ptr);
+  sprintf(buffer.ptr, "Assertion file '%.*s' line %d: %.*s\n", file.length, file.ptr, line, msg.length, msg.ptr);
   OutputDebugStringA(buffer.ptr);
   int userResponse = 1;
   version(none) version(DigitalMars) version(Win64)

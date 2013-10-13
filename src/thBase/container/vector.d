@@ -564,7 +564,7 @@ unittest {
 
 	  vec3.resize(10000);
   	
-	  auto timer = new shared(Timer)();
+	  auto timer = cast(shared(Timer))New!Timer();
     scope(exit) Delete(timer);
   	
 	  double time1,time2;

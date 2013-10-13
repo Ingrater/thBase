@@ -14,7 +14,7 @@ const(TypeInfo) unqualTypeInfo(const(TypeInfo) info)
 {
   auto tt = info.type;
   if(tt == TypeInfo.Type.Const || tt == TypeInfo.Type.Immutable || tt == TypeInfo.Type.Shared)
-    return unqualTypeInfo(info.next);
+    return unqualTypeInfo(info.nextTypeInfo);
   return info;
 }
 
@@ -350,7 +350,7 @@ size_t formatDo(PP)(ref PP putPolicy, const(char)[] fmt, TypeInfo[] arguments, v
           {
             case TypeInfo.Type.Array:
             {
-              auto elementType = unqualTypeInfo(strippedType.next());
+              auto elementType = unqualTypeInfo(strippedType.nextTypeInfo);
               auto et = elementType.type;
 
               switch(et)
@@ -416,7 +416,7 @@ size_t formatDo(PP)(ref PP putPolicy, const(char)[] fmt, TypeInfo[] arguments, v
           case TypeInfo.Type.Pointer:
             {
               auto value = va_arg!(const(char)*)(argptr);
-              auto targetType = unqualTypeInfo(strippedType.next());
+              auto targetType = unqualTypeInfo(strippedType.nextTypeInfo);
               auto t = targetType.type;
             
               if(t == TypeInfo.Type.Char)

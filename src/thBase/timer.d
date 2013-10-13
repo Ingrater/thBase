@@ -10,7 +10,7 @@ version(linux){
 /**
  * a very percicse hardware timer
  */
-shared class Timer {
+class Timer {
 private:
 	ulong m_Start;
 	version(Windows){
@@ -40,7 +40,7 @@ public:
 	 * Get elapsed time as float,
 	 * might lose percision over time
 	 */
-	float GetTimeFloat()
+	float GetTimeFloat() shared
 	{
 		version(Windows){
 			ulong Time;
@@ -57,7 +57,8 @@ public:
 	 * Get elapsed time as double
 	 * might lose percision over time
 	 */
-	double GetTimeDouble(){
+	double GetTimeDouble() shared
+  {
 		version(Windows){
 			ulong Time;
 			QueryPerformanceCounter(cast(long*)&Time);
@@ -72,7 +73,7 @@ public:
 	/**
 	 * Gets time as 64 bit int, does not loose percision
 	 */
-	ulong GetTime()
+	ulong GetTime() shared
 	{
 		ulong TimeDiff;
 		version(Windows){
@@ -85,14 +86,14 @@ public:
 	}
 	
 	version(Windows){
-		double GetResolution(){ return m_Resolution; }
+		double GetResolution() shared { return m_Resolution; }
 	}
 	
 	version(linux){
 		/**
 		 * Returns the current real time in micro seconds.
 		 */
-		ulong getCurrentTime(){
+		ulong getCurrentTime() shared {
 			timespec Time;
 			clock_gettime(CLOCK_REALTIME, &Time);
 			return cast(ulong)(Time.tv_nsec / 1_000L) + cast(ulong)(Time.tv_sec * 1_000_000L);
@@ -105,7 +106,7 @@ public:
 	 * networked clocks. Effectively the start time of all clients is set to the
 	 * same value.
 	 */
-	ulong getStartTime()
+	ulong getStartTime() shared
 	{
 		version(Windows)
 			return m_Start * 1000 / m_Frequency;
@@ -117,7 +118,8 @@ public:
 	 * Sets the start time of this clock to the specified time. Expects the time
 	 * in milliseconds and converts it to a internal representation if necessary.
 	 */
-	void setStartTime(ulong start){
+	void setStartTime(ulong start) shared
+  {
 		version(Windows)
 			m_Start = start / 1000 * m_Frequency;
 		version(linux)

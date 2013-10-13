@@ -44,10 +44,20 @@ import thBase.math3d.all;
 import thBase.timer;
 import thBase.io;
 
+  struct wrapper(T)
+  {
+    T m_value;
+  }
+
   int main(string[] args)
   { 
     auto timer = cast(shared(Timer))New!Timer();
     scope(exit) Delete(timer);
+
+    auto val1 = wrapper!(int)();
+    auto val2 = wrapper!int();
+
+    const(char)[] str = "hello world";
 
     return 0;
   }

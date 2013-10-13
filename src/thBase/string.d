@@ -665,7 +665,7 @@ string stackCString(string invar, string outvar)
 {
   string result = "char[] " ~ outvar ~ "; char[256] "~outvar~"smallBuf;";
   result ~=       "if(" ~ invar ~ ".length < "~outvar~"smallBuf.length)";
-  result ~=         outvar ~ " = "~outvar~"smallBuf;";
+  result ~=         outvar ~ " = "~outvar~"smallBuf[];";
   result ~=       "else ";
   result ~=         outvar ~ " = (cast(char*)ThreadLocalStackAllocator.globalInstance.AllocateMemory(" ~ invar ~ ".length+1))[0.." ~ invar ~ ".length+1];";
   result ~=       "scope(exit) if(" ~ invar ~ ".length >= "~outvar~"smallBuf.length) ThreadLocalStackAllocator.globalInstance.FreeMemory(" ~ outvar ~ ".ptr);";
