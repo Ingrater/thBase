@@ -16,5 +16,13 @@ unittest
 
     assert(!_T("")); //empty string should evaluate to false
 
+    static rcstring testFunc1(rcstring str)
+    {
+      str ~= "World!";
+      return str;
+    }
+
+    rcstring str3 = "Hello ";
+    str3 = testFunc1(str3);
   }
 }

@@ -164,7 +164,7 @@ public:
 	}
 	alias size length;
 
-  void push_back(U : T)(auto ref U element)
+  void push_back(U)(auto ref U element) if(is(StripModifier!U == T))
   {
     if(m_Data.length == m_Size)
     {
@@ -183,7 +183,7 @@ public:
 	/**
   * adds multiple elements to the end of the vector
   */
-	void push_back(U : T[])(U elements)
+	void push_back(U)(U elements) if(thBase.traits.isArray!U && is(StripModifier!(arrayType!U) == T))
   {
 		if(m_Size + elements.length > m_Data.length){
 			size_t newSize = m_Data.length * 2;
@@ -196,13 +196,13 @@ public:
 		m_Size += elements.length;
 	}
 	
-	void opOpAssign(string op, U : T)(U element) if(op == "~")
+	void opOpAssign(string op, U)(U element) if(op == "~" && is(StripModifier!U == T))
 	{
 		push_back(element);
 	}
 	
 	// ~= 
-	void opOpAssign(string op, U : T[])(U elements) if(op == "~")
+	void opOpAssign(string op, U)(U elements) if(op == "~" && thBase.traits.isArray!U && is(StripModifier!(arrayType!U) == T))
 	{
 		push_back(elements);
 	}
@@ -550,6 +550,10 @@ unittest {
 	  assert(vec1.size() == 7);
 	  assert(vec1[5] == 2);
 	  assert(vec1[6] == 3);
+    int data2[2];
+    data2[0] = 4; data2[1] = 5;
+    vec1.push_back(cast(const(int)[])data2[]);
+    vec1 ~= cast(const(int)[])data2[];
   	
 	  auto vec2 = New!(Vector!(int))(a);
     scope(exit) Delete(vec2);
