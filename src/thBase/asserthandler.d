@@ -18,7 +18,7 @@ version(none) version(Win64)
 
 void Init()
 {
-  setAssertHandler(&AssertHandler);
+  core.exception.assertHandler = &AssertHandler;
   version(none) version(Win64)
   {
     auto handle = LoadLibraryA("msvcrt.dll".ptr);
@@ -26,7 +26,7 @@ void Init()
   }
 }
 
-void AssertHandler( string file, size_t line, string msg )
+void AssertHandler( string file, size_t line, string msg ) nothrow
 {
   char[2048] buffer;
   sprintf(buffer.ptr, "Assertion file '%.*s' line %d: %.*s\n", file.length, file.ptr, line, msg.length, msg.ptr);

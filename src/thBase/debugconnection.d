@@ -371,6 +371,6 @@ void sendDebugMessage(scope const(char)[] channelName, const(void[]) data)
 
     uint dataLength = int_cast!uint(data.length);
     bucket.toSend ~= (cast(byte*)&dataLength)[0..typeof(dataLength).sizeof];
-    bucket.toSend ~= cast(const(byte[]))data;
+    bucket.toSend ~= cast(byte[])data;
   }
 }
