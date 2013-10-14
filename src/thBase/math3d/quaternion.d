@@ -3,6 +3,7 @@ module thBase.math3d.quaternion;
 import thBase.math3d.vecs;
 import thBase.math3d.mats;
 import std.math;
+import core.stdc.math;
 import thBase.math : FloatEpsilon;
 import core.stdc.stdio;
 import rtti;
@@ -26,12 +27,12 @@ struct Quaternion {
 	this(vec3 axis, float angle){
 	  angle = angle / 180.0f * PI;
 	  angle /= 2;
-	  float temp = sin(angle);
+	  float temp = sinf(angle);
 	  
 	  this.x = axis.x * temp;
 	  this.y = axis.y * temp;
 	  this.z = axis.z * temp;
-	  this.angle = cos(angle);
+	  this.angle = cosf(angle);
 	}
 	
 	//ditto
@@ -46,7 +47,7 @@ struct Quaternion {
 		float trace = 1.0f + rot.f[0] + rot.f[4] + rot.f[8];
     if(trace > 0.00000001f)
     {
-      float S = sqrt(trace) * 2.0f;
+      float S = sqrtf(trace) * 2.0f;
       this.x = ( rot.f[7] - rot.f[5] ) / S;
       this.y = ( rot.f[2] - rot.f[6] ) / S;
       this.z = ( rot.f[3] - rot.f[1] ) / S;
@@ -56,7 +57,7 @@ struct Quaternion {
     {
       if( rot.f[0] > rot.f[4] && rot.f[0] > rot.f[8] ) //Column 0:
       {
-        float S = sqrt( 1.0f + rot.f[0] - rot.f[4] - rot.f[8] ) * 2;
+        float S = sqrtf( 1.0f + rot.f[0] - rot.f[4] - rot.f[8] ) * 2;
         this.x = 0.25f * S;
         this.y = ( rot.f[3] + rot.f[1] ) / S;
         this.z = ( rot.f[2] + rot.f[6] ) / S;
@@ -64,7 +65,7 @@ struct Quaternion {
       }
       else if( rot.f[4] > rot.f[8] ) // Column 1:
       { 
-        float S = sqrt( 1.0f + rot.f[4] - rot.f[0] - rot.f[8] ) * 2.0f;
+        float S = sqrtf( 1.0f + rot.f[4] - rot.f[0] - rot.f[8] ) * 2.0f;
         this.x = ( rot.f[3] + rot.f[1] ) / S;
         this.y = 0.25f * S;
         this.z = ( rot.f[7] + rot.f[5] ) / S;
@@ -72,7 +73,7 @@ struct Quaternion {
       }
       else 
       {
-        float S = sqrt( 1.0f + rot.f[8] - rot.f[0] - rot.f[4] ) * 2.0f;
+        float S = sqrtf( 1.0f + rot.f[8] - rot.f[0] - rot.f[4] ) * 2.0f;
         this.x = ( rot.f[2] + rot.f[6] ) / S;
         this.y = ( rot.f[7] + rot.f[5] ) / S;
         this.z = 0.25f * S;
@@ -87,7 +88,7 @@ struct Quaternion {
 	 */
 	Quaternion normalize() const pure {
 	  Quaternion res;
-	  float length = sqrt(x * x + y * y + z * z + angle * angle);
+	  float length = sqrtf(x * x + y * y + z * z + angle * angle);
 	  if(length != 0){
 		  res.x = x / length;
 		  res.y = y / length;
@@ -227,10 +228,10 @@ struct Quaternion {
     }
     else
     {
-      float velocityLength = sqrt(squaredVelocityLength);
+      float velocityLength = sqrtf(squaredVelocityLength);
 
-      deltaQ.angle = cos(velocityLength);
-      s = sin(velocityLength) / velocityLength;
+      deltaQ.angle = cosf(velocityLength);
+      s = sinf(velocityLength) / velocityLength;
     }
 
     deltaQ.x = scaledAngularVelocity.x * s;

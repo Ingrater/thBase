@@ -11,6 +11,8 @@ public import thBase.math3d.quaternion;
 public import thBase.math3d.triangle;
 public import thBase.math3d.sphere;
 
+import core.stdc.math;
+
 /**
  * Computes the normal for a given triangle
  * Params:
@@ -46,12 +48,12 @@ const(mat4) RotationMatrixXYZ(float x, float y, float z){
   mat4 result;
   float A,B,C,D,E,F,AD,BD;
 
-  A       = cos(x/(-180.0f) * PI);
-  B       = sin(x/(-180.0f) * PI);
-  C       = cos(y/(-180.0f) * PI);
-  D       = sin(y/(-180.0f) * PI);
-  E       = cos(z/(-180.0f) * PI);
-  F       = sin(z/(-180.0f) * PI);
+  A       = cosf(x/(-180.0f) * PI);
+  B       = sinf(x/(-180.0f) * PI);
+  C       = cosf(y/(-180.0f) * PI);
+  D       = sinf(y/(-180.0f) * PI);
+  E       = cosf(z/(-180.0f) * PI);
+  F       = sinf(z/(-180.0f) * PI);
   AD      =   A * D;
   BD      =   B * D;
   result.f[0]  =   C * E;
@@ -79,12 +81,12 @@ const(mat4) RotationMatrixXYZ(ref const(vec3) v3Rotation)
   mat4 result;
   float A,B,C,D,E,F,AD,BD;
 
-  A       = cos(v3Rotation.x/(-180.0f) * PI);
-  B       = sin(v3Rotation.x/(-180.0f) * PI);
-  C       = cos(v3Rotation.y/(-180.0f) * PI);
-  D       = sin(v3Rotation.y/(-180.0f) * PI);
-  E       = cos(v3Rotation.z/(-180.0f) * PI);
-  F       = sin(v3Rotation.z/(-180.0f) * PI);
+  A       = cosf(v3Rotation.x/(-180.0f) * PI);
+  B       = sinf(v3Rotation.x/(-180.0f) * PI);
+  C       = cosf(v3Rotation.y/(-180.0f) * PI);
+  D       = sinf(v3Rotation.y/(-180.0f) * PI);
+  E       = cosf(v3Rotation.z/(-180.0f) * PI);
+  F       = sinf(v3Rotation.z/(-180.0f) * PI);
   AD      =   A * D;
   BD      =   B * D;
   result.f[0]  =   C * E;
@@ -210,12 +212,12 @@ const(vec4) UpVektor(float X,float Y,float Z,float Radians){
   float RotY,RotZ,Distance;
   vec4 Up;
   //Z Rotation Berechnen
-  Distance = sqrt(X * X + Y * Y);
+  Distance = sqrtf(X * X + Y * Y);
   if(Distance != 0){
     if(Y >= 0)
-      RotZ = acos( X / Distance);
+      RotZ = acosf( X / Distance);
     else
-      RotZ = 2 * PI - acos( X / Distance);
+      RotZ = 2 * PI - acosf( X / Distance);
     X = Distance;
     Y = 0;
   }
@@ -223,30 +225,30 @@ const(vec4) UpVektor(float X,float Y,float Z,float Radians){
     RotZ=0;
   }
   //Y Rotation Berechnen
-  Distance = sqrt( X * X + Z * Z);
+  Distance = sqrtf( X * X + Z * Z);
   if(Distance != 0)
-    RotY = acos( X / Distance);
+    RotY = acosf( X / Distance);
   else
     RotY = 0;
   //Up Point berechnen
   X = 0;
-  Y = sin(Radians);
-  Z = cos(Radians);
+  Y = sinf(Radians);
+  Z = cosf(Radians);
   //Um Y Achse drehen
   if(RotY != 0){
-    X = sin(RotY) * Z;
-    Z = cos(RotY) * Z;
+    X = sinf(RotY) * Z;
+    Z = cosf(RotY) * Z;
   }
   //Um Z Achse drehen
   if(RotZ != 0){
-    Distance = sqrt(X * X + Y * Y);
+    Distance = sqrtf(X * X + Y * Y);
     if(Distance != 0){
       if(Y >= 0)
-        RotZ += acos(X / Distance);
+        RotZ += acosf(X / Distance);
       else
-        RotZ +=  2 * PI - acos(X / Distance);
-      X = cos(RotZ) * Distance;
-      Y = sin(RotZ) * Distance;
+        RotZ +=  2 * PI - acosf(X / Distance);
+      X = cosf(RotZ) * Distance;
+      Y = sinf(RotZ) * Distance;
     }
   }
   Up.x = X;
@@ -272,7 +274,7 @@ const(vec4) Tangent(ref const(vec4) v1, ref const(vec4) v2, ref const(vec4) v3, 
   float div;
   //T
   div = (t2.x - t1.x) * (t3.y - t1.y) - (t3.x - t1.x) * (t2.y - t1.y);
-  div = fabs(div);
+  div = fabsf(div);
   t = ((t3.y - t1.y) * (v2 - v1) - (t2.y - t1.y) * (v3 - v1)) / div;
   t.w = 1.0f;
   return t;
@@ -292,7 +294,7 @@ const(vec4) Binormal(ref const(vec4) v1, ref const(vec4) v2, ref const(vec4) v3,
   vec4 b;
   float div;
   div = (t2.x - t1.x) * (t3.y - t1.y) - (t3.x - t1.x) * (t2.y - t1.y);
-  div = fabs(div);
+  div = fabsf(div);
   b = ((t2.x - t1.x)* (v3 - v1)  - (t3.x - t1.x) * (v2 - v1)) / div;
   b.w = 1.0f;
   return b;
