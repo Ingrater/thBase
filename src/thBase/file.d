@@ -129,6 +129,19 @@ struct RawFile {
 	}
 
   /**
+   * writes all buffered contents of the file to the disk
+   */
+  void flush()
+  in
+  {
+    assert(m_Handle !is null);
+  }
+  body
+  {
+    fflush(m_Handle);
+  }
+
+  /**
    * gets the size of the file
    */
   @property size_t size()
