@@ -38,8 +38,54 @@ enum LogSubsystem
   Global = 1 << 0
 }
 
-alias void delegate(LogLevel level, ulong subsystem, scope string msg) LogHandler;
-alias void function(LogLevel level, ulong subsystem, scope string msg) LogHandlerFunc;
+alias void delegate(LogLevel level, ulong subsystem, scope string msg) LogHandlerDelegate;
+alias void function(LogLevel level, ulong subsystem, scope string msg) LogHandlerFunction;
+
+struct LogHandler
+{
+  enum Type
+  {
+    Delegate,
+    Function
+  }
+
+  Type type;
+
+  union
+  {
+    LogHandlerDelegate del;
+    LogHandlerFunction func;
+  }
+
+  this(LogHandlerDelegate del)
+  {
+    this.del = del;
+    this.type = Type.Delegate;
+  }
+
+  this(LogHandlerFunction func)
+  {
+    this.func = func;
+    this.type = Type.Function;
+  }
+
+  void opCall(LogLevel level, ulong subsystem, scope string msg)
+  {
+    if(this.type == Type.Delegate)
+      del(level, subsystem, msg);
+    else
+      func(level, subsystem, msg);
+  }
+
+  bool opEquals(ref const(LogHandler) rh)
+  {
+    if(this.type != rh.type)
+      return false;
+    if(this.type == Type.Delegate)
+      return this.del == rh.del;
+    return this.func == rh.func;
+  }
+}
 
 version(Plugin)
 {
@@ -120,19 +166,19 @@ else
    * Params:
    *  logHandler = the function that will handle log output
    */
-  public void RegisterLogHandler(LogHandler logHandler){
+  public void RegisterLogHandler(LogHandlerDelegate logHandler){
 	  g_mutex.lock();
     scope(exit) g_mutex.unlock();
-    g_logHandlers ~= (logHandler);
+    g_logHandlers ~= LogHandler(logHandler);
   }
 
   /// ditto
-  public void RegisterLogHandler(LogHandlerFunc logHandler){
+  public void RegisterLogHandler(LogHandlerFunction logHandler){
 	  //LogHandler logHandlerDg;
 	  //logHandlerDg.funcptr = logHandler;
 	  g_mutex.lock();
     scope(exit) g_mutex.unlock();
-    g_logHandlers ~= ((LogLevel level, ulong subsystem, scope string msg){ logHandler(level, subsystem, msg); });
+    g_logHandlers ~= LogHandler(logHandler);
   }
 
   /**
@@ -140,20 +186,18 @@ else
    * Params:
    *  logHandler = the log handler to remove
    */
-  public void UnregisterLogHandler(LogHandler logHandler)
+  public void UnregisterLogHandler(LogHandlerDelegate logHandler)
   {
     g_mutex.lock();
     scope(exit) g_mutex.unlock();
-    g_logHandlers.remove(logHandler);
+    g_logHandlers.remove(LogHandler(logHandler));
   }
 
   /// ditto
-  public void UnregisterLogHandler(LogHandlerFunc logHandler){
-	  LogHandler logHandlerDg;
-	  logHandlerDg.funcptr = logHandler;
+  public void UnregisterLogHandler(LogHandlerFunction logHandler){
 	  g_mutex.lock();
     g_mutex.unlock();
-    g_logHandlers.remove(logHandlerDg);
+    g_logHandlers.remove(LogHandler(logHandler));
   }
 }
 
