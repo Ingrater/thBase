@@ -44,7 +44,7 @@ struct vec2 {
 	/**
 	 * subtracts this and another vector
 	 */
-	vec2 opSub(const ref vec2 v) const {
+	vec2 opSub(T)(auto ref const(T) v) const if(is(T == vec2)) {
 		return vec2(this.x - v.x,this.y - v.y);
 	}
 	
