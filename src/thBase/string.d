@@ -11,6 +11,8 @@ import core.stdc.string;
 import core.refcounted;
 import core.vararg;
 
+public import thBase.allocator : ThreadLocalStackAllocator;
+
 version(unittest) 
 {
   import thBase.devhelper;

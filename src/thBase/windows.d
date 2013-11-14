@@ -31,6 +31,7 @@ extern(Windows)
   BOOL CancelIo(HANDLE hFile);
   void OutputDebugStringA(LPCTSTR lpOutputStr);
   BOOL SetDllDirectoryA(LPCTSTR lpPathName);
+  BOOL IsDebuggerPresent();
 }
 
 size_t formatLastError(char[] buffer)

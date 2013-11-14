@@ -69,3 +69,28 @@ bool epsilonCompare(T,E)(T x, T y, E epsilon)
     static assert(0, T.stringof ~ " is not supported by epsilonCompare");
   }
 }
+
+float fastsqrt(float f)
+{
+  version(D_InlineAsm_X86)
+  {
+    asm {
+      movss XMM0, f;
+      rsqrtss XMM1, XMM0;
+      mulss XMM0, XMM1;
+      movss f, XMM0;
+    }
+  }
+  else version(D_InlineAsm_X64)
+  {
+    asm {
+      movss XMM0, f;
+      rsqrtss XMM1, XMM0;
+      mulss XMM0, XMM1;
+      movss f, XMM0;
+    }
+  }
+  else
+    static assert(0, "not implemented");
+  return f;
+}
