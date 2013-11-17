@@ -768,7 +768,7 @@ cd %CWD%</preBuildCommand>
   <doHdrGeneration>0</doHdrGeneration>
   <hdrdir />
   <hdrname />
-  <doXGeneration>0</doXGeneration>
+  <doXGeneration>1</doXGeneration>
   <xfilename>$(IntDir)\$(TargetName).json</xfilename>
   <debuglevel>0</debuglevel>
   <debugids />

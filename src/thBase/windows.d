@@ -3,7 +3,7 @@ module thBase.windows;
 import core.sys.windows.windows;
 import thBase.casts;
 
-enum
+/*enum
 {
   CP_ACP                   = 0,
   CP_OEMCP                 = 1,
@@ -12,7 +12,7 @@ enum
   CP_SYMBOL                = 42,
   CP_UTF7                  = 65000,
   CP_UTF8                  = 65001
-}
+}*/
 
 struct FILE_NOTIFY_INFORMATION {
   DWORD NextEntryOffset;
