@@ -18,7 +18,8 @@ version(none) version(Win64)
 
 void Init()
 {
-  core.exception.assertHandler = &AssertHandler;
+  if(IsDebuggerPresent())
+    core.exception.assertHandler = &AssertHandler;
   version(none) version(Win64)
   {
     auto handle = LoadLibraryA("msvcrt.dll".ptr);

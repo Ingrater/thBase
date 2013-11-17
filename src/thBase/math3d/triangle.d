@@ -245,9 +245,9 @@ struct Triangle {
         subps XMM2,XMM0; //unnormalized plane normal in XMM2
         movaps XMM0,XMM2;
         dpps XMM0,XMM2, 0b0111_0001; //dot(normal,normal)
-        sqrtss XMM0, XMM0;
+        rsqrtss XMM0, XMM0;
         pshufd XMM0, XMM0, 0b00_00_00_00; //shuffle xxxx
-        divps XMM2,XMM0; //normalized normal in XMM2
+        mulps XMM2,XMM0; //normalized normal in XMM2
         movaps XMM3,XMM2;
         dpps XMM3,XMM7, 0b0111_1000; //dot(normal,v2) -> w (distance)
         addps XMM2,XMM3;
