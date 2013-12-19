@@ -81,7 +81,7 @@ float fastsqrt(float f)
       movss f, XMM0;
     }
   }
-  else version(D_InlineAsm_X64)
+  else version(D_InlineAsm_X86_64)
   {
     asm {
       movss XMM0, f;
