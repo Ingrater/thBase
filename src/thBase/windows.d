@@ -32,6 +32,7 @@ extern(Windows)
   void OutputDebugStringA(LPCTSTR lpOutputStr);
   BOOL SetDllDirectoryA(LPCTSTR lpPathName);
   BOOL IsDebuggerPresent();
+  BOOL SetEnvironmentVariableA(LPCTSTR lpName, LPCTSTR lpValue);
 }
 
 size_t formatLastError(char[] buffer)

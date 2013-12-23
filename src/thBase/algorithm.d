@@ -464,3 +464,17 @@ unittest {
   assert(binarySearchInsertIndex!((x,y){return x < y;})(a, 7) == 3);
   assert(binarySearchInsertIndex!((x,y){return x < y;})(a, 9) == 4);
 }
+
+T move(T)(ref T value)
+{
+  T result;
+  memcpy(&result, &value, T.sizeof);
+
+  static if(HasPostblit!T || needsDestruction!T)
+  {
+    T empty;
+    memcpy(&value, &empty, T.sizeof);
+  }
+
+  return result;
+}
