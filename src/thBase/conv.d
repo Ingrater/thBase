@@ -57,12 +57,12 @@ thResult to(TT,ST)(ST arg, out TT result) if(isIntegral!TT && thBase.traits.isSo
   return thResult.SUCCESS;
 }
 
-TT to(TT,ST)(ST arg) if(isIntegral!TT && isSigned!TT && thBase.traits.isSomeString!ST)
+TT to(TT,ST)(ST arg) if(isIntegral!TT && thBase.traits.isSomeString!ST)
 {
   TT result = void;
   if(to!(TT,ST)(arg,result) == thResult.FAILURE)
   {
-    throw New!ConvException(format("Error converting string '%s' to signed integral type", arg[]));
+    throw New!ConvException(format("Error converting string '%s' to integral type " ~ TT.stringof, arg[]));
   }
   return result;
 }
