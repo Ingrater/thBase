@@ -241,4 +241,35 @@ unittest
   assert(!map4.exists(3));
   assert(!map4.exists(4));
   assert(map4.exists(5));
+
+  {
+    auto map5 = New!(Hashmap!(Collision, int))();
+    scope(exit) Delete(map5);
+
+    for(int i=0; i<100; i++)
+    {
+      map5[Collision(i, i)] = i; // insert
+      map5.remove(Collision(i, i)); // remove
+      assert(map5.exists(Collision(i, i)) == false); // lookup
+    }
+    assert(!map5.isPseudoFull);
+
+    for(int i=99; i >= 0; i--)
+    {
+      map5[Collision(i, i)] = i; // insert
+      
+      map5.remove(Collision(i, i)); // remove
+      assert(map5.exists(Collision(i, i)) == false); // lookup
+    }
+    assert(!map5.isPseudoFull);
+
+    for(int i=0; i<100; i++)
+    {
+      map5[Collision(i, i)] = i; // insert
+      map5[Collision(i+1, i+1)] = i+1; // insert
+      map5.remove(Collision(i, i)); // remove
+      assert(map5.exists(Collision(i, i)) == false); // lookup
+    }
+    assert(!map5.isPseudoFull);
+  }
 }

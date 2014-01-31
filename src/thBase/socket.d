@@ -917,7 +917,7 @@ unittest
     catch (Throwable e)
     {
         printf(" --- std.socket(%u) broken test ---\n", __LINE__);
-        printf(" (%.*s)\n", e.toString()[]);
+        printf(" (%.*s)\n", e.toString()[].ptr);
     }
 }
 
