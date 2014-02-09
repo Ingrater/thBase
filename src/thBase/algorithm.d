@@ -178,7 +178,11 @@ unittest {
 
 void swap(T)(ref T value1, ref T value2)
 {
-  static if(HasPostblit!T)
+  static if(__traits(hasMember, T, "swap"))
+  {
+    value1.swap(value2);
+  }
+  else static if(HasPostblit!T)
   {
     //if the value has a postblit operator it means that it most likley tracks a big block of memory internally
     //using memcpy to swap will avoid calling assignment or postblit operations

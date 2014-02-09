@@ -130,7 +130,7 @@ public:
 /**
  * Represents a point in time, usually the time of its creation
  */
-struct Zeitpunkt {
+struct PointInTime {
 private:
 	shared(Timer) m_Timer;
 	ulong m_Time;
@@ -159,7 +159,7 @@ public:
      * Params:
      *  z = other point in time (has to use same timer)
      */
-	double opSub(const ref Zeitpunkt z){
+	double opSub(const ref PointInTime z){
 		version(Windows){
 			double Resolution = m_Timer.GetResolution();
 			return cast(double)(m_Time - z.m_Time) * Resolution * 1000.0;
@@ -169,11 +169,11 @@ public:
 		}
 	}
 	
-	int opCmp(ref const(Zeitpunkt) z) const {
+	int opCmp(ref const(PointInTime) z) const {
 		return cast(int)(m_Time - z.m_Time);
 	}
 	
-	bool opEquals(ref const(Zeitpunkt) z) const {
+	bool opEquals(ref const(PointInTime) z) const {
 		return m_Time == z.m_Time;
 	}
 	
@@ -191,13 +191,13 @@ public:
 	
 	/**
 	 * Returns the number of milliseconds elapsed since the start of the timer but
-	 * checks that this Zeitpunkt uses the specified timer. Otherwise an exception
+	 * checks that this PointInTime uses the specified timer. Otherwise an exception
 	 * is thrown.
 	 * 
 	 * Used by the netcode to get a timer independent time representation.
 	 */
 	ulong getMilliseconds(shared(Timer) usedTimer){
-		assert(m_Timer is usedTimer, "Tried to get milliseconds of a Zeitpunkt with another timer");
+		assert(m_Timer is usedTimer, "Tried to get milliseconds of a PointInTime with another timer");
 		return getMilliseconds();
 	}
 	
@@ -208,7 +208,7 @@ public:
 	 * Used by the netcode to update the value in a timer independent way.
 	 */
 	void setMilliseconds(ulong time, shared(Timer) usedTimer){
-		assert(m_Timer is usedTimer, "Tried to set milliseconds of a Zeitpunkt with another timer");
+		assert(m_Timer is usedTimer, "Tried to set milliseconds of a PointInTime with another timer");
 		version(Windows){
 			m_Time = time * m_Timer.m_Frequency / 1000;
 		}
@@ -216,4 +216,6 @@ public:
 			m_Time = time * 1_000;
 		}
 	}
-};
+}
+
+alias Zeitpunkt = PointInTime; // backwards compatibility

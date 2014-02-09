@@ -1,17 +1,19 @@
 module thBase.math3d.vecs;
 
 import std.math;
+import core.stdc.math;
 import thBase.format;
 
 /**
  * a 2 dimensional vector
  */
-struct vec2 {
+struct vec2_t(T) if(is(T == float) || is(T == short) || is(T == int))
+{
 	union {
 		struct {
-			float x,y; // coordinates
+			T x,y; // coordinates
 		}
-		float[2] f; // coordinates as array, same data as x,y
+		T[2] f; // coordinates as array, same data as x,y
 	}
 	
 	/**
@@ -20,7 +22,7 @@ struct vec2 {
 	 *  x = x value
 	 *  y = y value
 	 */
-	this(float x, float y){
+	this(T x, T y){
 		this.x = x;
 		this.y = y;
 	}
@@ -30,77 +32,81 @@ struct vec2 {
 	 * Params:
 	 *  f = initial data
 	 */
-	this(float[2] f){
+	this(T[2] f){
 		this.f[0..1] = f[0..1];
 	}
 	
 	/**
 	 * adds this and another vector
 	 */
-	vec2 opAdd(T)(auto ref const(T) v) const if(is(T == vec2)) {
-		return vec2(this.x + v.x,this.y + v.y);
+	vec2_t!T opAdd(U)(auto ref const(U) v) const if(is(U == vec2_t!T)) 
+  {
+		return vec2(this.x + v.x, this.y + v.y);
 	}
 	
 	/**
 	 * subtracts this and another vector
 	 */
-	vec2 opSub(T)(auto ref const(T) v) const if(is(T == vec2)) {
-		return vec2(this.x - v.x,this.y - v.y);
+	vec2_t!T opSub(U)(auto ref const(U) v) const if(is(U == vec2_t!T)) 
+  {
+		return vec2(this.x - v.x, this.y - v.y);
 	}
 	
 	
 	/**
 	 * multiplies this vector and a scalar
 	 */
-	vec2 opMul(const float f) const {
-		return vec2(this.x * f, this.y * f);
+	vec2_t!T opMul(const T f) const 
+  {
+		return vec2_t!T(this.x * f, this.y * f);
 	}
 	
 	/**
 
 	 * multiplies this vector with another one
 	 */
-	vec2 opMul(const ref vec2 v) const {
-      return vec2(this.x * v.x, this.y * v.y);
+	vec2_t!T opMul(const ref vec2_t!T v) const {
+      return vec2_t!T(this.x * v.x, this.y * v.y);
 	}
 	
 	/**
 	 * divides this vector through a scalar
 	 */
-	vec2 opDiv(const float f) const {
-		return vec2(this.x / f, this.y / f);
+	vec2_t!T opDiv(const T f) const 
+  {
+		return vec2_t!T(this.x / f, this.y / f);
 	}
 	
 	/**
 	 * does a dot product with another vector
 	 */
-	float dot(const ref vec2 v){
+	T dot(const ref vec2_t!T v){
 		return this.x * v.x + this.y * v.y;
 	}
 	
 	/**
 	 * Returns: the length of this vector
 	 */
-	float length(){
-		return std.math.sqrt(this.x * this.x + this.y * this.y);
+	float length()
+  {
+		return sqrtf(this.x * this.x + this.y * this.y);
 	}
 	
 	/**
 	 * Returns: a normalized copy of this vector
 	 */
-	vec2 normalize() const {
-    float length;
-    vec2 temp, res=this;
-    temp = this * this;
-    length = cast(float)std.math.sqrt(cast(float)(temp.f[0]+temp.f[1]));
+	vec2_t!T normalize() const {
+    vec2_t!T res=this;
+    auto temp = this * this;
+    auto length = sqrtf(cast(float)(temp.f[0]+temp.f[1]));
     if(length != 0){
-      res = this / length;
+      res = this / cast(T)length;
     }
     return res;
   }
 	
 	struct XmlValue {
-		float x,y;
+		T x,y;
 	}
 	
 	void XmlSetValue(XmlValue value){
@@ -112,11 +118,14 @@ struct vec2 {
 		return XmlValue(x,y);
 	}
 };
+alias vec2 = vec2_t!float;
+alias ivec2 = vec2_t!int;
 
 /**
  * a 3 dimensional vector
  */
-struct vec3_t(T) if(is(T == float) || is(T == short) || is(T == int)){	
+struct vec3_t(T) if(is(T == float) || is(T == short) || is(T == int))
+{	
 	union {
 		struct {
 			T x=0,y=0,z=0; //x,y,z dimensions
@@ -254,7 +263,7 @@ struct vec3_t(T) if(is(T == float) || is(T == short) || is(T == int)){
 	 * Returns: the length of this vector
 	 */
 	@property float length() const pure {
-		return sqrt(cast(double)(this.x * this.x + this.y * this.y + this.z * this.z));
+		return sqrtf(cast(double)(this.x * this.x + this.y * this.y + this.z * this.z));
 	}
 
   /**

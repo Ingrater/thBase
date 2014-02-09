@@ -7,11 +7,12 @@ auto static_cast(T,U)(U source)
   static if(is(T == class))
   {
     static assert(is(U == class), "can not statically cast from " ~ U.stringof ~ " to " ~ T.stringof ~ " because " ~ U.stringof ~ " is not a class");
-    static assert(is(T : U), T.stringof ~ " is not derived from " ~ U.stringof);
+    //static assert(is(T : U) || is(U : T), T.stringof ~ " is not related to " ~ U.stringof); BUG?
     debug
     {
       T result = cast(T)source;
       assert(result !is null, "runtime cast failed");
+      assert(cast(void*)result == cast(void*)source, "address changed!");
       return result;
     }
     else

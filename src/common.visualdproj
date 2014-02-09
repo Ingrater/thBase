@@ -335,7 +335,7 @@ cd %CWD%</preBuildCommand>
   <noboundscheck>1</noboundscheck>
   <useSwitchError>0</useSwitchError>
   <useUnitTests>0</useUnitTests>
-  <useInline>0</useInline>
+  <useInline>1</useInline>
   <release>1</release>
   <preservePaths>0</preservePaths>
   <warnings>0</warnings>
@@ -1283,6 +1283,7 @@ cd %CWD%</preBuildCommand>
    <File path="thBase\traits.d" />
    <File path="thBase\types.d" />
    <File path="thBase\utf.d" />
+   <File path="thBase\weakptr.d" />
    <File path="thBase\windows.d" />
   </Folder>
   <File path="coretest.d" />

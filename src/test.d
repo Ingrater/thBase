@@ -51,13 +51,13 @@ import thBase.io;
 
   int main(string[] args)
   { 
-    auto timer = cast(shared(Timer))New!Timer();
+    /*auto timer = cast(shared(Timer))New!Timer();
     scope(exit) Delete(timer);
 
     auto val1 = wrapper!(int)();
     auto val2 = wrapper!int();
 
-    const(char)[] str = "hello world";
+    const(char)[] str = "hello world";*/
 
     return 0;
   }
