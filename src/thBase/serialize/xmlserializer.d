@@ -9,12 +9,6 @@ import thBase.allocator;
 
 class XmlSerializerBase {
 public:
-  enum IsOptional : bool
-  {
-    No = false,
-    Yes = true
-  }
-
 	static void DoSerializeAttribute(int value, TiXmlElement pElement, TiXmlString name){
 		pElement.SetAttribute(name,value);
 	}
@@ -195,7 +189,7 @@ void ToXmlFile(T)(ref T pValue, string pFilename){
 	static if(__traits(hasMember,pValue,"DoXmlSerialize"))
 		pValue.DoXmlSerialize(doc,rootName,false);
 	else
-		XmlSerializerBase.DoProcessMember(pValue,doc,rootName, XmlSerializerBase.IsOptional.No, allocator);
+		XmlSerializerBase.DoProcessMember(pValue, doc, rootName, IsOptional.No, allocator);
 
 	doc.SaveFile(pFilename);
 }

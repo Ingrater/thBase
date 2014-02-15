@@ -4,7 +4,6 @@ import thBase.tinyxml;
 import thBase.serialize.common;
 import thBase.conv, thBase.format;
 import std.traits, thBase.traits, core.traits;
-import thBase.metainfo;
 import core.refcounted;
 import thBase.error;
 import thBase.allocator;
@@ -105,141 +104,161 @@ protected:
     value = rcstring(text[]);
   }
 	
-	static void ProcessMember(MT)(ref MT pValue, TiXmlNode pFather, string pName, bool pIgnoreAll, bool pIsOptional = false, TiXmlNode pNode = null){
-		static if(!HasMetaAttribute!(MT,XmlIgnore) && !is(UnderlingType!(MT) == MetaAttribute)){
-			if(!pIgnoreAll || pIgnoreAll && HasMetaAttribute!(MT,XmlSerialize)){
-				static bool IgnoreAll = HasMetaAttribute!(MT,XmlIgnoreAll);
-				static if(NativeType!(MT)){
-					//writefln("deserializing " ~ pName ~ " type: " ~ MT.stringof);
-					DoDeserializeAttribute(pValue,pFather.ToElement(),pName,pIsOptional);
+	static void ProcessMember(MT)(ref MT pValue, TiXmlNode pFather, string pName, IsOptional isOptional, TiXmlNode pNode = null)
+  {
+		static if(NativeType!(MT)){
+			//writefln("deserializing " ~ pName ~ " type: " ~ MT.stringof);
+			DoDeserializeAttribute(pValue,pFather.ToElement(), pName, isOptional);
+		}
+		else static if(std.traits.isArray!(MT))
+    {
+      static assert(!is(MT == string), "serialzing 'string' is not supported. Use rcstring instead");
+			TiXmlNode node = (pNode is null) ? pFather.FirstChild(pName) : pNode;
+			if(node is null && !isOptional){
+        char[256] buffer;
+        auto len = formatStatic(buffer, "'%s' does not exist", pName);
+				HandleError(pFather, cast(string)buffer[0..len]);
+			}
+			else {
+        auto error = ErrorScope(ErrorContext.create("array", pName));
+				TiXmlElement element = node.ToElement();
+				if(element is null){
+					HandleError(node,"is not an element");
 				}
-				else static if(std.traits.isArray!(MT)){
-          static assert(!is(MT == string), "serialzing 'string' is not supported. Use rcstring instead");
-					TiXmlNode node = (pNode is null) ? pFather.FirstChild(pName) : pNode;
-					if(node is null && !pIsOptional){
-            char[256] buffer;
-            auto len = formatStatic(buffer, "'%s' does not exist", pName);
-						HandleError(pFather, cast(string)buffer[0..len]);
-					}
-					else {
-            auto error = ErrorScope(ErrorContext.create("array", pName));
-						TiXmlElement element = node.ToElement();
-						if(element is null){
-							HandleError(node,"is not an element");
-						}
-						int size;
-						DoDeserializeAttribute(size,element,"size",false);
-						if(pValue.length == 0){
-							pValue = NewArray!(ArrayType!(MT))(size);
-						}
-						else if(pValue.length != size){
-							static if(isStaticArray!(MT))
-								HandleError(element, "array size does not match static array size");
-							else
-              {
-                HandleError(element, "array is not empty and does not match size");
-              }
-						}
-            string name;
-            static if(is(typeof(ArrayType!(MT).XmlName)))
-              name = ArrayType!(MT).XmlName;
-            else
-              name = ArrayType!(MT).stringof;
-            TiXmlNode cur = element.FirstChildElement(name);
-            
-            int i=0;
-            for(;i<size && cur !is null;i++, cur = cur.NextSiblingElement(name)){
-              ProcessMember(pValue[i],element,null,false,false,cur);
-            }
-            if(cur !is null)
-            {
-              HandleError(node, "there are more child elements then given in the size attribute");
-            }
-            if(i < size)
-            {
-              HandleError(node, "child elements are missing or size attribute to big");
-            }
-					}
+				int size;
+				DoDeserializeAttribute(size, element, "size", false);
+				if(pValue.length == 0){
+					pValue = NewArray!(ArrayType!(MT))(size);
 				}
-        else static if(isRCArray!(MT))
+				else if(pValue.length != size){
+					static if(isStaticArray!(MT))
+						HandleError(element, "array size does not match static array size");
+					else
+          {
+            HandleError(element, "array is not empty and does not match size");
+          }
+				}
+
+        string name;
+        alias AT = arrayType!MT;
+        static if(NativeType!AT)
+          name = AT.stringof;
+        else static if (HasSetterGetter!AT && !NativeType!(GetterType!AT) && hasAttribute!(GetterType!AT, NiceName))
         {
-          static if(isRCString!(MT))
-          {
-            static assert(is(RCArrayType!(MT) == immutable(char)), "wchar and dchar not implemented");
-            DoDeserializeAttribute(pValue, pFather.ToElement(), pName, pIsOptional);
-          }
-          else
-          {
-            TiXmlNode node = (pNode is null) ? pFather.FirstChild(pName) : pNode;
-            if(node is null && !pIsOptional){
-              char[256] buffer;
-              auto len = formatStatic(buffer, "'%s' does not exist", pName);
-              HandleError(pFather, cast(string)buffer[0..len]);
-            }
-            else {
-              auto error = ErrorScope(ErrorContext.create("array", pName));
-              TiXmlElement element = node.ToElement();
-              if(element is null){
-                HandleError(node, "is not an element");
-              }
-              int size;
-              DoDeserializeAttribute(size,element,"size",false);
-              pValue = MT(size);
-              TiXmlNode cur = element.FirstChildElement(RCArrayType!MT.stringof);
-              int i=0;
-              for(;i<size && cur !is null;i++, cur = cur.NextSiblingElement(RCArrayType!MT.stringof)){
-                ProcessMember(pValue[i],element,null,false,false,cur);
-              }
-              if(cur !is null)
-              {
-                HandleError(node, "there are more child elements then given in the size attribute");
-              }
-              if(i < size)
-              {
-                HandleError(node, "child elements are missing or size attribute to big");
-              }
-            }
-          }
+          name = getAttribute!(GetterType!AT, NiceName).value;
         }
-				else static if(RecursiveType!(MT)){
-					static if(HasSetterGetter!(MT)){
-						SetterType!MT temp = pValue.XmlGetValue();
-						static if(__traits(hasMember,SetterType!(MT),"DoXmlDeserialize"))
-							temp.DoXmlDeserialize(pFather, pName, IgnoreAll, HasMetaAttribute!(MT,XmlOptional), pNode);
-						else
-							ProcessMember(temp, pFather, pName, IgnoreAll, HasMetaAttribute!(MT,XmlOptional), pNode);
-						pValue.XmlSetValue(temp);
-					}
-					else {
-            auto error = ErrorScope(ErrorContext.create("group", pName));
-						TiXmlNode node = (pNode is null) ? pFather.FirstChild(pName) : pNode;
-						if(node is null && !pIsOptional){
-							static if(!HasMetaAttribute!(MT,XmlOptional)){
-                char[256] buffer;
-                auto len = formatStatic(buffer, "'%s' does not exist", pName);
-								HandleError(pFather, cast(string)buffer[0..len]);
-							}
-						}
-						else {
-							TiXmlElement element = node.ToElement();
-							if(element is null){
-								HandleError(node,"is not a element");
-							}
-							foreach(m;__traits(allMembers,MT)){
-								static if(m.length < 2 || m[0..2] != "__"){
-									static if(__traits(compiles,__traits(getMember,pValue,m) = __traits(getMember,pValue,m).init) && !isFunction!(typeof(__traits(getMember,pValue,m)))){
-										static if(__traits(hasMember,typeof(__traits(getMember,MT,m)),"DoXmlDeserialize"))
-											__traits(getMember,pValue,m).DoXmlDeserialize(element,m,IgnoreAll,HasMetaAttribute!(typeof(__traits(getMember,MT,m)),XmlOptional), pNode);
-										else
-											ProcessMember(__traits(getMember,pValue,m),element,m,IgnoreAll,HasMetaAttribute!(typeof(__traits(getMember,MT,m)),XmlOptional), pNode);
-									}
-								}
-							}
-						}
-					}
-				}	
+        else static if(hasAttribute!(AT, NiceName))
+          name = getAttribute!(AT, NiceName).value;
+        else
+          name = AT.stringof;
+
+        TiXmlNode cur = element.FirstChildElement(name);            
+        int i=0;
+        for(;i<size && cur !is null;i++, cur = cur.NextSiblingElement(name)){
+          ProcessMember(pValue[i], element, null, IsOptional.No, cur);
+        }
+        if(cur !is null)
+        {
+          HandleError(node, "there are more child elements then given in the size attribute");
+        }
+        if(i < size)
+        {
+          HandleError(node, "child elements are missing or size attribute to big");
+        }
 			}
 		}
+    else static if(isRCArray!(MT))
+    {
+      static if(isRCString!(MT))
+      {
+        static assert(is(RCArrayType!(MT) == immutable(char)), "wchar and dchar not implemented");
+        DoDeserializeAttribute(pValue, pFather.ToElement(), pName, isOptional);
+      }
+      else
+      {
+        TiXmlNode node = (pNode is null) ? pFather.FirstChild(pName) : pNode;
+        if(node is null && !isOptional)
+        {
+          char[256] buffer;
+          auto len = formatStatic(buffer, "'%s' does not exist", pName);
+          HandleError(pFather, cast(string)buffer[0..len]);
+        }
+        else {
+          auto error = ErrorScope(ErrorContext.create("array", pName));
+          TiXmlElement element = node.ToElement();
+          if(element is null){
+            HandleError(node, "is not an element");
+          }
+          int size;
+          DoDeserializeAttribute(size,element,"size",false);
+          pValue = MT(size);
+
+          string name;
+          alias AT = arrayType!MT;
+          static if(NativeType!AT)
+            name = AT.stringof;
+          else static if (HasSetterGetter!AT && !NativeType!(GetterType!AT) && hasAttribute!(GetterType!AT, NiceName))
+          {
+            name = getAttribute!(GetterType!AT, NiceName).value;
+          }
+          else static if(hasAttribute!(AT, NiceName))
+            name = getAttribute!(AT, NiceName).value;
+          else
+            name = AT.stringof;
+
+          TiXmlNode cur = element.FirstChildElement(name);
+          int i=0;
+          for(;i<size && cur !is null;i++, cur = cur.NextSiblingElement(name)){
+            ProcessMember(pValue[i], element, null, IsOptional.No, cur);
+          }
+          if(cur !is null)
+          {
+            HandleError(node, "there are more child elements then given in the size attribute");
+          }
+          if(i < size)
+          {
+            HandleError(node, "child elements are missing or size attribute to big");
+          }
+        }
+      }
+    }
+		else static if(RecursiveType!(MT)){
+			static if(HasSetterGetter!(MT))
+      {
+				SetterType!MT temp = pValue.XmlGetValue();
+				static if(__traits(hasMember,SetterType!(MT),"DoXmlDeserialize"))
+					temp.DoXmlDeserialize(pFather, pName, isOptional, pNode);
+				else
+					ProcessMember(temp, pFather, pName, isOptional, pNode);
+				pValue.XmlSetValue(temp);
+			}
+			else {
+        auto error = ErrorScope(ErrorContext.create("group", pName));
+				TiXmlNode node = (pNode is null) ? pFather.FirstChild(pName) : pNode;
+				if(node is null && !isOptional){
+          char[256] buffer;
+          auto len = formatStatic(buffer, "'%s' does not exist", pName);
+				  HandleError(pFather, cast(string)buffer[0..len]);
+				}
+				else {
+					TiXmlElement element = node.ToElement();
+					if(element is null){
+						HandleError(node,"is not a element");
+					}
+					foreach(m;__traits(allMembers,MT)){
+						static if(m.length < 2 || m[0..2] != "__"){
+							static if(__traits(compiles,__traits(getMember,pValue,m) = __traits(getMember,pValue,m).init) && !isFunction!(typeof(__traits(getMember,pValue,m)))){
+                auto isMemberOptional = hasAttribute!(__traits(getMember, MT, m), Optional) ? IsOptional.Yes : IsOptional.No;
+                static if(__traits(hasMember,typeof(__traits(getMember,MT,m)),"DoXmlDeserialize"))
+									__traits(getMember,pValue,m).DoXmlDeserialize(element, m, isMemberOptional, pNode);
+								else
+									ProcessMember(__traits(getMember,pValue,m), element, m, isMemberOptional, pNode);
+							}
+						}
+					}
+				}
+			}
+		}	
 	}	
 }
 
@@ -273,7 +292,7 @@ void FromXmlFile(T)(ref T pValue, rcstring pFilename){
 		static if(__traits(hasMember,pValue,"DoXmlDeserialize"))
 			pValue.DoXmlDeserialize(doc,rootName,false);
 		else
-			XmlDeserializerBase.ProcessMember(pValue,doc,rootName,false);
+			XmlDeserializerBase.ProcessMember(pValue, doc, rootName, IsOptional.No);
 	}
 	catch(XmlDeserializerException e){
 		e.Append(" inside file '" ~ pFilename ~ "'");

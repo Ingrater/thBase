@@ -7,6 +7,12 @@ struct Optional {}
 struct Ignore {}
 struct NiceName { string value; }
 
+enum IsOptional : bool
+{
+  No = false,
+  Yes = true
+}
+
 template hasAttribute(alias sym, T)
 {
   static bool helper()
