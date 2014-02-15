@@ -4,7 +4,6 @@ import core.refcounted;
 import thBase.tinyxml;
 public import thBase.serialize.common;
 public import thBase.serialize.wrapper;
-public import thBase.metainfo;
 import std.traits, thBase.traits, core.traits;
 import thBase.allocator;
 
@@ -38,6 +37,7 @@ public:
   static void ProcessNativeArrayMember(MT)(ref MT pValue, TiXmlNode pFather, IAllocator allocator)
   {
     TiXmlElement element = AllocatorNew!TiXmlElement(allocator, TiXmlString("el", IsStatic.Yes), allocator);
+    pFather.LinkEndChild(element);
     DoSerializeAttribute(pValue, element, TiXmlString("value", IsStatic.Yes));
   }
 
@@ -54,11 +54,20 @@ public:
         TiXmlElement element = AllocatorNew!TiXmlElement(allocator, TiXmlString(pName, IsStatic.Yes), allocator);
         pFather.LinkEndChild(element);
         element.SetAttribute(TiXmlString("size", IsStatic.Yes), cast(int)pValue.length);
+        
         string name;
-        static if(is(typeof(ArrayType!(MT).XmlName)))
-          name = ArrayType!(MT).XmlName;
+        alias AT = arrayType!MT;
+        static if(NativeType!AT)
+          name = AT.stringof;
+        else static if (HasSetterGetter!AT && !NativeType!(GetterType!AT) && hasAttribute!(GetterType!AT, NiceName))
+        {
+          name = getAttribute!(GetterType!AT, NiceName).value;
+        }
+        else static if(hasAttribute!(AT, NiceName))
+          name = getAttribute!(AT, NiceName).value;
         else
-          name = ArrayType!(MT).stringof;
+          name = AT.stringof;
+          
         foreach(int i,ref v;pValue){
           static if(NativeType!(ArrayType!(MT)))
             ProcessNativeArrayMember(v, element, allocator);
@@ -83,11 +92,20 @@ public:
           TiXmlElement element = AllocatorNew!TiXmlElement(allocator, TiXmlString(pName, IsStatic.Yes), allocator);
           pFather.LinkEndChild(element);
           element.SetAttribute(TiXmlString("size", IsStatic.Yes), cast(int)pValue.length);
+
           string name;
-          static if(is(typeof(ArrayType!(MT).XmlName)))
-            name = arrayType!(MT).XmlName;
+          alias AT = arrayType!MT;
+          static if(NativeType!AT)
+            name = AT.stringof;
+          else static if (HasSetterGetter!AT && !NativeType!(GetterType!AT) && hasAttribute!(GetterType!AT, NiceName))
+          {
+            name = getAttribute!(GetterType!AT, NiceName).value;
+          }
+          else static if(hasAttribute!(AT, NiceName))
+            name = getAttribute!(AT, NiceName).value;
           else
-            name = arrayType!(MT).stringof;
+            name = AT.stringof;
+
           foreach(int i, ref v;pValue[])
           {
             static if(NativeType!(arrayType!(MT)))
@@ -124,10 +142,9 @@ public:
                 auto memberOptional = hasAttribute!(__traits(getMember, pValue, m), Optional) ?
                   IsOptional.Yes : IsOptional.No;
                 static if(__traits(hasMember,typeof(__traits(getMember, MT, m)),"DoXmlSerialize"))
-                  __traits(getMember,pValue,m).DoXmlSerialize(element, m, IgnoreAll);
+                  __traits(getMember,pValue,m).DoXmlSerialize(element, m);
                 else
                 {
-
                   static if(!hasAttribute!(__traits(getMember, pValue, m), Ignore))
                     XmlSerializerBase.DoProcessMember(__traits(getMember, pValue, m), element, m, memberOptional, allocator);
                 }
@@ -261,17 +278,42 @@ unittest
     }
   }
 
+  @NiceName("NiceName")
+  static struct Named
+  {
+    int i;
+  }
+
+  static struct Named2
+  {
+    int i;
+
+    Named XmlGetValue()
+    {
+      return Named(i);
+    }
+
+    void XmlSetValue(Named v)
+    {
+      i = v.i;
+    }
+  }
+
   static struct test {
 
     ~this()
     {
       Delete(s);
+      Delete(n1);
+      Delete(n2);
     }
 
     float f;
     int i;
     rcstring name;
     special[] s;
+    Named[] n1;
+    Named2[] n2;
     RCArray!special s2;
     @Optional int[] opt;
     @Optional RCArray!int opt2;
@@ -290,6 +332,8 @@ unittest
     t.i = 16;
     t.name = _T("testnode");
     t.s = NewArray!(special)(4);
+    t.n1 = NewArray!(Named)(2);
+    t.n2 = NewArray!(Named2)(2);
     t.s2 = RCArray!special(4);
     t.opt2 = RCArray!int(4);
     for(int i=0; i<4; i++)

@@ -4,6 +4,16 @@ import std.math;
 import core.stdc.math;
 import thBase.format;
 
+private template GenerateNiceName(string name, T, OT)
+{
+  static if(is(T == float))
+    enum string GenerateNiceName = name;
+  static if(is(T == int))
+    enum string GenerateNiceName = "i" ~ name;
+  else
+    enum string GenerateNiceName = OT.stringof;
+}
+
 /**
  * a 2 dimensional vector
  */
@@ -105,6 +115,7 @@ struct vec2_t(T) if(is(T == float) || is(T == short) || is(T == int))
     return res;
   }
 	
+  @NiceName(GenerateNiceName!("vec2", T, vec2_t!T))
 	struct XmlValue {
 		T x,y;
 	}
@@ -133,15 +144,6 @@ struct vec3_t(T) if(is(T == float) || is(T == short) || is(T == int))
 		T[3] f; // dimensions as array, same data as x,y,z
 	}
 
-  static if(is(T == float))
-  {
-    enum string XmlName = "vec3";
-  }
-  else static if(is(T == int))
-  {
-    enum string XmlName = "ivec3";
-  }
-	
 	/**
 	 * constructor
 	 * Params:
@@ -341,10 +343,11 @@ struct vec3_t(T) if(is(T == float) || is(T == short) || is(T == int))
 	 * - unary operator
 	 */
 	vec3_t!(T) opUnary(string op)() pure if(op == "-")
-		{
-			return vec3_t!(T)(-x,-y,-z);
-		}
+  {
+	  return vec3_t!(T)(-x,-y,-z);
+	}
 	
+  @NiceName(GenerateNiceName!("vec3", T, vec2_t!T))
 	struct XmlValue {
 		T x,y,z;
 	}
@@ -569,22 +572,25 @@ struct vec4_t(T) if(is(T == float) || is(T == short) || is(T == int)) {
 	 * - unary operator
 	 */
 	vec4_t!(T) opUnary(string op)() const pure if(op == "-")
-		{
-			return vec4_t!(T)(-x,-y,-z,-w);
-		}
+	{
+	  return vec4_t!(T)(-x,-y,-z,-w);
+	}
 	
+  @NiceName(GenerateNiceName!("vec3", T, vec2_t!T))
 	struct XmlValue {
 		T x,y,z,w;
 	}
 	
-	void XmlSetValue(XmlValue value){
+	void XmlSetValue(XmlValue value)
+  {
 		x = value.x;
 		y = value.y;
 		z = value.z;
 		w = value.w;
 	}
 	
-	XmlValue XmlGetValue(){
+	XmlValue XmlGetValue()
+  {
 		return XmlValue(x,y,z,w);
 	}
 };
