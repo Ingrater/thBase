@@ -364,7 +364,8 @@ struct vec3_t(T) if(is(T == float) || is(T == short) || is(T == int))
     return format("%s", f);
   }
 }
-alias vec3_t!(float) vec3;
+alias vec3 = vec3_t!(float);
+alias ivec3 = vec3_t!(int);
 
 /**
  * a 4 dimensional vector
@@ -587,7 +588,8 @@ struct vec4_t(T) if(is(T == float) || is(T == short) || is(T == int)) {
 		return XmlValue(x,y,z,w);
 	}
 };
-alias vec4_t!(float) vec4;
+alias vec4 = vec4_t!(float);
+alias ivec4 = vec4_t!(int);
 
 version(unittest)
 {

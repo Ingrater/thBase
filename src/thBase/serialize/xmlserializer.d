@@ -10,6 +10,12 @@ import thBase.allocator;
 
 class XmlSerializerBase {
 public:
+  enum IsOptional : bool
+  {
+    No = false,
+    Yes = true
+  }
+
 	static void DoSerializeAttribute(int value, TiXmlElement pElement, TiXmlString name){
 		pElement.SetAttribute(name,value);
 	}
@@ -28,87 +34,115 @@ public:
 		else
 			pElement.SetAttribute(name, TiXmlString("false", IsStatic.Yes));
 	}
-	
-	static void ProcessMember(MT)(ref MT pValue, TiXmlNode pFather, string pName, bool pIgnoreAll, IAllocator allocator){
-		//writefln("Processing " ~ MT.stringof ~ " normal");
-		static if(!HasMetaAttribute!(MT,XmlIgnore)){
-			if(!pIgnoreAll || pIgnoreAll && HasMetaAttribute!(MT,XmlSerialize)){
-				static bool IgnoreAll = HasMetaAttribute!(MT,XmlIgnoreAll);
-				static if(NativeType!(MT)){
-					DoSerializeAttribute(pValue,pFather.ToElement(), TiXmlString(pName, IsStatic.Yes));
-				}
-				else static if(std.traits.isArray!(MT)){
-          static assert(!is(MT == string), "serializing of strings is not supported, use rcstring instead");
-					TiXmlElement element = AllocatorNew!TiXmlElement(allocator, TiXmlString(pName, IsStatic.Yes), allocator);
-					pFather.LinkEndChild(element);
-					element.SetAttribute(TiXmlString("size", IsStatic.Yes), cast(int)pValue.length);
+
+  static void ProcessNativeArrayMember(MT)(ref MT pValue, TiXmlNode pFather, IAllocator allocator)
+  {
+    TiXmlElement element = AllocatorNew!TiXmlElement(allocator, TiXmlString("el", IsStatic.Yes), allocator);
+    DoSerializeAttribute(pValue, element, TiXmlString("value", IsStatic.Yes));
+  }
+
+  static void DoProcessMember(MT)(ref MT pValue, TiXmlNode pFather, string pName, IsOptional isOptional, IAllocator allocator)
+  {
+    static if(NativeType!(MT)){
+      DoSerializeAttribute(pValue, pFather.ToElement(), TiXmlString(pName, IsStatic.Yes));
+    }
+    else static if(std.traits.isArray!(MT))
+    {
+      static assert(!is(MT == string), "serializing of strings is not supported, use rcstring instead");
+      if(!isOptional || pValue.length > 0)
+      {
+        TiXmlElement element = AllocatorNew!TiXmlElement(allocator, TiXmlString(pName, IsStatic.Yes), allocator);
+        pFather.LinkEndChild(element);
+        element.SetAttribute(TiXmlString("size", IsStatic.Yes), cast(int)pValue.length);
+        string name;
+        static if(is(typeof(ArrayType!(MT).XmlName)))
+          name = ArrayType!(MT).XmlName;
+        else
+          name = ArrayType!(MT).stringof;
+        foreach(int i,ref v;pValue){
+          static if(NativeType!(ArrayType!(MT)))
+            ProcessNativeArrayMember(v, element, allocator);
+          else
+            DoProcessMember(v, element, name, IsOptional.No, allocator);
+        }
+      }
+    }
+    else static if(isRCArray!(MT)){
+      static if(is(MT == rcstring))
+      {
+        if(!isOptional || pValue.length > 0)
+        {
+          TiXmlElement element = pFather.ToElement();
+          element.SetAttribute(TiXmlString(pName, IsStatic.Yes), cast(TiXmlString)pValue);
+        }
+      }
+      else
+      {
+        if(!isOptional || pValue.length > 0)
+        {
+          TiXmlElement element = AllocatorNew!TiXmlElement(allocator, TiXmlString(pName, IsStatic.Yes), allocator);
+          pFather.LinkEndChild(element);
+          element.SetAttribute(TiXmlString("size", IsStatic.Yes), cast(int)pValue.length);
           string name;
           static if(is(typeof(ArrayType!(MT).XmlName)))
-            name = ArrayType!(MT).XmlName;
+            name = arrayType!(MT).XmlName;
           else
-            name = ArrayType!(MT).stringof;
-					foreach(int i,ref v;pValue){
-						ProcessMember(v, element, name, false, allocator);
-					}
-				}
-        else static if(isRCArray!(MT)){
-          static if(is(MT == rcstring))
+            name = arrayType!(MT).stringof;
+          foreach(int i, ref v;pValue[])
           {
-            TiXmlElement element = pFather.ToElement();
-            element.SetAttribute(TiXmlString(pName, IsStatic.Yes), cast(TiXmlString)pValue);
-          }
-          else
-          {
-            TiXmlElement element = AllocatorNew!TiXmlElement(allocator, TiXmlString(pName, IsStatic.Yes), allocator);
-            pFather.LinkEndChild(element);
-            element.SetAttribute(TiXmlString("size", IsStatic.Yes), cast(int)pValue.length);
-            string name;
-            static if(is(typeof(ArrayType!(MT).XmlName)))
-              name = arrayType!(MT).XmlName;
+            static if(NativeType!(arrayType!(MT)))
+              ProcessNativeArrayMember(v, element, allocator);
             else
-              name = arrayType!(MT).stringof;
-            foreach(int i, ref v;pValue[])
-            {
-              ProcessMember(v, element, name, false, allocator);
+              DoProcessMember(v, element, name, IsOptional.No, allocator);
+          }
+        }
+      }
+    }
+    else static if(RecursiveType!(MT)){
+      //writefln("recursive type");
+      static if(HasSetterGetter!(MT)){
+        static if(__traits(hasMember,GetterType!(MT),"DoXmlSerialize"))
+          pValue.XmlGetValue().DoXmlSerialize(pFather, pName);
+        else
+        {
+          auto proxyValue = pValue.XmlGetValue();
+          DoProcessMember(proxyValue, pFather, pName, isOptional, allocator);
+        }
+      }
+      else {
+        //writefln("processing members");
+        TiXmlElement element = AllocatorNew!TiXmlElement(allocator, TiXmlString(pName, IsStatic.Yes), allocator);
+        pFather.LinkEndChild(element);
+        foreach(m;__traits(allMembers,MT)){
+          //writefln("testing " ~ m);
+          static if(m.length < 2 || m[0..2] != "__"){
+            //writefln(m ~ " passed 1");
+            static if(__traits(compiles,typeof(__traits(getMember,MT,m)))){
+              //writefln(m ~ " passed 2");
+              static if(!isFunction!(typeof(__traits(getMember,pValue,m)))){
+                //writefln(m ~ " passed 3");
+                auto memberOptional = hasAttribute!(__traits(getMember, pValue, m), Optional) ?
+                  IsOptional.Yes : IsOptional.No;
+                static if(__traits(hasMember,typeof(__traits(getMember, MT, m)),"DoXmlSerialize"))
+                  __traits(getMember,pValue,m).DoXmlSerialize(element, m, IgnoreAll);
+                else
+                {
+
+                  static if(!hasAttribute!(__traits(getMember, pValue, m), Ignore))
+                    XmlSerializerBase.DoProcessMember(__traits(getMember, pValue, m), element, m, memberOptional, allocator);
+                }
+              }
             }
           }
         }
-				else static if(RecursiveType!(MT)){
-					//writefln("recursive type");
-					static if(HasSetterGetter!(MT)){
-						static if(__traits(hasMember,GetterType!(MT),"DoXmlSerialize"))
-							pValue.XmlGetValue().DoXmlSerialize(pFather,pName,IgnoreAll);
-						else
-            {
-              auto proxyValue = pValue.XmlGetValue();
-							ProcessMember(proxyValue, pFather, pName, IgnoreAll, allocator);
-            }
-					}
-					else {
-						//writefln("processing members");
-						TiXmlElement element = AllocatorNew!TiXmlElement(allocator, TiXmlString(pName, IsStatic.Yes), allocator);
-						pFather.LinkEndChild(element);
-						foreach(m;__traits(allMembers,MT)){
-							//writefln("testing " ~ m);
-							static if(m.length < 2 || m[0..2] != "__"){
-								//writefln(m ~ " passed 1");
-								static if(__traits(compiles,typeof(__traits(getMember,MT,m)))){
-									//writefln(m ~ " passed 2");
-									static if(!isFunction!(typeof(__traits(getMember,pValue,m)))){
-										//writefln(m ~ " passed 3");
-										static if(__traits(hasMember,typeof(__traits(getMember,MT,m)),"DoXmlSerialize"))
-											__traits(getMember,pValue,m).DoXmlSerialize(element,m,IgnoreAll);
-										else
-											XmlSerializerBase.ProcessMember(__traits(getMember,pValue,m),element,m,IgnoreAll, allocator);
-									}
-								}
-							}
-						}
-					}
-				}	
-			}
+      }
+    }	
+  }
+	
+	static void ProcessMember(alias M, MT)(ref MT pValue, TiXmlNode pFather, string pName, IAllocator allocator){
+    static if(!hasAttribute!(M, Ignore)){
+      DoProcessMember(pValue, pFather, pName, allocator);
 		}
-		//writefln("finished " ~ MT.stringof);
 	}	
 }
 
@@ -144,7 +178,7 @@ void ToXmlFile(T)(ref T pValue, string pFilename){
 	static if(__traits(hasMember,pValue,"DoXmlSerialize"))
 		pValue.DoXmlSerialize(doc,rootName,false);
 	else
-		XmlSerializerBase.ProcessMember(pValue,doc,rootName,false, allocator);
+		XmlSerializerBase.DoProcessMember(pValue,doc,rootName, XmlSerializerBase.IsOptional.No, allocator);
 
 	doc.SaveFile(pFilename);
 }
@@ -194,6 +228,7 @@ version(unittest)
 {
   import thBase.devhelper;
   import thBase.serialize.xmldeserializer;
+  import thBase.math3d.vecs;
 }
 
 unittest
@@ -213,6 +248,19 @@ unittest
     }
   }
 
+  static struct DontTouch
+  {
+    void XmlSetValue(int value)
+    {
+      assert(0, "should not be called");
+    }
+
+    int XmlGetValue()
+    {
+      assert(0, "should not be called");
+    }
+  }
+
   static struct test {
 
     ~this()
@@ -225,6 +273,15 @@ unittest
     rcstring name;
     special[] s;
     RCArray!special s2;
+    @Optional int[] opt;
+    @Optional RCArray!int opt2;
+    @Ignore DontTouch ignore;
+    vec3 v3;
+    ivec3 iv3;
+    vec2 v2;
+    ivec2 iv2;
+    vec4 v4;
+    ivec4 iv4;
   }
 
   {
@@ -234,6 +291,7 @@ unittest
     t.name = _T("testnode");
     t.s = NewArray!(special)(4);
     t.s2 = RCArray!special(4);
+    t.opt2 = RCArray!int(4);
     for(int i=0; i<4; i++)
     {
       t.s[i].x = cast(float)i;
@@ -241,6 +299,8 @@ unittest
 
       t.s2[i].x = cast(float)i;
       t.s2[i].y = cast(float)i; //this shouldn't be serialized
+
+      t.opt2[i] = i;
     }
     ToXmlFile(t, "XmlSerializeTest.xml");
   }
