@@ -320,41 +320,50 @@ unittest
     ivec4 iv4;
   }
 
+  try
   {
-    test t;
-    t.f = 0.5f;
-    t.i = 16;
-    t.name = _T("testnode");
-    t.s = NewArray!(special)(4);
-    t.n1 = NewArray!(Named)(2);
-    t.n2 = NewArray!(Named2)(2);
-    t.s2 = RCArray!special(4);
-    t.opt2 = RCArray!int(4);
-    for(int i=0; i<4; i++)
     {
-      t.s[i].x = cast(float)i;
-      t.s[i].y = cast(float)i; //this shouldn't be serialized
+      test t;
+      t.f = 0.5f;
+      t.i = 16;
+      t.name = _T("testnode");
+      t.s = NewArray!(special)(4);
+      t.n1 = NewArray!(Named)(2);
+      t.n2 = NewArray!(Named2)(2);
+      t.s2 = RCArray!special(4);
+      t.opt2 = RCArray!int(4);
+      for(int i=0; i<4; i++)
+      {
+        t.s[i].x = cast(float)i;
+        t.s[i].y = cast(float)i; //this shouldn't be serialized
 
-      t.s2[i].x = cast(float)i;
-      t.s2[i].y = cast(float)i; //this shouldn't be serialized
+        t.s2[i].x = cast(float)i;
+        t.s2[i].y = cast(float)i; //this shouldn't be serialized
 
-      t.opt2[i] = i;
+        t.opt2[i] = i;
+      }
+      ToXmlFile(t, "XmlSerializeTest.xml");
     }
-    ToXmlFile(t, "XmlSerializeTest.xml");
-  }
 
-  {
-    auto t = FromXmlFile!(test)(_T("XmlSerializeTest.xml"));
-    assert(t.f == 0.5f, "t.f a has invalid value");
-    assert(t.i == 16, "t.i has a invalid value");
-    assert(t.name == "testnode", "t.name has a invalid value");
-    for(int i=0; i<4; i++)
     {
-      assert(t.s[i].x == cast(float)i, "t.s[].x has a invalid value");
-      assert(t.s[i].y != t.s[i].y, "t.s[].y has a invalid value"); //NAN check
+      auto t = FromXmlFile!(test)(_T("XmlSerializeTest.xml"));
+      assert(t.f == 0.5f, "t.f a has invalid value");
+      assert(t.i == 16, "t.i has a invalid value");
+      assert(t.name == "testnode", "t.name has a invalid value");
+      for(int i=0; i<4; i++)
+      {
+        assert(t.s[i].x == cast(float)i, "t.s[].x has a invalid value");
+        assert(t.s[i].y != t.s[i].y, "t.s[].y has a invalid value"); //NAN check
       
-      assert(t.s2[i].x == cast(float)i, "t.s2[].x has a invalid value");
-      assert(t.s2[i].y != t.s2[i].y, "t.s2[].y has a invalid value");
+        assert(t.s2[i].x == cast(float)i, "t.s2[].x has a invalid value");
+        assert(t.s2[i].y != t.s2[i].y, "t.s2[].y has a invalid value");
+      }
     }
+  }
+  catch(RCException ex)
+  {
+    auto error = ex.toString();
+    Delete(ex);
+    assert(0, error[]);
   }
 }

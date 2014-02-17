@@ -24,6 +24,7 @@ class XmlDeserializerException : RCException {
 	
 	void Append(rcstring msg){
 		this.rcmsg ~= msg;
+    this.msg = rcmsg[];
 	}
 }
 
@@ -43,10 +44,11 @@ protected:
 		}
 	}
 	
-	static void HandleError(TiXmlNode pNode, string msg){
+	static void HandleError(TiXmlNode pNode, string msg)
+  {
 		auto path = pNode.Value();
 		for(TiXmlNode next = pNode.Parent();next !is null && next.Type() != TiXmlNode.NodeType.DOCUMENT;next = next.Parent())
-			path = next.Value() ~ "." ~ path;	
+			path = next.Value() ~ "." ~ path;
 		throw New!XmlDeserializerException(FormatError("path: '%s' error: %s", path[], msg));
 	}
 	
@@ -120,6 +122,8 @@ protected:
 				HandleError(pFather, cast(string)buffer[0..len]);
 			}
 			else {
+        if(node is null)
+          return;
         auto error = ErrorScope(ErrorContext.create("array", pName));
 				TiXmlElement element = node.ToElement();
 				if(element is null){
@@ -142,7 +146,7 @@ protected:
         string name;
         alias AT = arrayType!MT;
         static if(NativeType!AT)
-          name = AT.stringof;
+          name = "el";
         else static if (HasSetterGetter!AT && !NativeType!(GetterType!AT) && hasAttribute!(GetterType!AT, NiceName))
         {
           name = getAttribute!(GetterType!AT, NiceName).value;
@@ -155,7 +159,10 @@ protected:
         TiXmlNode cur = element.FirstChildElement(name);            
         int i=0;
         for(;i<size && cur !is null;i++, cur = cur.NextSiblingElement(name)){
-          ProcessMember(pValue[i], element, null, IsOptional.No, cur);
+          static if(NativeType!AT)
+            DoDeserializeAttribute(pValue[i], cur.ToElement(), "value", IsOptional.No);
+          else
+            ProcessMember(pValue[i], element, null, IsOptional.No, cur);
         }
         if(cur !is null)
         {
@@ -196,7 +203,7 @@ protected:
           string name;
           alias AT = arrayType!MT;
           static if(NativeType!AT)
-            name = AT.stringof;
+            name = "el";
           else static if (HasSetterGetter!AT && !NativeType!(GetterType!AT) && hasAttribute!(GetterType!AT, NiceName))
           {
             name = getAttribute!(GetterType!AT, NiceName).value;
@@ -209,7 +216,10 @@ protected:
           TiXmlNode cur = element.FirstChildElement(name);
           int i=0;
           for(;i<size && cur !is null;i++, cur = cur.NextSiblingElement(name)){
-            ProcessMember(pValue[i], element, null, IsOptional.No, cur);
+            static if(NativeType!AT)
+              DoDeserializeAttribute(pValue[i], cur.ToElement(), "value", IsOptional.No);
+            else
+              ProcessMember(pValue[i], element, null, IsOptional.No, cur);
           }
           if(cur !is null)
           {
