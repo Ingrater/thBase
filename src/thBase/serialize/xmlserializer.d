@@ -324,6 +324,12 @@ unittest
   {
     {
       test t;
+      t.v3 = vec3(1.0f, 2.0f, 3.0f);
+      t.iv3 = ivec3(1, 2, 3);
+      t.v2 = vec2(4.0f, 5.0f);
+      t.iv2 = ivec2(4, 5);
+      t.v4 = vec4(6.0f, 7.0f, 8.0f, 9.0f);
+      t.iv4 = ivec4(6, 7, 8, 9);
       t.f = 0.5f;
       t.i = 16;
       t.name = _T("testnode");

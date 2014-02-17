@@ -235,6 +235,8 @@ protected:
 		else static if(RecursiveType!(MT)){
 			static if(HasSetterGetter!(MT))
       {
+        if(isOptional && pName !is null && pFather.FirstChild(pName) is null)
+          return;
 				SetterType!MT temp = pValue.XmlGetValue();
 				static if(__traits(hasMember,SetterType!(MT),"DoXmlDeserialize"))
 					temp.DoXmlDeserialize(pFather, pName, isOptional, pNode);
@@ -258,11 +260,14 @@ protected:
 					foreach(m;__traits(allMembers,MT)){
 						static if(m.length < 2 || m[0..2] != "__"){
 							static if(__traits(compiles,__traits(getMember,pValue,m) = __traits(getMember,pValue,m).init) && !isFunction!(typeof(__traits(getMember,pValue,m)))){
-                auto isMemberOptional = hasAttribute!(__traits(getMember, MT, m), Optional) ? IsOptional.Yes : IsOptional.No;
-                static if(__traits(hasMember,typeof(__traits(getMember,MT,m)),"DoXmlDeserialize"))
-									__traits(getMember,pValue,m).DoXmlDeserialize(element, m, isMemberOptional, pNode);
-								else
-									ProcessMember(__traits(getMember,pValue,m), element, m, isMemberOptional, pNode);
+                auto isMemberOptional = hasAttribute!(__traits(getMember, pValue, m), Optional) ? IsOptional.Yes : IsOptional.No;
+                static if(!hasAttribute!(__traits(getMember, pValue, m), Ignore))
+                {
+                  static if(__traits(hasMember,typeof(__traits(getMember,MT,m)),"DoXmlDeserialize"))
+									  __traits(getMember,pValue,m).DoXmlDeserialize(element, m, isMemberOptional, pNode);
+								  else
+									  ProcessMember(__traits(getMember,pValue,m), element, m, isMemberOptional, pNode);
+                }
 							}
 						}
 					}
@@ -390,6 +395,19 @@ unittest
     }
   }
 
+  static struct DoNotTouch
+  {
+    void XmlSetValue(XmlValue!int x)
+    {
+      assert(0, "should not be called");
+    }
+
+    XmlValue!int XmlGetValue()
+    {
+      assert(0, "should not be called");
+    }
+  }
+
   static struct test {
 
     ~this()
@@ -402,6 +420,7 @@ unittest
     rcstring name;
     special[] s;
     RCArray!special s2;
+    @Optional DoNotTouch doNotTouch;
   }
 
   try 
