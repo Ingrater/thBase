@@ -1272,6 +1272,7 @@ cd %CWD%</preBuildCommand>
    <File path="thBase\rtti.d" />
    <File path="thBase\scoped.d" />
    <File path="thBase\sharedlib.d" />
+   <File path="thBase\singleton.d" />
    <File path="thBase\socket.d" />
    <File path="thBase\sse.d" />
    <File path="thBase\stream.d" />
