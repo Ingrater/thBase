@@ -136,7 +136,7 @@ public:
   }
 
   /// \brief swap all weak references of this and another weak referenced object
-  void swapPlaces(ref WeakReferenced!(T, Base) other)
+  void swapPlaces(WeakReferenced!(T, Base) other)
   {
     auto lock = ScopedLock!Mutex(s_mutex);
     swap(s_weakTable[m_weakRefIndex.index], s_weakTable[other.m_weakRefIndex.index]);

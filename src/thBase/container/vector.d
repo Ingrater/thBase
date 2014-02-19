@@ -267,10 +267,13 @@ public:
 		return m_Data[start..stop];
 	}
 
-  void opIndexAssign(U)(auto ref U value, size_t index) 
+  void opIndexAssign(U)(auto ref U value, size_t index)
   {
-    static assert(is(T == StripModifier!U));
-    m_Data[index] = value;
+    static assert(is(T == StripModifier!U) || is(U == typeof(null)));
+    static if(is(U == typeof(null)))
+      m_Data[index] = null; // BUG 12203
+    else
+      m_Data[index] = value;
   }
 	
 	void opSliceAssign(T[] array, size_t start, size_t stop)

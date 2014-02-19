@@ -25,8 +25,9 @@ struct NoArgs {};
  */
 struct scopedRef(T, Allocator = StdAllocator)
 {
-  static assert(is(T == class) || is(T == interface), "scoped ref can only deal with classes or pointers not with " ~ T.stringof);
+  static assert(is(T == class), "scoped ref can only deal with classes not with " ~ T.stringof);
   T m_ref;
+  
   static if(!is(typeof(Allocator.globalInstance)))
   {
     private Allocator m_allocator;
@@ -38,19 +39,12 @@ struct scopedRef(T, Allocator = StdAllocator)
 
   static if(is(typeof(Allocator.globalInstance)))
   {
-    /**
-    * Constructor
-    * Params:
-    *  r = the reference
-    */
     this(ARGS...)(ARGS args)
     {
-      m_ref = AllocatorNew!T(Allocator.globalInstance,args);
-    }
-
-    this(NoArgs)
-    {
-      m_ref = AllocatorNew!T(Allocator.globalInstance);
+      static if(ARGS.length == 1 && is(ARGS[0] == NoArgs))
+        m_ref = new T();
+      else
+        m_ref = new T(args);
     }
   }
   else
