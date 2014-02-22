@@ -239,4 +239,21 @@ struct Quaternion {
 
     return deltaQ * this;
   }
+
+  static Quaternion identity()
+  {
+    Quaternion q;
+    q.x = 0; q.y = 0; q.z = 0; q.angle = 1.0f;
+    return q;
+  }
+}
+
+version(unittest)
+{
+  import thBase.math;
+}
+
+unittest
+{
+  assert(epsilonCompare(Quaternion.identity.toMat3() * vec3(1, 2, 3), vec3(1, 2, 3)), "identity is wrong");
 }

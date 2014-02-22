@@ -122,7 +122,7 @@ struct RawFile {
 	 * $(BR) this is done automatically upon destruction of the wrapper object
 	 */
 	void close(){
-		if(m_Handle != null){
+		if(m_Handle !is null){
 			fclose(m_Handle);
 			m_Handle = null;
 		}
@@ -146,7 +146,7 @@ struct RawFile {
    */
   @property size_t size()
   {
-    if( m_Handle != null)
+    if( m_Handle !is null)
     {
       auto cur = ftell(m_Handle);
       fseek(m_Handle,0,SEEK_END);
@@ -162,7 +162,7 @@ struct RawFile {
    */
   @property size_t position()
   {
-    if(m_Handle != null)
+    if(m_Handle !is null)
     {
       return ftell(m_Handle);
     }
@@ -174,7 +174,7 @@ struct RawFile {
    */
   void seek(size_t position)
   {
-    if( m_Handle != null)
+    if( m_Handle !is null)
     {
       fseek(m_Handle, int_cast!int(position), SEEK_SET);
     }
@@ -185,7 +185,7 @@ struct RawFile {
    */
   void seekEnd()
   {
-    if(m_Handle != null)
+    if(m_Handle !is null)
     {
       fseek(m_Handle, 0, SEEK_END);
     }
@@ -196,7 +196,7 @@ struct RawFile {
    */
   void skip(size_t bytes)
   {
-    if(m_Handle != null)
+    if(m_Handle !is null)
     {
       fseek(m_Handle, int_cast!int(bytes), SEEK_CUR);
     }
@@ -204,7 +204,7 @@ struct RawFile {
 
   @property bool eof()
   {
-    if( m_Handle != null)
+    if( m_Handle !is null)
       return !!feof(m_Handle);
     return true;
   }
