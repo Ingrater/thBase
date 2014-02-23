@@ -10,6 +10,7 @@ import std.traits;
 import core.stdc.string;
 import core.refcounted;
 import core.vararg;
+import thBase.math : max;
 
 public import thBase.allocator : ThreadLocalStackAllocator;
 
@@ -742,4 +743,57 @@ size_t toLowerImpl(const(char)[] str, char[] dest) @trusted
     cur += len;
   }
   return cur;
+}
+
+rcstring replace(T, U)(T str, U searchFor, U replaceWith) 
+if(thBase.traits.isSomeString!T && !thBase.traits.isSomeString!U)
+{
+  static if(is(U == char))
+  {
+    auto result = rcstring(str[]);
+    foreach(ref char c; cast(char[])result[])
+    {
+      if(c == searchFor)
+        c = replaceWith;
+    }
+    return result;
+  }
+  else
+  {
+    static assert(0, "not implemented");
+  }
+}
+
+unittest
+{
+  assert("abcdefaba".replace('a','f') == "fbcdeffbf");
+}
+
+auto replace(S1, S2, S3)(S1 str, S2 searchFor, S3 replaceWith)
+if(thBase.traits.isSomeString!S1 && thBase.traits.isSomeString!S2 && thBase.traits.isSomeString!S3)
+{
+  auto remainder = str[];
+  ptrdiff_t pos = remainder.indexOf(searchFor);
+  static if(isRCArray!S1)
+  {
+    if(pos < 0)
+      return str;
+  }
+
+  auto appender = StringAppendBuffer!()(str.length, max(8, replaceWith.length - searchFor.length * 8));
+  do
+  {
+    appender ~= remainder[0..pos];
+    appender ~= replaceWith[];
+    remainder = remainder[pos + searchFor.length .. $];
+    pos = remainder.indexOf(searchFor);
+  }
+  while(pos >= 0);
+  appender ~= remainder;
+  return appender.str;
+}
+
+unittest
+{
+  assert("\\\\this\\\\is\\\\a\\\\\\\\path".replace("\\\\","/") == "/this/is/a//path");
 }

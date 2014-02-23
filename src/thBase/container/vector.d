@@ -6,6 +6,7 @@ public import core.stdc.string;
 import core.allocator;
 import std.traits;
 import thBase.traits;
+import thBase.algorithm : swap;
 
 enum RemoveEntry : bool
 {
@@ -432,7 +433,7 @@ public:
     return numRemoved;
   }
 
-  void insertAtIndex(U)(size_t index, auto ref U value)
+  void insertAtIndex(size_t index, T value)
   {
     assert(index <= m_Size, "out of bounds access");
     resize(m_Size + 1);
@@ -443,7 +444,7 @@ public:
         m_Data[i] = m_Data[i-1]; //TODO use memmove
       }
     }
-    m_Data[index] = value;
+    swap(m_Data[index], value);
   }
 	
 	void insertionSort(scope bool delegate(ref const(T) lh, ref const(T) rh) cmp){

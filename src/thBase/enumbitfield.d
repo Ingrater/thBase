@@ -119,6 +119,16 @@ struct EnumBitfield(T)
     typeof(value) temp = v1 | v2 | v3 | v4 | v5 | v6;
     return (value & temp) == temp;
   }
+
+  bool IsSubsetOf(EnumBitfield!T rh)
+  {
+    return (value & rh.value) != 0;
+  }
+
+  bool IsAnyBitSet()
+  {
+    return value != 0;
+  }
 }
 
 EnumBitfield!T Flags(T)(T v1)

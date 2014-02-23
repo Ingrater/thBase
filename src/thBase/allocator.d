@@ -28,18 +28,18 @@ enum StillAllocated
   Ignore
 }
 
-class FixedBlockAllocator(LockingPolicy) : IAllocator
+class FixedBlockAllocator(lockingPolicy) : IAllocator
 {
   private: 
     void[] m_memoryBlock;
     bool m_bAllocated = false;
-    LockingPolicy m_lock;
+    lockingPolicy m_lock;
 
   public:
 
   this(void[] memoryBlock)
   {
-    m_lock = LockingPolicy(PolicyInit.DEFAULT);
+    m_lock = lockingPolicy(PolicyInit.DEFAULT);
     m_memoryBlock = memoryBlock;
   }
 
@@ -50,8 +50,8 @@ class FixedBlockAllocator(LockingPolicy) : IAllocator
 
   final void[] AllocateMemory(size_t size)
   {
-    m_lock.Lock();
-    scope(exit) m_lock.Unlock();
+    m_lock.lock();
+    scope(exit) m_lock.unlock();
     assert(m_bAllocated == false, "memory block has already been allocated");
     assert(size <= m_memoryBlock.length, "to much memory requested");
     if(m_bAllocated || size > m_memoryBlock.length)
@@ -63,8 +63,8 @@ class FixedBlockAllocator(LockingPolicy) : IAllocator
 
   final void FreeMemory(void* mem)
   {
-    m_lock.Lock();
-    scope(exit) m_lock.Unlock();
+    m_lock.lock();
+    scope(exit) m_lock.unlock();
     assert(m_bAllocated == true && mem == m_memoryBlock.ptr, "memory block does not belong to this allocator");
 
     m_bAllocated = false;
@@ -73,12 +73,12 @@ class FixedBlockAllocator(LockingPolicy) : IAllocator
 
 import core.stdc.stdio;
 
-class FixedStackAllocator(LockingPolicy, Allocator) : IAllocator
+class FixedStackAllocator(lockingPolicy, Allocator) : IAllocator
 {
   enum size_t alignment = size_t.sizeof;
   private:
     Allocator m_allocator;
-    LockingPolicy m_lock;
+    lockingPolicy m_lock;
     void[] m_memoryBlock;
     void* m_cur;
     void* m_last;
@@ -111,7 +111,7 @@ class FixedStackAllocator(LockingPolicy, Allocator) : IAllocator
     this(size_t stackSize, Allocator allocator)
     {
       m_allocator = allocator;
-      m_lock = LockingPolicy(PolicyInit.DEFAULT);
+      m_lock = lockingPolicy(PolicyInit.DEFAULT);
       m_memoryBlock = m_allocator.AllocateMemory(stackSize);
       assert(m_memoryBlock.ptr !is null);
       m_cur = m_memoryBlock.ptr;
@@ -128,8 +128,8 @@ class FixedStackAllocator(LockingPolicy, Allocator) : IAllocator
 
     final void[] AllocateMemory(size_t size)
     {
-      m_lock.Lock();
-      scope(exit) m_lock.Unlock();
+      m_lock.lock();
+      scope(exit) m_lock.unlock();
       size_t padding = 0;
       size_t alignedSize = size;
       if(alignedSize % alignment != 0)
@@ -170,8 +170,8 @@ class FixedStackAllocator(LockingPolicy, Allocator) : IAllocator
 
     final void FreeMemory(void* mem)
     {
-      m_lock.Lock();
-      scope(exit) m_lock.Unlock();
+      m_lock.lock();
+      scope(exit) m_lock.unlock();
 
       debug {
         assert(mem >= m_memoryBlock.ptr && mem < m_upperEnd, "memory given is not from this allocator");
@@ -205,8 +205,8 @@ class FixedStackAllocator(LockingPolicy, Allocator) : IAllocator
 
     final bool CanFreeMemory(void* mem)
     {
-      m_lock.Lock();
-      scope(exit) m_lock.Unlock();
+      m_lock.lock();
+      scope(exit) m_lock.unlock();
       debug {
         return mem >= m_memoryBlock.ptr && mem < m_upperEnd;
       }
@@ -219,8 +219,8 @@ class FixedStackAllocator(LockingPolicy, Allocator) : IAllocator
 
     final void FreeAllMemory()
     {
-      m_lock.Lock();
-      scope(exit) m_lock.Unlock();
+      m_lock.lock();
+      scope(exit) m_lock.unlock();
 
       debug {
         m_upperEnd = m_memoryBlock.ptr + m_memoryBlock.length;
@@ -240,7 +240,7 @@ version(unittest)
   auto leak = LeakChecker("thBase.allocator unittest");
   {
     void[1024] mem = void;
-    auto blockAlloc = New!(FixedBlockAllocator!(NoLockPolicy))(mem);
+    auto blockAlloc = New!(FixedBlockAllocator!(NolockPolicy))(mem);
     auto stackAlloc = New!(FixedStackAllocator!(MutexLockPolicy, typeof(blockAlloc)))(mem.length, blockAlloc);
     scope(exit)
     {
@@ -279,10 +279,10 @@ version(unittest)
   }
 }*/
 
-class TemporaryAllocator(LockingPolicy, Allocator, size_t ALIGNMENT = size_t.sizeof) : IAllocator
+class TemporaryAllocator(lockingPolicy, Allocator, size_t ALIGNMENT = size_t.sizeof) : IAllocator
 {
   private:
-  LockingPolicy m_lock;
+  lockingPolicy m_lock;
   Allocator m_allocator;
 
   debug 
@@ -396,7 +396,7 @@ class TemporaryAllocator(LockingPolicy, Allocator, size_t ALIGNMENT = size_t.siz
   {
     assert(memBlockSize >= 1024, "temp memory allocator with less then 1kb blocksize does not make much sense");
     assert(allocator !is null);
-    m_lock = LockingPolicy(PolicyInit.DEFAULT);
+    m_lock = lockingPolicy(PolicyInit.DEFAULT);
     m_allocator = allocator;
     m_memBlockSize = memBlockSize;
     AllocateMemoryBlock(0);
@@ -447,8 +447,8 @@ class TemporaryAllocator(LockingPolicy, Allocator, size_t ALIGNMENT = size_t.siz
 
   final void[] AllocateMemory(size_t size)
   {
-    m_lock.Lock();
-    scope(exit) m_lock.Unlock();
+    m_lock.lock();
+    scope(exit) m_lock.unlock();
 
     auto result = DoAllocateMemory(size);
     debug {
@@ -464,8 +464,8 @@ class TemporaryAllocator(LockingPolicy, Allocator, size_t ALIGNMENT = size_t.siz
 
   final void FreeMemory(void* mem)
   {
-    m_lock.Lock();
-    scope(exit) m_lock.Unlock();
+    m_lock.lock();
+    scope(exit) m_lock.unlock();
 
     debug {
       assert(m_AllocatedMemory.exists(mem), "double or invalid free");
@@ -475,8 +475,8 @@ class TemporaryAllocator(LockingPolicy, Allocator, size_t ALIGNMENT = size_t.siz
 
   final bool CanFreeMemory(void* mem)
   {
-    m_lock.Lock();
-    scope(exit) m_lock.Unlock();
+    m_lock.lock();
+    scope(exit) m_lock.unlock();
 
     foreach(ref block; m_blocks)
     {
@@ -499,7 +499,7 @@ unittest
 {
   auto leak = LeakChecker("thBase.allocator unittest");
   {
-    auto allocator = New!(TemporaryAllocator!(NoLockPolicy, StdAllocator))(1024, StdAllocator.globalInstance);
+    auto allocator = New!(TemporaryAllocator!(NolockPolicy, StdAllocator))(1024, StdAllocator.globalInstance);
     scope(exit) Delete(allocator);
     void*[64] allocated;
 
@@ -535,12 +535,12 @@ unittest
   }
 }
 
-class ChunkAllocator(LockingPolicy, AT = StdAllocator) : IAllocator
+class ChunkAllocator(lockingPolicy, AT = StdAllocator) : IAllocator
 {
   private:
     composite!(Stack!(void[], AT)) m_FreeChunks;
     composite!(Vector!(void[], AT)) m_Regions;
-    LockingPolicy m_lock;
+    lockingPolicy m_lock;
     debug
     {
       composite!(Hashmap!(void*, size_t, PointerHashPolicy, StdAllocator)) m_AllocatedMemory;
@@ -573,7 +573,7 @@ class ChunkAllocator(LockingPolicy, AT = StdAllocator) : IAllocator
       assert(chunkSize > 0);
       assert(numChunks > 0);
       assert(chunkSize % alignment == 0, "chunk size has to be a multiple of alignment");
-      m_lock = LockingPolicy(PolicyInit.DEFAULT);
+      m_lock = lockingPolicy(PolicyInit.DEFAULT);
       m_chunkSize = chunkSize;
       m_numChunksPerRegion = numChunks;
       m_allocator = allocator;
@@ -614,8 +614,8 @@ class ChunkAllocator(LockingPolicy, AT = StdAllocator) : IAllocator
 
     final void[] AllocateMemory(size_t size)
     {
-      m_lock.Lock();
-      scope(exit) m_lock.Unlock();
+      m_lock.lock();
+      scope(exit) m_lock.unlock();
 
       assert(size <= m_chunkSize, "a chunk allocator can not allocate memory blocks bigger then its chunk size");
       if(m_FreeChunks.empty)
@@ -634,8 +634,8 @@ class ChunkAllocator(LockingPolicy, AT = StdAllocator) : IAllocator
 
     final void FreeMemory(void* mem)
     {
-      m_lock.Lock();
-      scope(exit) m_lock.Unlock();
+      m_lock.lock();
+      scope(exit) m_lock.unlock();
 
       debug
       {
@@ -648,8 +648,8 @@ class ChunkAllocator(LockingPolicy, AT = StdAllocator) : IAllocator
 
     final bool CanFreeMemory(void* mem)
     {
-      m_lock.Lock();
-      scope(exit) m_lock.Unlock();
+      m_lock.lock();
+      scope(exit) m_lock.unlock();
 
       foreach(ref region; m_Regions[])
       {
@@ -679,7 +679,7 @@ unittest
 {
   auto leak = LeakChecker("thBase.allocator.ChunkAllocator unittest");
   {
-    auto allocator = New!(ChunkAllocator!(NoLockPolicy))(1024, 4);
+    auto allocator = New!(ChunkAllocator!(NolockPolicy))(1024, 4);
     scope(exit) Delete(allocator);
 
     void*[9] allocated;
@@ -725,7 +725,7 @@ unittest
   }
 }
 
-class RedirectAllocator(SmallAllocator, BigAllocator, LockingPolicy) : IAllocator
+class RedirectAllocator(SmallAllocator, BigAllocator, lockingPolicy) : IAllocator
 {
   public:
     enum Delete
@@ -740,7 +740,7 @@ class RedirectAllocator(SmallAllocator, BigAllocator, LockingPolicy) : IAllocato
     size_t m_maxSize;
     SmallAllocator m_smallAllocator;
     BigAllocator m_bigAllocator;
-    LockingPolicy m_lock;
+    lockingPolicy m_lock;
     composite!(Hashmap!(void*, size_t, PointerHashPolicy, StdAllocator)) m_bigAllocations;
     Delete m_delete;
     
@@ -748,7 +748,7 @@ class RedirectAllocator(SmallAllocator, BigAllocator, LockingPolicy) : IAllocato
     this(size_t maxSize, SmallAllocator smallAllocator, BigAllocator bigAllocator, Delete del)
     {
       assert(maxSize > 0);
-      m_lock = LockingPolicy(PolicyInit.DEFAULT);
+      m_lock = lockingPolicy(PolicyInit.DEFAULT);
       m_maxSize = maxSize;
       m_smallAllocator = smallAllocator;
       m_bigAllocator = bigAllocator;
@@ -770,8 +770,8 @@ class RedirectAllocator(SmallAllocator, BigAllocator, LockingPolicy) : IAllocato
     {
       if(size > m_maxSize)
       {
-        m_lock.Lock();
-        scope(exit) m_lock.Unlock();
+        m_lock.lock();
+        scope(exit) m_lock.unlock();
 
         void mem[] = m_bigAllocator.AllocateMemory(size);
         m_bigAllocations.opIndexAssign(size, mem.ptr);
@@ -782,8 +782,8 @@ class RedirectAllocator(SmallAllocator, BigAllocator, LockingPolicy) : IAllocato
 
     final void FreeMemory(void* mem)
     {
-      m_lock.Lock();
-      scope(exit) m_lock.Unlock();
+      m_lock.lock();
+      scope(exit) m_lock.unlock();
       if(m_bigAllocations.exists(mem))
       {
         m_bigAllocations.remove(mem);
@@ -800,9 +800,9 @@ unittest
 {
   auto leak = LeakChecker("thBase.allocator.RedirectAllocator unittest");
   {
-    alias RedirectAllocator!(ChunkAllocator!(NoLockPolicy), StdAllocator, NoLockPolicy) allocator_t;
+    alias RedirectAllocator!(ChunkAllocator!(NolockPolicy), StdAllocator, NolockPolicy) allocator_t;
     auto allocator = New!allocator_t
-                         (1024, New!(ChunkAllocator!(NoLockPolicy))(1024,4), StdAllocator.globalInstance, allocator_t.Delete.Small);
+                         (1024, New!(ChunkAllocator!(NolockPolicy))(1024,4), StdAllocator.globalInstance, allocator_t.Delete.Small);
     scope(exit) Delete(allocator);
 
     void*[4] allocated;

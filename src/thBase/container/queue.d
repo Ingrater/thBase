@@ -1,5 +1,10 @@
 module thBase.container.queue;
 
+import thBase.container.vector;
+import thBase.types;
+import thBase.scoped;
+import thBase.algorithm : move;
+
 import core.sync.semaphore;
 import core.sync.mutex;
 import core.allocator;
@@ -247,3 +252,82 @@ unittest
     }
   }
 }
+
+class Queue(T, LockingPolicy = NoLockPolicy, Allocator = StdAllocator)
+{
+private:
+  composite!(Vector!(T, Allocator)) m_data;
+  LockingPolicy m_lock;
+
+  size_t m_insertIndex = 0;
+  size_t m_takeIndex = 0;
+
+public:
+  this()
+  {
+    m_lock = LockingPolicy(PolicyInit.DEFAULT);
+    m_data = typeof(m_data)(DefaultCtor());
+    m_data.resize(4);
+  }
+
+  /// \brief takes a element from the beginning of the queue
+  T take()
+  {
+    auto slock = ScopedLock!LockingPolicy(m_lock);
+    assert(count() > 0, "no more elements left in the queue");
+    T result;
+    swap(result, m_data[m_takeIndex]);
+    m_takeIndex = m_takeIndex++;
+    if(m_takeIndex == m_data.length)
+      m_takeIndex = 0;
+    return result;
+  }
+
+  /// \brief appends a new element at the end of the queue
+  void append(T val)
+  {
+    auto slock = ScopedLock!LockingPolicy(m_lock);
+    if(m_takeIndex > m_insertIndex)
+    {
+      assert(m_takeIndex - m_insertIndex >= 1);
+      if(m_takeIndex - m_insertIndex == 1)
+      {
+        m_data.insertAtIndex(m_insertIndex, move(val));
+        m_insertIndex++;
+        m_takeIndex++;
+      }
+      else
+      {
+        swap(m_data[m_insertIndex], val);
+        m_insertIndex++; // no overflow possible
+      }
+    }
+    else
+    {
+      if(m_insertIndex == m_data.length() - 1 && m_takeIndex == 0)
+      {
+        m_data.insertAtIndex(m_insertIndex, move(val));
+        m_insertIndex++;
+      }
+      else
+      {
+        swap(m_data[m_insertIndex], val);
+        m_insertIndex++;
+        if(m_insertIndex == m_data.length)
+          m_insertIndex = 0;
+      }
+    }
+  }
+
+  /// \brief returns the number of elements remaining in the queue
+  size_t count()
+  {
+    auto slock = ScopedLock!LockingPolicy(m_lock);
+    size_t insertIndex = m_insertIndex;
+    if(insertIndex < m_takeIndex)
+      insertIndex += m_data.length;
+    assert(insertIndex >= m_takeIndex);
+    return insertIndex - m_takeIndex;
+  }
+
+};

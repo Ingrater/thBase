@@ -8,31 +8,26 @@ struct NoLockPolicy
 {
   //@disable this(); //BUG
   this(PolicyInit init){}
-  void Lock(){}
-  void Unlock(){}
+  void lock(){}
+  void unlock(){}
 }
 
 struct MutexLockPolicy
 {
-  private Mutex m_mutex;
+  private composite!Mutex m_mutex;
   //@disable this(); //BUG
   
   this(PolicyInit init)
   {
-    m_mutex = New!Mutex();
+    m_mutex = typeof(m_mutex)(DefaultCtor());
   }
 
-  ~this()
-  {
-    Delete(m_mutex);
-  }
-
-  void Lock()
+  void lock()
   {
     m_mutex.lock();
   }
 
-  void Unlock()
+  void unlock()
   {
     m_mutex.unlock();
   }
