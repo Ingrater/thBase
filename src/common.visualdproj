@@ -1253,6 +1253,7 @@ cd %CWD%</preBuildCommand>
    <File path="thBase\constref.d" />
    <File path="thBase\contracts.d" />
    <File path="thBase\conv.d" />
+   <File path="thBase\copy.d" />
    <File path="thBase\ctfe.d" />
    <File path="thBase\dds.d" />
    <File path="thBase\debugconnection.d" />
