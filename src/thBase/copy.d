@@ -2,7 +2,7 @@ module thBase.copy;
 
 import thBase.traits;
 
-T shallowCopyFrom(T)(T to, T from)
+void shallowCopyFrom(T)(T to, T from)
 {
   foreach(m; __traits(allMembers, T))
   {

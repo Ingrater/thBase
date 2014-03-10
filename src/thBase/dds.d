@@ -121,6 +121,11 @@ class DDSLoader
     IAllocator m_allocator;
   public:
 
+    @property final allocator()
+    {
+      return m_allocator;
+    }
+
     @property final image_data_t[] images()
     {
       return m_images;

@@ -401,8 +401,7 @@ class TemporaryAllocator(lockingPolicy, Allocator, size_t ALIGNMENT = size_t.siz
     m_memBlockSize = memBlockSize;
     AllocateMemoryBlock(0);
     debug {
-      m_AllocatedMemory = typeof(m_AllocatedMemory)(DefaultCtor());
-      m_AllocatedMemory.construct!(StdAllocator)(StdAllocator.globalInstance);
+      m_AllocatedMemory = typeof(m_AllocatedMemory)(StdAllocator.globalInstance);
     }
   }
 
@@ -579,16 +578,12 @@ class ChunkAllocator(lockingPolicy, AT = StdAllocator) : IAllocator
       m_allocator = allocator;
       m_alignment = alignment;
 
-      m_FreeChunks = typeof(m_FreeChunks)(DefaultCtor());
-      m_FreeChunks.construct(numChunks, allocator);
-
-      m_Regions = typeof(m_Regions)(DefaultCtor());
-      m_Regions.construct(allocator);
+      m_FreeChunks = typeof(m_FreeChunks)(numChunks, allocator);
+      m_Regions = typeof(m_Regions)(allocator);
 
       debug 
       {
-        m_AllocatedMemory = typeof(m_AllocatedMemory)(DefaultCtor());
-        m_AllocatedMemory.construct(StdAllocator.globalInstance);
+        m_AllocatedMemory = typeof(m_AllocatedMemory)(StdAllocator.globalInstance);
       }
     }
 
@@ -754,8 +749,7 @@ class RedirectAllocator(SmallAllocator, BigAllocator, lockingPolicy) : IAllocato
       m_bigAllocator = bigAllocator;
       m_delete = del;
 
-      m_bigAllocations = typeof(m_bigAllocations)(DefaultCtor());
-      m_bigAllocations.construct(StdAllocator.globalInstance);
+      m_bigAllocations = typeof(m_bigAllocations)(StdAllocator.globalInstance);
     }
 
     ~this()
@@ -843,8 +837,7 @@ class ThreadLocalChunkAllocator : IAllocator
 
     this(size_t chunkSize, size_t numChunks, size_t alignment)
     {
-      m_allocator = typeof(m_allocator)(DefaultCtor());
-      m_allocator.construct(chunkSize, numChunks, alignment);
+      m_allocator = typeof(m_allocator)(chunkSize, numChunks, alignment);
     }
 
     final void[] AllocateMemory(size_t size)

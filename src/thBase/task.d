@@ -61,13 +61,9 @@ class TaskQueue
     this()
     {
       m_queueMutex = typeof(m_queueMutex)(DefaultCtor());
-      m_queueMutex.construct();
       m_taskQueue = typeof(m_taskQueue)(DefaultCtor());
-      m_taskQueue.construct();
       m_waitingWorkers = typeof(m_waitingWorkers)(DefaultCtor());
-      m_waitingWorkers.construct();
       m_freeWorkers = typeof(m_freeWorkers)(DefaultCtor());
-      m_freeWorkers.construct();
 
       {
         g_taskMutex.lock();

@@ -1180,7 +1180,6 @@ public {
 	this(IAllocator allocator) {
 		super(TiXmlNode.NodeType.ELEMENT, allocator);
     attributeSet = composite!TiXmlAttributeSet(DefaultCtor());
-    attributeSet.construct(allocator);
 	}
 	/// Construct an element.
 	this(TiXmlString in_value, IAllocator allocator)

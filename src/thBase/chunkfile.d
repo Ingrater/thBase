@@ -55,9 +55,7 @@ class Chunkfile
       m_operation = operation;
       m_debugMode = debugMode;
       m_readInfo = typeof(m_readInfo)(DefaultCtor());
-      m_readInfo.construct();
       m_writeInfo = typeof(m_writeInfo)(DefaultCtor());
-      m_writeInfo.construct();
       final switch(m_operation)
       {
         case Operation.Read:
