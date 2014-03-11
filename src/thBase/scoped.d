@@ -36,15 +36,16 @@ struct scopedRef(T, Allocator = StdAllocator)
   alias m_ref this;
 
   @disable this();
+  @disable this(this);
 
   static if(is(typeof(Allocator.globalInstance)))
   {
     this(ARGS...)(ARGS args)
     {
       static if(ARGS.length == 1 && is(ARGS[0] == NoArgs))
-        m_ref = new T();
+        m_ref = New!T();
       else
-        m_ref = new T(args);
+        m_ref = New!T(args);
     }
   }
   else
@@ -70,6 +71,7 @@ struct scopedRef(T, Allocator = StdAllocator)
         AllocatorDelete(Allocator.globalInstance, m_ref);
       else
         AllocatorDelete(m_allocator, m_ref);
+      m_ref = null;
     }
   }
 
