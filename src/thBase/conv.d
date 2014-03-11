@@ -177,7 +177,10 @@ TT to(TT,ST)(ST arg) if(isRCString!TT && (is(ST == dchar[]) || is(ST == immutabl
 string EnumToStringGenerate(T,string templateVar = "T", string pre = "")(string var){
 	string res = "final switch(" ~ var ~ "){";
 	foreach(m;__traits(allMembers,T)){
-		res ~= "case " ~ templateVar ~ "." ~ m ~ ": return \"" ~ pre ~ m ~ "\";";
+    auto memberName = m;
+    if(memberName[0] == '_')
+      memberName = memberName[1..$];
+		res ~= "case " ~ templateVar ~ "." ~ m ~ ": return \"" ~ pre ~ memberName ~ "\";";
 	}
 	res ~= "}";
 	return res;
@@ -193,13 +196,49 @@ unittest
   {
     Value1,
     Value2,
-    Value3
+    Value3,
+    _Value4
   }
 
   assert(EnumToString(Test.Value1) == "Value1");
   assert(EnumToString(Test.Value2) == "Value2");
   assert(EnumToString(Test.Value3) == "Value3");
+  assert(EnumToString(Test._Value4) == "Value4");
   assert(EnumToString!"Test."(Test.Value1) == "Test.Value1");
   assert(EnumToString!"Test."(Test.Value2) == "Test.Value2");
   assert(EnumToString!"Test."(Test.Value3) == "Test.Value3");
+}
+
+string StringToEnumGenerate(T)(string templateVar, string var){
+	string res = "switch(" ~ var ~ "){\n";
+	foreach(m;__traits(allMembers,T)){
+    string memberName = m;
+    if(memberName[0] == '_')
+      memberName = memberName[1..$];
+		res ~= "case \"" ~ memberName ~ "\": return " ~ templateVar ~ "." ~ m ~ ";\n";
+	}
+  res ~= "default: break;\n";
+	res ~= "}";
+	return res;
+}
+
+T StringToEnum(T)(const(char)[] value){
+	mixin(StringToEnumGenerate!(T)("T", "value"));
+  throw New!ConvException(format("Could not convert the string '%s' to %s", value, T.stringof));
+}
+
+unittest
+{
+  enum Test : uint
+  {
+    Value1,
+    Value2,
+    Value3,
+    _Value4
+  }
+
+  assert(StringToEnum!Test("Value1") == Test.Value1);
+  assert(StringToEnum!Test("Value2") == Test.Value2);
+  assert(StringToEnum!Test("Value3") == Test.Value3);
+  assert(StringToEnum!Test("Value4") == Test._Value4);
 }

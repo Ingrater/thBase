@@ -768,9 +768,21 @@ class TiXmlNode : TiXmlBase
 		}
 		return null;
 	} 
+
   final TiXmlElement FirstChildElement( TiXmlString _value )
   {
     return FirstChildElement(_value[]);
+  }
+
+  final TiXmlText FirstTextElement()
+  {
+    TiXmlNode node;
+    for(node = FirstChild(); node !is null; node = node.NextSibling())
+    {
+      if(node.ToText)
+        return node.ToText;
+    }
+    return null;
   }
 
 
@@ -1179,7 +1191,7 @@ class TiXmlElement : TiXmlNode
 public {
 	this(IAllocator allocator) {
 		super(TiXmlNode.NodeType.ELEMENT, allocator);
-    attributeSet = composite!TiXmlAttributeSet(DefaultCtor());
+    attributeSet = composite!TiXmlAttributeSet(allocator);
 	}
 	/// Construct an element.
 	this(TiXmlString in_value, IAllocator allocator)

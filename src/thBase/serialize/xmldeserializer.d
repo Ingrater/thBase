@@ -7,6 +7,7 @@ import std.traits, thBase.traits, core.traits;
 import core.refcounted;
 import thBase.error;
 import thBase.allocator;
+import thBase.conv;
 
 public import thBase.serialize.wrapper;
 
@@ -30,7 +31,7 @@ class XmlDeserializerException : RCException {
 
 class XmlDeserializerBase {
 protected:
-	static void HandleError(AttributeQueryEnum pType, TiXmlElement pElement, string name,string type){
+	static void HandleError(AttributeQueryEnum pType, TiXmlElement pElement, const(char)[] name, const(char)[] type){
 		auto path = pElement.Value();
 		for(TiXmlNode next = pElement.Parent();next !is null && next.Type() != TiXmlNode.NodeType.DOCUMENT;next = next.Parent())
     {
@@ -44,7 +45,7 @@ protected:
 		}
 	}
 	
-	static void HandleError(TiXmlNode pNode, string msg)
+	static void HandleError(TiXmlNode pNode, const(char)[] msg)
   {
 		auto path = pNode.Value();
 		for(TiXmlNode next = pNode.Parent();next !is null && next.Type() != TiXmlNode.NodeType.DOCUMENT;next = next.Parent())
@@ -52,18 +53,23 @@ protected:
 		throw New!XmlDeserializerException(FormatError("path: '%s' error: %s", path[], msg));
 	}
 	
-	static void DoDeserializeAttribute(ref int value, TiXmlElement pElement, string name, bool optional){
+	static bool DoDeserializeAttribute(ref int value, TiXmlElement pElement, string name, bool optional){
 		auto error = ErrorScope(ErrorContext.create("int-attribute", name));
-    auto type = pElement.QueryIntAttribute(name,value);
-		if(type == AttributeQueryEnum.TIXML_WRONG_TYPE || type == AttributeQueryEnum.TIXML_NO_ATTRIBUTE && !optional)
-			HandleError(type,pElement,name,"int");
+    auto type = pElement.QueryIntAttribute(name, value);
+		if(type == AttributeQueryEnum.TIXML_WRONG_TYPE || type == AttributeQueryEnum.TIXML_NO_ATTRIBUTE)
+    {
+      if(!optional)
+			  HandleError(type, pElement, name, "int");
+      return false;
+    }
+    return true;
 	}
 	
 	static void DoDeserializeAttribute(ref float value, TiXmlElement pElement, string name, bool optional){
 		auto error = ErrorScope(ErrorContext.create("float-attribute", name));
     auto type = pElement.QueryFloatAttribute(name,value);
 		if(type == AttributeQueryEnum.TIXML_WRONG_TYPE || type == AttributeQueryEnum.TIXML_NO_ATTRIBUTE && !optional)
-			HandleError(type,pElement,name,"float");
+			HandleError(type, pElement ,name, "float");
 	}
 	
 	static void DoDeserializeAttribute(ref double value, TiXmlElement pElement, string name, bool optional){
@@ -105,6 +111,45 @@ protected:
 		}
     value = rcstring(text[]);
   }
+
+  static void DoDeserializeEnumAttribute(T)(ref T value, TiXmlElement element, string name, bool optional)
+  {
+    auto error = ErrorScope(ErrorContext.create("enum-attribute", name));
+		auto text = element.Attribute(name);
+		if(text[] is null){
+			if(optional)
+				return;
+			else
+				HandleError(AttributeQueryEnum.TIXML_NO_ATTRIBUTE, element, name, "enum");
+		}
+    try 
+    {
+      value = StringToEnum!T(text[]);
+    }
+    catch(ConvException ex)
+    {
+      rcstring msg = ex.getMessage();
+      Delete(ex);
+      HandleError(element, msg[]);
+    }
+  }
+
+  static void ProcessTextNode(ref rcstring value, TiXmlElement element, string name)
+  {
+    TiXmlNode textNode = element.FirstChildElement(name);
+    if(textNode is null)
+    {
+      char[256] msg;
+      formatStatic(msg, "missing child node '%s'", name);
+      HandleError(cast(TiXmlNode)element, msg);
+    }
+    TiXmlText text = textNode.FirstTextElement();
+    if(text is null)
+    {
+      HandleError(textNode, "missing text");
+    }
+    value = text.Value[];
+  }
 	
 	static void ProcessMember(MT)(ref MT pValue, TiXmlNode pFather, string pName, IsOptional isOptional, TiXmlNode pNode = null)
   {
@@ -129,19 +174,6 @@ protected:
 				if(element is null){
 					HandleError(node,"is not an element");
 				}
-				int size;
-				DoDeserializeAttribute(size, element, "size", false);
-				if(pValue.length == 0){
-					pValue = NewArray!(ArrayType!(MT))(size);
-				}
-				else if(pValue.length != size){
-					static if(isStaticArray!(MT))
-						HandleError(element, "array size does not match static array size");
-					else
-          {
-            HandleError(element, "array is not empty and does not match size");
-          }
-				}
 
         string name;
         alias AT = arrayType!MT;
@@ -155,6 +187,27 @@ protected:
           name = getAttribute!(AT, NiceName).value;
         else
           name = AT.stringof;
+
+				int size = 0;
+				if(!DoDeserializeAttribute(size, element, "size", true))
+        {
+          TiXmlNode cur = element.FirstChildElement(name);
+          for(;cur !is null;cur = cur.NextSiblingElement(name))
+          {
+            size++;
+          }
+        }
+				if(pValue.length == 0){
+					pValue = NewArray!(ArrayType!(MT))(size);
+				}
+				else if(pValue.length != size){
+					static if(isStaticArray!(MT))
+						HandleError(element, "array size does not match static array size");
+					else
+          {
+            HandleError(element, "array is not empty and does not match size");
+          }
+				}
 
         TiXmlNode cur = element.FirstChildElement(name);            
         int i=0;
@@ -258,22 +311,40 @@ protected:
 						HandleError(node,"is not a element");
 					}
 					foreach(m;__traits(allMembers,MT)){
-						static if(m.length < 2 || m[0..2] != "__"){
-							static if(__traits(compiles,__traits(getMember,pValue,m) = __traits(getMember,pValue,m).init) && !isFunction!(typeof(__traits(getMember,pValue,m)))){
-                auto isMemberOptional = hasAttribute!(__traits(getMember, pValue, m), Optional) ? IsOptional.Yes : IsOptional.No;
-                static if(!hasAttribute!(__traits(getMember, pValue, m), Ignore))
-                {
-                  static if(__traits(hasMember,typeof(__traits(getMember,MT,m)),"DoXmlDeserialize"))
-									  __traits(getMember,pValue,m).DoXmlDeserialize(element, m, isMemberOptional, pNode);
-								  else
-									  ProcessMember(__traits(getMember,pValue,m), element, m, isMemberOptional, pNode);
-                }
-							}
+						static if(m.length < 2 || m[0..2] != "__")
+            {
+              static if(__traits(compiles,typeof(__traits(getMember,pValue,m))))
+              {
+							  static if(__traits(compiles,__traits(getMember,pValue,m) = __traits(getMember,pValue,m).init) && !isFunction!(typeof(__traits(getMember,pValue,m))))
+                { 
+                  static if(!hasAttribute!(__traits(getMember, pValue, m), Ignore))
+                  {
+                    static if(hasAttribute!(__traits(getMember, pValue, m), LongText))
+                    {
+                      ProcessTextNode(__traits(getMember, pValue, m), element, m);
+                    }
+                    else
+                    {
+                      auto isMemberOptional = hasAttribute!(__traits(getMember, pValue, m), Optional) ? IsOptional.Yes : IsOptional.No;
+                      static if(__traits(hasMember,typeof(__traits(getMember,MT,m)),"DoXmlDeserialize"))
+									      __traits(getMember,pValue,m).DoXmlDeserialize(element, m, isMemberOptional, pNode);
+								      else
+									      ProcessMember(__traits(getMember,pValue,m), element, m, isMemberOptional, pNode);
+                    }
+                  }
+							  }
+              }
 						}
 					}
 				}
 			}
 		}	
+    else static if(is(MT == enum))
+    {
+      DoDeserializeEnumAttribute(pValue, pFather.ToElement, pName, isOptional);
+    }
+    else
+      static assert(0, "unsupported type " ~ MT.stringof);
 	}	
 }
 
@@ -297,11 +368,13 @@ void FromXmlFile(T)(ref T pValue, rcstring pFilename){
 	}
 	
 	static if(std.traits.isArray!(T))
-		__gshared string rootName = (ArrayType!(T)).stringof;
-  static if(isRCArray!(T))
-    __gshared string rootName = (RCArrayType!(T)).stringof;
+		enum string rootName = (ArrayType!(T)).stringof;
+  else static if(isRCArray!(T))
+    enum string rootName = (RCArrayType!(T)).stringof;
+  else static if(hasAttribute!(T, NiceName))
+    enum string rootName = getAttribute!(T, NiceName).value;
 	else
-		__gshared string rootName = T.stringof;
+		enum string rootName = T.stringof;
 	
 	try {
 		static if(__traits(hasMember,pValue,"DoXmlDeserialize"))

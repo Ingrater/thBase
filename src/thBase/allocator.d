@@ -498,7 +498,7 @@ unittest
 {
   auto leak = LeakChecker("thBase.allocator unittest");
   {
-    auto allocator = New!(TemporaryAllocator!(NolockPolicy, StdAllocator))(1024, StdAllocator.globalInstance);
+    auto allocator = New!(TemporaryAllocator!(NoLockPolicy, StdAllocator))(1024, StdAllocator.globalInstance);
     scope(exit) Delete(allocator);
     void*[64] allocated;
 
@@ -674,7 +674,7 @@ unittest
 {
   auto leak = LeakChecker("thBase.allocator.ChunkAllocator unittest");
   {
-    auto allocator = New!(ChunkAllocator!(NolockPolicy))(1024, 4);
+    auto allocator = New!(ChunkAllocator!(NoLockPolicy))(1024, 4);
     scope(exit) Delete(allocator);
 
     void*[9] allocated;
@@ -794,9 +794,9 @@ unittest
 {
   auto leak = LeakChecker("thBase.allocator.RedirectAllocator unittest");
   {
-    alias RedirectAllocator!(ChunkAllocator!(NolockPolicy), StdAllocator, NolockPolicy) allocator_t;
+    alias RedirectAllocator!(ChunkAllocator!(NoLockPolicy), StdAllocator, NoLockPolicy) allocator_t;
     auto allocator = New!allocator_t
-                         (1024, New!(ChunkAllocator!(NolockPolicy))(1024,4), StdAllocator.globalInstance, allocator_t.Delete.Small);
+                         (1024, New!(ChunkAllocator!(NoLockPolicy))(1024,4), StdAllocator.globalInstance, allocator_t.Delete.Small);
     scope(exit) Delete(allocator);
 
     void*[4] allocated;

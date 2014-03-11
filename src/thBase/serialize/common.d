@@ -6,6 +6,7 @@ import core.traits;
 struct Optional {}
 struct Ignore {}
 struct NiceName { string value; }
+struct LongText {}
 
 enum IsOptional : bool
 {
