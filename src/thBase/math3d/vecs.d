@@ -3,12 +3,13 @@ module thBase.math3d.vecs;
 import std.math;
 import core.stdc.math;
 import thBase.format;
+import thBase.serialize.common;
 
 private template GenerateNiceName(string name, T, OT)
 {
   static if(is(T == float))
     enum string GenerateNiceName = name;
-  static if(is(T == int))
+  else static if(is(T == int))
     enum string GenerateNiceName = "i" ~ name;
   else
     enum string GenerateNiceName = OT.stringof;

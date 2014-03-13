@@ -275,6 +275,17 @@ public:
     return RCArray!(T, Allocator)(m_Data,(m_Data[])[0..m_CurPos]);
   }
 
+  size_t getMarker()
+  {
+    return m_CurPos;
+  }
+
+  void resetToMarker(size_t marker)
+  {
+    assert(marker <= m_CurPos);
+    m_CurPos = marker;
+  }
+
 private:
   void EnsureSpaceLeft(size_t count)
   {

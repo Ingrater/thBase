@@ -2,7 +2,7 @@
 www.sourceforge.net/projects/tinyxml
 Original code (2.0 and earlier )copyright (c) 2000-2002 Lee Thomason (www.grinninglizard.com)
 
-This software is provided 'as-is', without any express or implied
+This software is provided 'as-is', withref any express or implied
 warranty. In no event will the authors be held liable for any
 damages arising from the use of this software.
 
@@ -180,7 +180,7 @@ protected{
 	
 	void StreamOut (IOutputStream o);
 
-	static TiXmlString ReadName( TiXmlString p, out TiXmlString name, TiXmlEncoding encoding )
+	static TiXmlString ReadName( TiXmlString p, ref TiXmlString name, TiXmlEncoding encoding )
 	in
 	{ assert(p); }
 	body
@@ -235,7 +235,7 @@ protected{
 		}
 	}
 
-	static void PutString( TiXmlString str, IOutputStream outs )
+	static void PutString( TiXmlString str, IOutputStream refs )
 	{
 		foreach (int i, char c;str[])
 		{
@@ -248,38 +248,38 @@ protected{
 			{
 				while ( i<str.length-1 )
 				{
-					outs.write(str[i]);
+					refs.write(str[i]);
 					if ( str[i] == ';' )
 						break;
 				}
 			}
 			else if ( c == '&' )
 			{
-				outs.write(entity[0].str); 
+				refs.write(entity[0].str); 
 			}
 			else if ( c == '<' )
 			{
-				outs.write(entity[1].str); 
+				refs.write(entity[1].str); 
 			}
 			else if ( c == '>' )
 			{
-				outs.write(entity[2].str); 
+				refs.write(entity[2].str); 
 			}
 			else if ( c == '\"' )
 			{
-				outs.write(entity[3].str); 
+				refs.write(entity[3].str); 
 			}
 			else if ( c == '\'' )
 			{
-				outs.write(entity[4].str); 
+				refs.write(entity[4].str); 
 			}
 			else if ( c < 32 )
 			{
-				outs.format("&#x%02X;", cast(uint) ( c & 0xff ));
+				refs.format("&#x%02X;", cast(uint) ( c & 0xff ));
 			}
 			else
 			{
-				outs.write(c);	
+				refs.write(c);	
 			}
 		}
 	}
@@ -831,7 +831,7 @@ protected{
 		target.SetValue(value);
 		target.userData = userData;
 	}
-	// Figure out what is at *p, and parse it. Returns null if it is not an xml node.
+	// Figure ref what is at *p, and parse it. Returns null if it is not an xml node.
 	TiXmlNode Identify( TiXmlString start, TiXmlEncoding encoding )
 	{
 		auto p = start;
@@ -958,7 +958,7 @@ class TiXmlAttribute : TiXmlBase
 	// Get the tinyxml string representation
 	TiXmlString NameTStr() { return name; }
 
-	AttributeQueryEnum QueryIntValue( out int _value )
+	AttributeQueryEnum QueryIntValue( ref int _value )
 	{
 		if (to!int(value[],_value) == thResult.SUCCESS)
 		{
@@ -966,8 +966,18 @@ class TiXmlAttribute : TiXmlBase
 		}
 		return AttributeQueryEnum.TIXML_WRONG_TYPE;
 	}
+
+	AttributeQueryEnum QueryUIntValue( ref uint _value )
+	{
+		if (to!uint(value[],_value) == thResult.SUCCESS)
+		{
+			return AttributeQueryEnum.TIXML_SUCCESS;
+		}
+		return AttributeQueryEnum.TIXML_WRONG_TYPE;
+	}
+
 	/// QueryDoubleValue examines the value string. See QueryIntValue().
-	AttributeQueryEnum QueryDoubleValue( out double _value ) 
+	AttributeQueryEnum QueryDoubleValue( ref double _value ) 
 	{
 		if (to!double(value[],_value) == thResult.SUCCESS)
 		{
@@ -1219,7 +1229,7 @@ public {
     return Attribute(name[]);
   }
 
-	TiXmlString Attribute( string name, out int i ) 
+	TiXmlString Attribute( string name, ref int i ) 
   {
 		auto s = Attribute( name );
 		if ( s )
@@ -1229,12 +1239,12 @@ public {
 
 		return s;
 	}
-  final TiXmlString Attribute( TiXmlString name, out int i )
+  final TiXmlString Attribute( TiXmlString name, ref int i )
   {
     return Attribute(name[],i);
   }
 
-	TiXmlString Attribute( string name, out double i ) 
+	TiXmlString Attribute( string name, ref double i ) 
   {
 		auto s = Attribute( name );
 		if ( s )
@@ -1244,12 +1254,21 @@ public {
 
 		return s;
 	}
-  TiXmlString Attribute( TiXmlString name, out double i )
+  TiXmlString Attribute( TiXmlString name, ref double i )
   {
     return Attribute( name[], i );
   }
 
-	AttributeQueryEnum QueryIntAttribute( string name, out int _value ) 
+	AttributeQueryEnum QueryUIntAttribute( string name, ref uint _value ) 
+  {
+		TiXmlAttribute node = attributeSet.Find( name );
+		if ( !node )
+			return AttributeQueryEnum.TIXML_NO_ATTRIBUTE;
+
+		return node.QueryUIntValue( _value );
+	}
+
+	AttributeQueryEnum QueryIntAttribute( string name, ref int _value ) 
   {
 		TiXmlAttribute node = attributeSet.Find( name );
 		if ( !node )
@@ -1257,12 +1276,12 @@ public {
 	
 		return node.QueryIntValue( _value );
 	}
-  final AttributeQueryEnum QueryIntAttribute( TiXmlString name, out int _value )
+  final AttributeQueryEnum QueryIntAttribute( TiXmlString name, ref int _value )
   {
     return QueryIntAttribute( name[], _value );
   }
 	
-	AttributeQueryEnum QueryDoubleAttribute( string name, out double _value ) 
+	AttributeQueryEnum QueryDoubleAttribute( string name, ref double _value ) 
   {
 		TiXmlAttribute node = attributeSet.Find( name );
 		if ( !node )
@@ -1270,13 +1289,13 @@ public {
 	
 		return node.QueryDoubleValue( _value );
 	}
-  final AttributeQueryEnum QueryDoubleAttribute( TiXmlString name, out double _value)
+  final AttributeQueryEnum QueryDoubleAttribute( TiXmlString name, ref double _value)
   {
     return QueryDoubleAttribute( name[], _value );
   }
 
 
-	AttributeQueryEnum QueryFloatAttribute( string name, out float _value )
+	AttributeQueryEnum QueryFloatAttribute( string name, ref float _value )
 	{
 		double d;
 		AttributeQueryEnum result = QueryDoubleAttribute( name, d );
@@ -1285,7 +1304,7 @@ public {
 		}
 		return result;
 	}
-  final AttributeQueryEnum QueryFloatAttribute( TiXmlString name, out float _value )
+  final AttributeQueryEnum QueryFloatAttribute( TiXmlString name, ref float _value )
   {
     return QueryFloatAttribute( name[], _value );
   }
@@ -1846,7 +1865,7 @@ protected {
 
 	}
 
-private bool cdata;			// true if this should be input and output as a CDATA style text element
+private bool cdata;			// true if this should be input and refput as a CDATA style text element
 };
 
 
@@ -2317,7 +2336,7 @@ public {
 												//errorLocation.last = 0; 
 											}
 
-	/// Print this Document to a out stream.
+	/// Print this Document to a ref stream.
 	override void Print( IOutputStream Stream, int depth = 0 ) {
 		TiXmlNode node;
 		for ( node=FirstChild; node; node=node.NextSibling )

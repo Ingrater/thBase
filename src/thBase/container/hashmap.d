@@ -2,6 +2,8 @@ module thBase.container.hashmap;
 
 public import core.hashmap;
 
+// TODO: make hashmap const correct
+
 version(unittest)
 {
   import thBase.conv;

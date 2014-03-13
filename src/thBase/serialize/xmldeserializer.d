@@ -64,6 +64,18 @@ protected:
     }
     return true;
 	}
+
+	static bool DoDeserializeAttribute(ref uint value, TiXmlElement pElement, string name, bool optional){
+		auto error = ErrorScope(ErrorContext.create("uint-attribute", name));
+    auto type = pElement.QueryUIntAttribute(name, value);
+		if(type == AttributeQueryEnum.TIXML_WRONG_TYPE || type == AttributeQueryEnum.TIXML_NO_ATTRIBUTE)
+    {
+      if(!optional)
+			  HandleError(type, pElement, name, "uint");
+      return false;
+    }
+    return true;
+	}
 	
 	static void DoDeserializeAttribute(ref float value, TiXmlElement pElement, string name, bool optional){
 		auto error = ErrorScope(ErrorContext.create("float-attribute", name));
@@ -300,10 +312,14 @@ protected:
 			else {
         auto error = ErrorScope(ErrorContext.create("group", pName));
 				TiXmlNode node = (pNode is null) ? pFather.FirstChild(pName) : pNode;
-				if(node is null && !isOptional){
-          char[256] buffer;
-          auto len = formatStatic(buffer, "'%s' does not exist", pName);
-				  HandleError(pFather, cast(string)buffer[0..len]);
+				if(node is null)
+        {
+          if(!isOptional)
+          {
+            char[256] buffer;
+            auto len = formatStatic(buffer, "'%s' does not exist", pName);
+				    HandleError(pFather, cast(string)buffer[0..len]);
+          }
 				}
 				else {
 					TiXmlElement element = node.ToElement();
