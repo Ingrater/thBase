@@ -61,7 +61,26 @@ private
 			in { assert(now.length > 0); }
 			body
 			{
-				// Do nothing if the tabsize is 0.
+        // TODO add utf8 support
+				assert(stamp.ptr <= now.ptr);
+        const(char)[] toCheck = stamp.ptr[0..now.ptr - stamp.ptr];
+        foreach(char c; toCheck)
+        {
+          switch(c)
+          {
+            case '\n':
+              cursor.row++;
+              cursor.col = 0;
+              break;
+            case '\t':
+              cursor.col += tabsize;
+              break;
+            default:
+              cursor.col++;
+              break;
+          }
+        }
+        stamp = now;
 			}
 
 			
@@ -367,7 +386,7 @@ protected{
 	"Error when TiXmlDocument added to document, because TiXmlDocument can only be at the root.",
 ];
 
-	TiXmlCursor location;
+	public TiXmlCursor location;
 
     /// Field containing a generic user pointer
 	void*			userData;
@@ -2163,45 +2182,10 @@ public {
 	
 		// If we have a file, assume it is all one big XML file, and read it in.
 		// The document parser may decide the document ends sooner than the entire file, however.
-		auto data = RCArray!char(length);
+		auto data = RCArray!(char, IAllocator)(length, m_allocator);
     size_t bytesRead = file.readArray(data);
     assert(bytesRead == length);
 	
-		/*int lastPos = 0;
-		int p = 0;
-		
-		while( p < buf.length ) {
-			if ( buf[p] == 0xa ) {
-				// Newline character. No special rules for this. Append all the characters
-				// since the last string, and include the newline.
-				data ~= buf[lastPos..(p+1)];	// append, include the newline
-				++p;									// move past the newline
-				lastPos = p;							// and point to the new buffer (may be 0)
-			}
-			else if ( buf[p] == 0xd ) {
-				if ( (p-lastPos) > 0 ) 
-					data ~= buf[lastPos..p];	// do not add the CR
-
-				data ~= cast(char)0xa;						// a proper newline
-				if ( buf[p+1] == 0xa ) {
-					// Carriage return - new line sequence
-					p += 2;
-					lastPos = p;
-				}
-				else {
-					++p;
-					lastPos = p;
-				}
-			}
-			else {
-				++p;
-			}
-		}
-		// Handle any left over characters.
-		if ( (p-lastPos) > 0 ) {
-			data ~= buf[lastPos..p];
-		}		
-		buf = null;*/
 		Parse( cast(TiXmlString)data, null, encoding );
 	
 		if ( Error() )

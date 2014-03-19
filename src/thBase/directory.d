@@ -165,4 +165,18 @@ void setDllDirectory(const(char)[] directory)
   SetDllDirectoryA(cstr.ptr);
 }
 
+size_t getExecutablePath(char[] buffer)
+{
+  HMODULE hModule = GetModuleHandleA(null);
+  if(hModule !is null)
+  {
+    auto len = int_cast!size_t(GetModuleFileNameA(hModule, buffer.ptr, buffer.length)); 
+    auto pos = buffer[0..len].lastIndexOf('\\');
+    if(pos >= 0)
+      return pos;
+    return len;
+  }
+  return 0;
+}
+
 }

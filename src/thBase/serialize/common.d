@@ -7,6 +7,7 @@ struct Optional {}
 struct Ignore {}
 struct NiceName { string value; }
 struct LongText {}
+struct LineNumber { string nodeName; uint offset; }
 
 enum IsOptional : bool
 {

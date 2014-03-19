@@ -162,6 +162,18 @@ protected:
     }
     value = text.Value[];
   }
+
+  static void ProcessLineNumber(ref uint value, TiXmlElement element, string name, uint offset)
+  {
+    TiXmlNode node = element.FirstChildElement(name);
+    if(node is null)
+    {
+      char[256] msg;
+      formatStatic(msg, "missing child node '%s'", name);
+      HandleError(cast(TiXmlNode)element, msg);
+    }
+    value = node.location.row + offset;
+  }
 	
 	static void ProcessMember(MT)(ref MT pValue, TiXmlNode pFather, string pName, IsOptional isOptional, TiXmlNode pNode = null)
   {
@@ -338,6 +350,11 @@ protected:
                     static if(hasAttribute!(__traits(getMember, pValue, m), LongText))
                     {
                       ProcessTextNode(__traits(getMember, pValue, m), element, m);
+                    }
+                    else static if(hasAttribute!(__traits(getMember, pValue, m), LineNumber))
+                    {
+                      alias attr = getAttribute!(__traits(getMember, pValue, m), LineNumber);
+                      ProcessLineNumber(__traits(getMember, pValue, m), element, attr.nodeName, attr.offset);
                     }
                     else
                     {

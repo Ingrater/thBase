@@ -108,6 +108,14 @@ class FixedStackAllocator(lockingPolicy, Allocator) : IAllocator
     }
 
   public:
+    static if(is(typeof(Allocator.globalInstance)))
+    {
+      this(size_t stackSize)
+      {
+        this(stackSize, Allocator.globalInstance);
+      }
+    }
+
     this(size_t stackSize, Allocator allocator)
     {
       m_allocator = allocator;

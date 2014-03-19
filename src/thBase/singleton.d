@@ -25,7 +25,7 @@ class Singleton(T, Allocator = StdAllocator)
       return s_instance;
     synchronized(s_instanceMutex)
     {
-      if(s_instance !is null)
+      if(s_instance is null)
       {
         s_instance = New!T();
       }
