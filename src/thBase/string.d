@@ -275,6 +275,12 @@ public:
     return RCArray!(T, Allocator)(m_Data,(m_Data[])[0..m_CurPos]);
   }
 
+  auto substr(size_t start, size_t end)
+  {
+    assert(start <= end && end <= m_CurPos);
+    return RCArray!(T, Allocator)(m_Data,(m_Data[])[start..end]);
+  }
+
   size_t getMarker()
   {
     return m_CurPos;

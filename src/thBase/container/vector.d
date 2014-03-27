@@ -144,17 +144,28 @@ public:
 			}
 			reserve(newSize);			
 		}
-		if(size > m_Size){
+		if(size > m_Size)
+    {
       static if(is(T == struct) || is(T == union))
-        T initHelper;
-		  for(T* cur = m_Data.ptr + m_Size; cur < m_Data.ptr + size; ++cur){
+      {
+        auto initHelper = T.init;
+        if(typeid(T).init().length == 0) // Initialize to all zeros
+        {
+          memset(m_Data.ptr + m_Size, 0, (size - m_Size) * T.sizeof);
+          goto end;
+        }
+      }
+		  for(T* cur = m_Data.ptr + m_Size; cur < m_Data.ptr + size; ++cur)
+      {
 			  static if(is(T == struct) || is(T == union))
+        {
           memcpy(cur, &initHelper, T.sizeof);
+        }
         else
           *cur = T.init;
 		  }		
 		}
-		m_Size = size;
+		end: m_Size = size;
 	}
 	
 	/**
@@ -417,7 +428,7 @@ public:
     callDtor(&m_Data[m_Size]);
   }
 
-  size_t removeIf(RemoveEntry delegate(size_t, ref T) condition)
+  size_t removeIf(scope RemoveEntry delegate(size_t, ref T) condition)
   {
     size_t numRemoved = 0;
     for(size_t i=0; i < m_Size;)

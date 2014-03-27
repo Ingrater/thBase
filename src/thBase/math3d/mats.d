@@ -112,7 +112,7 @@ struct mat3 {
 		assert(data.length == 9,"data has wrong size");
 	}
 	body {
-		f[0..9] = data[0..9];
+		f[0..9] = f[0..9];
 	}
 	
 	/**
@@ -173,7 +173,7 @@ struct mat4 {
 		assert(data.length == 16,"data has wrong size");
 	}
 	body {
-		f[0..16] = data[0..16];
+		f[0..16] = f[0..16];
 	}
 	
 	/**
@@ -236,6 +236,16 @@ struct mat4 {
 		temp.z = v.x * this.f[2] + v.y * this.f[6] + v.z * this.f[10] + this.f[14];
 		return temp;		
 	}
+
+  /// \brief transform a position vector
+  vec3 transformPosition(vec3 v) const pure
+  {
+    vec3 temp = void;
+    temp.x = v.x * f[0] + v.y * f[4] + v.z * f[8]  + f[12];
+    temp.y = v.x * f[1] + v.y * f[5] + v.z * f[9]  + f[13];
+    temp.z = v.x * f[2] + v.y * f[6] + v.z * f[10] + f[14];
+    return temp;		
+  }
 	
 	/**
 	 * sets all fields of this matrix to value
@@ -504,14 +514,14 @@ struct mat4 {
 	 *  pTo = position to look at
 	 *  pUp = up vector
 	 */
-	static mat4 LookAtMatrix(ref const(vec4) pFrom,ref  const(vec4) pTo, ref const(vec4) pUp) pure
+	static mat4 LookAtMatrix(const(vec3) pFrom, const(vec3) pTo, const(vec3) pUp) pure
   {
-	  vec4 x,y,z;
+	  vec3 x,y,z;
 	  mat4 res;
-	  z = (pTo - pFrom).normalize();
+	  z = (pTo - pFrom).normalized();
 	  //TODO: replace temporary variable
-	  vec4 pUpNormalized = pUp.normalize();
-	  x = z.cross(pUpNormalized).normalize();
+	  vec3 pUpNormalized = pUp.normalized();
+	  x = z.cross(pUpNormalized).normalized();
 	  y = x.cross(z);
 	  z = z * -1.0f;
 
@@ -551,10 +561,10 @@ struct mat4 {
   {
 	  vec4 x,y,z;
 	  mat4 res;
-	  z = dir.normalize();
+	  z = dir.normalized();
 	  //TODO: replace temporary variable
-	  vec4 pUpNormalized = pUp.normalize();
-	  x = z.cross(pUpNormalized).normalize();
+	  vec4 pUpNormalized = pUp.normalized();
+	  x = z.cross(pUpNormalized).normalized();
 	  y = x.cross(z);
 	  z = z * -1.0f;
 

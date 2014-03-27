@@ -178,7 +178,7 @@ unittest {
 
 void swap(T)(ref T value1, ref T value2)
 {
-  static if(__traits(hasMember, T, "swap"))
+  static if(__traits(hasMember, T, "swap") && isSomeFunction!(typeof(__traits(getMember, T, "swap"))))
   {
     value1.swap(value2);
   }

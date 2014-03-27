@@ -102,11 +102,13 @@ struct vec2_t(T) if(is(T == float) || is(T == short) || is(T == int))
   {
 		return sqrtf(this.x * this.x + this.y * this.y);
 	}
+
+  deprecated("use normalized instead") alias normalize = normalized;
 	
 	/**
 	 * Returns: a normalized copy of this vector
 	 */
-	vec2_t!T normalize() const {
+	vec2_t!T normalized() const {
     vec2_t!T res=this;
     auto temp = this * this;
     auto length = sqrtf(cast(float)(temp.f[0]+temp.f[1]));
@@ -293,11 +295,13 @@ struct vec3_t(T) if(is(T == float) || is(T == short) || is(T == int))
     res.z = cast(T)(this.x * v.y - this.y * v.x);
     return res;
   }
+
+  deprecated("use normalized instead") alias normalize = normalized;
 	
 	/**
 	 * Returns: a normalized copy of this vector
 	 */
-	vec3_t!(T) normalize() const pure {
+	vec3_t!(T) normalized() const pure {
       vec3_t!(T) temp,res=this;
       temp=(this) * (this);
       T length = cast(T)std.math.sqrt(cast(float)(temp.f[0]+temp.f[1]+temp.f[2]));
@@ -506,11 +510,13 @@ struct vec4_t(T) if(is(T == float) || is(T == short) || is(T == int)) {
 	vec3_t!(T) xyz() const pure {
 		return vec3_t!(T)(this.x, this.y, this.z);
 	}
+
+  deprecated("use normalized instead") alias normalize = normalized;
 	
 	/**
 	 * Returns: a normalized copy of this vector
 	 */
-	vec4_t!(T) normalize() const pure {
+	vec4_t!(T) normalized() const pure {
       T length;
       vec4_t!(T) temp,res=this;
       temp=(this) * (this);
@@ -547,9 +553,10 @@ struct vec4_t(T) if(is(T == float) || is(T == short) || is(T == int)) {
 	/**
 	 * Returns: a vector pointing from this vector to the other vector
 	 */
-	vec4_t!(T) direction(ref const(vec4_t!(T)) v) pure {
-      return (v - this).normalize();
-    }
+	vec4_t!(T) direction(ref const(vec4_t!(T)) v) pure 
+  {
+    return (v - this).normalized();
+  }
 	
 	/**
 	 * Returns: the length of this vector

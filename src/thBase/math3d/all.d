@@ -28,7 +28,7 @@ const(vec4) ComputeNormal(ref const(vec4) t1, ref const(vec4) t2, ref const(vec4
   normal.x = v2.y * v3.z - v2.z * v3.y;
   normal.y = v2.z * v3.x - v2.x * v3.z;
   normal.z = v2.x * v3.y - v2.y * v3.x;
-  normal = normal.normalize();
+  normal = normal.normalized();
   normal.w = 1.0f;
   return normal;	
 }
@@ -252,7 +252,7 @@ const(vec4) UpVektor(float X,float Y,float Z,float Radians){
   Up.x = X;
   Up.y = Y;
   Up.z = Z;
-  Up = Up.normalize();
+  Up = Up.normalized();
   Up.w = 1.0f;
   return Up;
 }

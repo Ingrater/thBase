@@ -145,6 +145,7 @@ extern(Windows)
   BOOL SetEnvironmentVariableA(LPCTSTR lpName, LPCTSTR lpValue);
   BOOL RegisterRawInputDevices(RAWINPUTDEVICE* pRawInputDevices, UINT uiNumDevices, UINT cbSize );
   UINT GetRawInputData(HRAWINPUT hRawInput, UINT uiCommand, LPVOID pData, PUINT pcbSize, UINT cbSizeHeader);
+  BOOL DestroyWindow(HWND hWnd);
 }
 
 size_t formatLastError(char[] buffer)

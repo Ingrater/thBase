@@ -27,7 +27,7 @@ struct Plane {
 	 *  pDir = normal of the plane
 	 */
 	this(vec3 pPos, vec3 pDir){
-		pDir = pDir.normalize();
+		pDir = pDir.normalized();
 		m_Eq = vec4(pDir,pPos.dot(pDir));
 	}
 	
@@ -41,7 +41,7 @@ struct Plane {
 	this(vec3 v1, vec3 v2, vec3 v3){
 		vec3 dir1 = v2 - v1;
 		vec3 dir2 = v3 - v1;
-		vec3 normal = dir1.cross(dir2).normalize();
+		vec3 normal = dir1.cross(dir2).normalized();
 		m_Eq = vec4(normal,v1.dot(normal));
 	}
 	
@@ -113,7 +113,7 @@ struct Plane {
     float invDet = 1.0f / (1.0f - dot * dot);
     float cThis =  (this.m_Eq.w - dot * other.m_Eq.w) * invDet;
     float cOther = (other.m_Eq.w - dot * this.m_Eq.w) * invDet;
-    return Ray(cThis * this.m_Eq.xyz + cOther * other.m_Eq.xyz, this.m_Eq.xyz.cross(other.m_Eq.xyz).normalize());
+    return Ray(cThis * this.m_Eq.xyz + cOther * other.m_Eq.xyz, this.m_Eq.xyz.cross(other.m_Eq.xyz).normalized());
 
 		/*vec3 dir,pos;
 		float d = (other.m_Eq.x * m_Eq.y) - (m_Eq.x * other.m_Eq.y);
