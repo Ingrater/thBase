@@ -277,9 +277,13 @@ public:
     assert(count() > 0, "no more elements left in the queue");
     T result;
     swap(result, m_data[m_takeIndex]);
-    m_takeIndex = m_takeIndex++;
+    m_takeIndex++;
     if(m_takeIndex == m_data.length)
+    {
+      if(m_takeIndex == m_insertIndex)
+        m_insertIndex = 0;
       m_takeIndex = 0;
+    }
     return result;
   }
 

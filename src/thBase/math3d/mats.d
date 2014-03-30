@@ -3,6 +3,7 @@ module thBase.math3d.mats;
 import thBase.math3d.vecs;
 import std.math;
 import thBase.math;
+import core.stdc.math : tanf;
 
 /**
  * 2x2 matrix
@@ -437,6 +438,28 @@ struct mat4 {
 	  res.f[12] = 0.0f; res.f[13] = 0.0f; res.f[15] = 0.0f;
 	  return res;
 	}
+
+  static const(mat4) ProjectionMatrixDirectX(float pViewAngle, float pAspectRatio, float pNear, float pFar) 
+  {
+    mat4 res;
+    pViewAngle = pViewAngle / 180.0f * PI;
+    res.f[0] = 1.0f / tanf( pViewAngle/2) * pAspectRatio;
+    res.f[1] = 0; res.f[2] = 0; res.f[3] = 0;
+
+    // Y-Achse
+    res.f[5] = 1.0f / tanf( pViewAngle/2);
+    res.f[4] = 0; res.f[6] = 0; res.f[7] = 0;
+
+    // Z-Achse
+    res.f[10] = pFar / (pNear - pFar);
+    res.f[11] = -1;
+    res.f[8] = 0; res.f[9] = 0;
+
+    // W-Achse -zn*zf/(zf-zn)
+    res.f[14] = (pFar * pNear) / (pNear - pFar);
+    res.f[12] = 0; res.f[13] = 0; res.f[15] = 0;
+    return res;
+  }
 
 	/**
 	 * Creates a perspective projection matrix

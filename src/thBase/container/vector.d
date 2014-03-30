@@ -450,7 +450,7 @@ public:
     resize(m_Size + 1);
     if(m_Size > 1)
     {
-      for(size_t i = m_Size-1; i >= index; i--)
+      for(size_t i = m_Size-1; i > index; i--)
       {
         m_Data[i] = m_Data[i-1]; //TODO use memmove
       }

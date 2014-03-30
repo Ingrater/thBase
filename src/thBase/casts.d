@@ -11,7 +11,7 @@ auto static_cast(T,U)(U source)
     debug
     {
       T result = cast(T)source;
-      assert(result !is null, "runtime cast failed");
+      assert(source is null || result !is null, "runtime cast failed");
       assert(cast(void*)result == cast(void*)source, "address changed!");
       return result;
     }

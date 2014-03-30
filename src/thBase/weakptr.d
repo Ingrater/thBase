@@ -275,7 +275,7 @@ unittest
   //test copy constructor
   void testCopy(WeakPtr!WeakRefTest ptr4)
   {
-    assert(ptr4.get() == ptr1.get());
+    assert(ptr4.get() is ptr1.get());
     assert(ptr4.get() !is null);
   }
   testCopy(ptr1);
@@ -284,7 +284,7 @@ unittest
   //test copy assignment
   WeakPtr!WeakRefTest ptr4;
   ptr4 = ptr1;
-  assert(ptr1.get() == ptr4.get());
+  assert(ptr1.get() is ptr4.get());
 
   // test assignment of null
   ptr1 = null;

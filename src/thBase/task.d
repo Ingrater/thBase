@@ -60,10 +60,10 @@ class TaskQueue
   public:
     this()
     {
-      m_queueMutex = typeof(m_queueMutex)(DefaultCtor());
-      m_taskQueue = typeof(m_taskQueue)(DefaultCtor());
-      m_waitingWorkers = typeof(m_waitingWorkers)(DefaultCtor());
-      m_freeWorkers = typeof(m_freeWorkers)(DefaultCtor());
+      m_queueMutex = typeof(m_queueMutex)(defaultCtor);
+      m_taskQueue = typeof(m_taskQueue)(defaultCtor);
+      m_waitingWorkers = typeof(m_waitingWorkers)(defaultCtor);
+      m_freeWorkers = typeof(m_freeWorkers)(defaultCtor);
 
       {
         g_taskMutex.lock();
@@ -160,8 +160,6 @@ class TaskQueue
             allTaskQueues[] = g_taskQueues.toArray();
           }
           scope(exit) AllocatorDelete(ThreadLocalStackAllocator.globalInstance, allTaskQueues);
-
-          //TODO start stealing from a random task queue, not always from the first one
 
           size_t startIndex = uniform(0, allTaskQueues.length);
           immutable size_t numTasks = allTaskQueues.length;
@@ -298,7 +296,7 @@ class TaskQueue
 }
 
 /**
- * A task worker, is a worker which can execute a single task and may be clieded at any point from within the task
+ * A task worker, is a worker which can execute a single task and may be yielded at any point from within the task
  */
 class TaskWorker : Fiber
 {
