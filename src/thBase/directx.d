@@ -53,6 +53,15 @@ struct ComRef(T)
     rh.m_ref = null;
   }
 
+  void opAssign(typeof(null))
+  {
+    if(m_ref !is null)
+    {
+      m_ref.Release();
+      m_ref = null;
+    }
+  }
+
   static assert(ComRef!T.sizeof == (void*).sizeof);
 }
 
