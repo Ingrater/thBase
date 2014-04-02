@@ -8,6 +8,7 @@ import core.refcounted;
 import thBase.error;
 import thBase.allocator;
 import thBase.conv;
+import thBase.casts;
 
 public import thBase.serialize.wrapper;
 
@@ -74,6 +75,24 @@ protected:
 			  HandleError(type, pElement, name, "uint");
       return false;
     }
+    return true;
+	}
+
+	static bool DoDeserializeAttribute(ref ubyte value, TiXmlElement pElement, string name, bool optional){
+		auto error = ErrorScope(ErrorContext.create("ubyte-attribute", name));
+    uint temp = 0;
+    auto type = pElement.QueryUIntAttribute(name, temp);
+		if(type == AttributeQueryEnum.TIXML_WRONG_TYPE || type == AttributeQueryEnum.TIXML_NO_ATTRIBUTE)
+    {
+      if(!optional)
+			  HandleError(type, pElement, name, "ubyte");
+      return false;
+    }
+    if(temp > 0xFF)
+    {
+      HandleError(AttributeQueryEnum.TIXML_WRONG_TYPE, pElement, name, "ubyte");
+    }
+    value = int_cast!ubyte(temp);
     return true;
 	}
 	

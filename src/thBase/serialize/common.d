@@ -77,7 +77,7 @@ template isFunction(T){
 }
 
 template NativeType(T){
-	static if(is(T == int) || is(T == uint) || is(T == float) || is(T == double) || is(T == bool))
+	static if(is(T == int) || is(T == uint) || is(T == float) || is(T == double) || is(T == bool) || is(T == ubyte))
 		enum bool NativeType = true;
 	else 
 		enum bool NativeType = false;
