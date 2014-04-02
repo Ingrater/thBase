@@ -156,11 +156,14 @@ protected:
       HandleError(cast(TiXmlNode)element, msg);
     }
     TiXmlText text = textNode.FirstTextElement();
-    if(text is null)
+    if(text !is null)
     {
-      HandleError(textNode, "missing text");
+      value = text.Value[];
     }
-    value = text.Value[];
+    else
+    {
+      value = rcstring();
+    }
   }
 
   static void ProcessLineNumber(ref uint value, TiXmlElement element, string name, uint offset)
