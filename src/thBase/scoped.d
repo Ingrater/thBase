@@ -18,7 +18,7 @@ struct ScopedLock(T)
   }
 }
 
-struct NoArgs {};
+deprecated("use defaultCtor instead") alias NoArgs = DefaultCtor;
 
 /**
  * A scoped reference, deletes the reference upon leaving a scope
@@ -42,7 +42,7 @@ struct scopedRef(T, Allocator = StdAllocator)
   {
     this(ARGS...)(ARGS args)
     {
-      static if(ARGS.length == 1 && is(ARGS[0] == NoArgs))
+      static if(ARGS.length == 1 && is(ARGS[0] == DefaultCtor))
         m_ref = New!T();
       else
         m_ref = New!T(args);

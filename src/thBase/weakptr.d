@@ -130,13 +130,13 @@ public:
   }
 
   /// \brief gets the weak ref index for debugging purposes
-  uint getWeakRefIndex()
+  final uint getWeakRefIndex()
   {
     return m_weakRefIndex.index;
   }
 
   /// \brief swap all weak references of this and another weak referenced object
-  void swapPlaces(WeakReferenced!(T, Base) other)
+  final void swapPlaces(WeakReferenced!(T, Base) other)
   {
     auto lock = ScopedLock!Mutex(s_mutex);
     swap(s_weakTable[m_weakRefIndex.index], s_weakTable[other.m_weakRefIndex.index]);

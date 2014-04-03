@@ -1,9 +1,15 @@
 module thBase.directx;
 
 import core.sys.windows.windows;
+import core.sys.windows.stacktrace;
 import std.c.windows.com;
 import thBase.casts;
 import thBase.singleton;
+import thBase.container.vector;
+import thBase.container.hashmap;
+import core.sync.mutex;
+import thBase.scoped;
+import core.stdc.stdio;
 
 void ReleaseAndNull(T)(ref T ptr)
 {
@@ -16,7 +22,7 @@ void ReleaseAndNull(T)(ref T ptr)
 
 struct ComRef(T)
 {
-  T m_ref;
+  T m_ref = null;
 
   alias m_ref this;
 
@@ -36,8 +42,13 @@ struct ComRef(T)
   ~this()
   {
     if(m_ref !is null)
+    {
       m_ref.Release();
+      m_ref = null;
+    }
   }
+
+  @disable void opAssign(ref const ComRef rh);
 
   void opAssign(ref ComRef rh)
   {
@@ -66,6 +77,8 @@ struct ComRef(T)
       m_ref = null;
     }
   }
+
+  @disable void Release();
 
   static assert(ComRef!T.sizeof == (void*).sizeof);
 }
@@ -104,7 +117,7 @@ void InitDebugMarker(T)(T context)
   context.QueryInterface(&IDD_ID3DUserDefinedAnnotation, cast(void**)&g_userDefinedAnnotation);
   if(g_userDefinedAnnotation is null || g_userDefinedAnnotation.GetStatus() == 0)
   {
-    g_userDefinedAnnotation = null;
+    ReleaseAndNull(g_userDefinedAnnotation);
     HMODULE pModule = LoadLibraryA("d3d9.dll".ptr);
     D3DPREF_BeginEvent = cast(D3DPERF_BeginEvent_Func)GetProcAddress(pModule, "D3DPERF_BeginEvent");
     D3DPREF_EndEvent = cast(D3DPERF_EndEvent_Func)GetProcAddress(pModule, "D3DPERF_EndEvent");
@@ -115,6 +128,11 @@ void InitDebugMarker(T)(T context)
   {
     g_debugMarkerActive = true;
   }
+}
+
+void DeinitDebugMarker()
+{
+  ReleaseAndNull(g_userDefinedAnnotation);
 }
 
 struct DebugMarker
@@ -154,7 +172,7 @@ struct DebugMarker
 
 /// \brief
 ///   A helper class that helps to find leaks of reference counted com objects which inherit from IUnknown
-class ComLeakFinder : Singleton!GlobalManager
+class ComLeakFinder : Singleton!ComLeakFinder
 {
 private:
   extern(Windows)
@@ -182,7 +200,7 @@ private:
   {
     void** oldVptr;
     void** newVptr;
-    composite!(Vector!trace) traces;
+    Vector!trace m_traces;
     uint refCount;
     AddRefFunc AddRef;
     ReleaseFunc Release;
@@ -192,8 +210,20 @@ private:
       this.oldVptr = oldVptr;
       this.newVptr = newVptr;
       refCount = 1;
-      AddREf = addRef;
+      AddRef = addRef;
       Release = release;
+    }
+
+    ~this()
+    {
+      Delete(m_traces);
+    }
+
+    Vector!trace traces()
+    {
+      if(m_traces is null)
+        m_traces = New!(typeof(m_traces))();
+      return m_traces;
     }
   }
 
@@ -204,11 +234,15 @@ private:
 
   composite!(Hashmap!(IUnknown, InterfaceData)) m_trackedInstances;
   composite!Mutex m_mutex;
+  uint m_addRefCalls;
+  uint m_releaseCalls;
+  uint m_initCalls;
 
   extern(Windows) static ULONG hookAddRef(IUnknown self)
   {
     auto inst = ComLeakFinder.instance();
     auto lock = ScopedLock!Mutex(inst.m_mutex);
+    inst.m_addRefCalls++;
 
     assert(inst.m_trackedInstances.exists(self), "object is not tracked");
 
@@ -217,8 +251,8 @@ private:
 
     info.traces.resize(info.traces.length() + 1);
     auto t = &info.traces[info.traces.length() - 1];
-    t.refCount = info.refCount;
-    t.numAddresses = (uint16)StackWalker.getCallstack(1, ArrayPtr<StackWalker.address_t>(t.addresses));
+    t.refCount = int_cast!ushort(info.refCount);
+    t.numAddresses = int_cast!ushort(StackTrace.trace(t.addresses, 1).length);
     t.type = TraceType.addRef;
 
     return info.AddRef(self);
@@ -228,31 +262,38 @@ private:
   {
     auto inst = ComLeakFinder.instance();
     auto lock = ScopedLock!Mutex(inst.m_mutex);
+    inst.m_releaseCalls++;
 
     assert(inst.m_trackedInstances.exists(self), "object is not tracked");
 
     auto info = &inst.m_trackedInstances[self];
     info.refCount--;
 
-    info.traces.resize(info.traces.length() + 1);
-    auto t = &info.traces[info.traces.length() - 1];
-    t.refCount = info.refCount;
-    t.numAddresses = (uint16)StackWalker.getCallstack(1, ArrayPtr<StackWalker.address_t>(t.addresses));
-    t.type = TraceType.release;
+    if(info.refCount > 0)
+    {
+      info.traces.resize(info.traces.length() + 1);
+      auto t = &info.traces[info.traces.length() - 1];
+      t.refCount = int_cast!ushort(info.refCount);
+      t.numAddresses = int_cast!ushort(StackTrace.trace(t.addresses, 1).length);
+      t.type = TraceType.release;
+    }
 
+    auto releaseFunc = info.Release;
     if(info.refCount == 0)
     {
       auto h = cast(Unknown*)cast(void*)(self);
-      delete[] h.vptr;
+      Delete(h.vptr);
       h.vptr = info.oldVptr;
       inst.m_trackedInstances.remove(self);
     }
-    return info.Release(self);
+    return releaseFunc(self);
   }
 public:
 
   this()
   {
+    m_trackedInstances = typeof(m_trackedInstances)(defaultCtor);
+    m_mutex = typeof(m_mutex)(defaultCtor);
   }
 
   /// \brief Destructors. Writes a ComLeaks.log file if leaks are found.
@@ -263,13 +304,14 @@ public:
     if(m_trackedInstances.count() > 0)
     {
       FILE* f = fopen("ComLeaks.log", "w");
+      fprintf(f, "init %d, AddRef %d, Release %d", m_initCalls, m_addRefCalls, m_releaseCalls);
       foreach(ref k, ref v; m_trackedInstances)
       {
         fprintf(f, "leaked instance 0x%x\n", k);
         foreach(ref t; v.traces)
         {
-          fprintf(f, "\nTrace: ");
-          switch(t.type)
+          fprintf(f, "\nRefcount %d Trace: ", t.refCount);
+          final switch(t.type)
           {
             case TraceType.initial:
               fprintf(f, "initial\n");
@@ -281,19 +323,16 @@ public:
               fprintf(f, "Release\n");
               break;
           }
-          #define LINE_LENGTH 256
-          char outBuf[LINE_LENGTH * GEP_ARRAY_SIZE(t.addresses)];
-          StackWalker.resolveCallstack(ArrayPtr<StackWalker.address_t>(t.addresses, t.numAddresses), outBuf, LINE_LENGTH);
-          for(uint16 i=0; i<t.numAddresses; i++)
+          rcstring[trace.addresses.length] buffer;
+          auto frames = StackTrace.resolve(t.addresses, buffer);
+          foreach(frame; frames)
           {
-            fprintf(f, "%s\n", outBuf + (LINE_LENGTH * i));
+            fprintf(f, "%.*s\n", frame.length, frame.ptr);
           }
         }
-        delete[] v.newVptr;
+        Delete(v.newVptr);
         fprintf(f, "=========================================\n");
         fflush(f);
-        ++kit;
-        ++vit;
       }
       fclose(f);
     }
@@ -303,6 +342,7 @@ public:
   void trackComObject(IUnknown pObject)
   {
     auto lock = ScopedLock!Mutex(m_mutex);
+    m_initCalls++;
 
     // Do not add it twice
     if(m_trackedInstances.exists(pObject))
@@ -311,35 +351,35 @@ public:
     //Check if the reference count is 1
     pObject.AddRef();
     ULONG count = pObject.Release();
-    assert(count == 1, "reference count of com object is not 1", count);
+    //assert(count == 1, "reference count of com object is not 1");
 
-    auto h = reinterpret_cast<Unknown*>(pObject);
+    auto h = cast(Unknown*)cast(void*)(pObject);
 
     // copy the vtable
     size_t vtableSize = 0;
-    while(h.vptr[vtableSize] != nullptr && vtableSize < 64)
+    while(h.vptr[vtableSize] != null && vtableSize < 64)
     {
       vtableSize++;
     }
     assert(vtableSize >= 3);
-    void** newVtable = new void*[vtableSize];
-    memcpy(newVtable, h.vptr, sizeof(void*) * vtableSize);
+    void** newVtable = NewArray!(void*)(vtableSize).ptr;
+    memcpy(newVtable, h.vptr, (void*).sizeof * vtableSize);
 
     //patch the methods
     newVtable[1] = &hookAddRef;
     newVtable[2] = &hookRelease;
 
-    auto& info = m_trackedInstances[pObject] = InterfaceData(h.vptr,
-                                                             newVtable,
-                                                             reinterpret_cast<AddRefFunc>(h.vptr[1]),
-                                                             reinterpret_cast<ReleaseFunc>(h.vptr[2]));
+    m_trackedInstances[pObject] = InterfaceData(h.vptr, newVtable,
+                                                cast(AddRefFunc)(h.vptr[1]),
+                                                cast(ReleaseFunc)(h.vptr[2]));
+    auto info = &m_trackedInstances[pObject];
     h.vptr = newVtable;
 
     // do the stacktrace
     info.traces.resize(1);
-    auto& t = info.traces[0];
-    t.numAddresses = (uint16)StackWalker.getCallstack(0, ArrayPtr<StackWalker.address_t>(t.addresses));
-    t.refCount = info.refCount;
+    auto t = &info.traces[0];
+    t.numAddresses = int_cast!ushort(StackTrace.trace(t.addresses, 0).length);
+    t.refCount = int_cast!ushort(info.refCount);
     t.type = TraceType.initial;
   }
 }

@@ -16,10 +16,7 @@ class Singleton(T, Allocator = StdAllocator)
 
   shared static ~this()
   {
-    synchronized(s_instanceMutex)
-    {
-      Delete(s_instance); s_instance = null;
-    }
+    destroySingleton();
     Delete(s_instanceMutex);
   }
 
@@ -36,5 +33,13 @@ class Singleton(T, Allocator = StdAllocator)
       s_instanceCreated = true;
     }
     return s_instance;
+  }
+
+  static void destroySingleton()
+  {
+    synchronized(s_instanceMutex)
+    {
+      Delete(s_instance); s_instance = null;
+    }
   }
 }
