@@ -409,7 +409,7 @@ struct mat4 {
 	/**
 	 * Creates a perspective projection matrix
 	 * Params:
-	 *  pViewAngle = the view angle in degrees
+	 *  pViewAngle = the view angle in degrees (vertically)
 	 *  pAspectRatio = the screen aspect ratio
 	 *  pNear = near clipping plane distance
 	 *  pFar = far clipping plane distance

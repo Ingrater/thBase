@@ -1225,6 +1225,7 @@ cd %CWD%</preBuildCommand>
    <Folder name="math3d">
     <File path="thBase\math3d\all.d" />
     <File path="thBase\math3d\box.d" />
+    <File path="thBase\math3d\frustrum.d" />
     <File path="thBase\math3d\mats.d" />
     <File path="thBase\math3d\plane.d" />
     <File path="thBase\math3d\position.d" />
