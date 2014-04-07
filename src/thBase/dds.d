@@ -29,8 +29,7 @@ class DDSLoader
   public:
   enum D3DFORMAT
   {
-      R8G8B8 = 20,
-      A8R8G8B8 = 21,
+      R8G8B8A8 = 21,
       DXT1 = MAKEFOURCC!('D','X','T','1'),
       DXT2 = MAKEFOURCC!('D','X','T','2'),
       DXT3 = MAKEFOURCC!('D','X','T','3'),
@@ -112,6 +111,7 @@ class DDSLoader
     }
 
     DDS_HEADER m_header;
+    D3DFORMAT m_format;
     rcstring m_filename;
     alias RCArray!(ubyte, IAllocator) mipmap_data_t;
     alias RCArray!(mipmap_data_t, IAllocator) image_data_t;
@@ -133,7 +133,7 @@ class DDSLoader
 
     @property final D3DFORMAT dataFormat() const
     {
-      return cast(D3DFORMAT)m_header.ddspf.dwFourCC;
+      return m_format;
     }
 
     @property final bool isCubemap() const
@@ -246,6 +246,8 @@ class DDSLoader
           throw New!DDSLoadingException(format("Unkown fourcc format in file '%s'", filename[]));
         }
 
+        m_format = cast(D3DFORMAT)m_header.ddspf.dwFourCC;
+
         size_t blockSize = (m_header.ddspf.dwFourCC == D3DFORMAT.DXT1) ? 8 : 16;
         size_t pitch = max(1, ((m_header.dwWidth+3)/4)) * blockSize; //how many bytes one scan line has
         size_t numScanLines = max(1, ((m_header.dwHeight+3)/4));
@@ -273,32 +275,65 @@ class DDSLoader
           mipmapWidth /= 2;
           mipmapHeight /= 2;
         }
-
-        // Is it a cubemap?
-        if(m_header.dwCaps2 & DDSCAPS2.CUBEMAP)
+      }
+      else if(m_header.ddspf.dwFlags & PixelFormatFlags.RGB)
+      {
+        if(m_header.ddspf.dwRGBBitCount != 32)
         {
-          DWORD allSides = DDSCAPS2.CUBEMAP_POSITIVEX | DDSCAPS2.CUBEMAP_NEGATIVEX |
-                           DDSCAPS2.CUBEMAP_POSITIVEY | DDSCAPS2.CUBEMAP_NEGATIVEY |
-                           DDSCAPS2.CUBEMAP_POSITIVEZ | DDSCAPS2.CUBEMAP_NEGATIVEZ;
-          if((m_header.dwCaps2 & allSides) != allSides)
-          {
-            throw New!DDSLoadingException(format("File '%s' is a cubemap but does not have all 6 cube map faces", filename[]));
-          }
-
-          numTextures = 6;
-          memoryNeeded *= numTextures;
-          m_images = NewArray!(image_data_t)(numTextures);
-          m_imageData = image_data_t(numTextures * numMipmaps, m_allocator);
+          throw New!DDSLoadingException(format("Rgb formats are only supported with alpha. file: '%s'", m_filename[]));
         }
-        else
+        // swizzeled because of endianes
+
+        if(m_header.ddspf.dwABitMask != 0xFF_00_00_00 ||
+           m_header.ddspf.dwRBitMask != 0x00_00_00_FF ||
+           m_header.ddspf.dwGBitMask != 0x00_00_FF_00 ||
+           m_header.ddspf.dwBBitMask != 0x00_FF_00_00)
         {
-          m_images = NewArray!(image_data_t)(numTextures);
-          m_imageData = image_data_t(numTextures * numMipmaps, m_allocator);
+          throw New!DDSLoadingException(format("Unsupported rgb format in file '%s'.", m_filename[]));
+        }
+        
+        m_format = D3DFORMAT.R8G8B8A8;
+
+        immutable size_t bytesPerPixel = 4;
+
+        size_t mipmapWidth = m_header.dwWidth;
+        size_t mipmapHeight = m_header.dwHeight;
+
+        for(size_t i=0; i<numMipmaps; i++)
+        {
+          size_t mipmapPitch = mipmapWidth * bytesPerPixel;
+          size_t mipmapNumScanlines = mipmapHeight;
+          mipmapMemorySize[i] = mipmapPitch * mipmapNumScanlines;
+          memoryNeeded += mipmapMemorySize[i];
+          mipmapWidth /= 2;
+          mipmapHeight /= 2;
         }
       }
       else
       {
-        assert(0, "not implemented yet");
+        throw New!DDSLoadingException(format("The format of the file '%s' is not supported.", m_filename[]));
+      }
+
+      // Is it a cubemap?
+      if(m_header.dwCaps2 & DDSCAPS2.CUBEMAP)
+      {
+        DWORD allSides = DDSCAPS2.CUBEMAP_POSITIVEX | DDSCAPS2.CUBEMAP_NEGATIVEX |
+          DDSCAPS2.CUBEMAP_POSITIVEY | DDSCAPS2.CUBEMAP_NEGATIVEY |
+          DDSCAPS2.CUBEMAP_POSITIVEZ | DDSCAPS2.CUBEMAP_NEGATIVEZ;
+        if((m_header.dwCaps2 & allSides) != allSides)
+        {
+          throw New!DDSLoadingException(format("File '%s' is a cubemap but does not have all 6 cube map faces", filename[]));
+        }
+
+        numTextures = 6;
+        memoryNeeded *= numTextures;
+        m_images = NewArray!(image_data_t)(numTextures);
+        m_imageData = image_data_t(numTextures * numMipmaps, m_allocator);
+      }
+      else
+      {
+        m_images = NewArray!(image_data_t)(numTextures);
+        m_imageData = image_data_t(numTextures * numMipmaps, m_allocator);
       }
 
       m_memory = mipmap_data_t(memoryNeeded, m_allocator); //new RCArray of size memoryNeeded
