@@ -2,13 +2,27 @@ module thBase.scoped;
 
 struct ScopedLock(T)
 {
-  private T* m_obj;
+  static if(is(T == struct))
+    private T* m_obj;
+  else
+    private T m_obj;
   @disable this();
 
-  this(ref T object)
+  static if(is(T == struct))
   {
-    m_obj = &object;
-    m_obj.lock();
+    this(ref T object)
+    {
+      m_obj = &object;
+      m_obj.lock();
+    }
+  }
+  else
+  {
+    this(T object)
+    {
+      m_obj = object;
+      m_obj.lock();
+    }
   }
 
   ~this()
