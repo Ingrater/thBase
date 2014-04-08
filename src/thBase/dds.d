@@ -5,6 +5,7 @@ import thBase.format;
 import thBase.file;
 import thBase.allocator;
 import thBase.math;
+import thBase.casts;
 
 version(unittest)
 {
@@ -29,13 +30,28 @@ class DDSLoader
   public:
   enum D3DFORMAT
   {
-      R8G8B8A8 = 21,
+      R8G8B8A8 = 1,
+      R16G16B16A16 = 2,
       DXT1 = MAKEFOURCC!('D','X','T','1'),
       DXT2 = MAKEFOURCC!('D','X','T','2'),
       DXT3 = MAKEFOURCC!('D','X','T','3'),
       DXT4 = MAKEFOURCC!('D','X','T','4'),
       DXT5 = MAKEFOURCC!('D','X','T','5'),
       DX10 = MAKEFOURCC!('D','X','1','0')
+  }
+
+  enum DXGI_FORMAT
+  {
+    R16G16B16A16_UNORM = 11,
+  }
+
+  static uint bytesPerPixel(DXGI_FORMAT format)
+  {
+    final switch(format)
+    {
+      case DXGI_FORMAT.R16G16B16A16_UNORM:
+        return 8;
+    }
   }
 
   private:
@@ -77,6 +93,23 @@ class DDSLoader
       DWORD           dwCaps3;
       DWORD           dwCaps4;
       DWORD           dwReserved2;
+    }
+
+    enum D3D10_RESOURCE_DIMENSION { 
+      UNKNOWN    = 0,
+      BUFFER     = 1,
+      TEXTURE1D  = 2,
+      TEXTURE2D  = 3,
+      TEXTURE3D  = 4
+    }
+
+    struct DDS_HEADER_DXT10
+    {
+      DXGI_FORMAT              dxgiFormat;
+      D3D10_RESOURCE_DIMENSION resourceDimension;
+      UINT                     miscFlag;
+      UINT                     arraySize;
+      UINT                     miscFlags2;
     }
 
     enum HeaderFlags
@@ -208,9 +241,59 @@ class DDSLoader
       file.read(m_header.dwCaps4);
       file.read(m_header.dwReserved2);
 
+      DDS_HEADER_DXT10 header10;
+      bool bCompressed = false;
+
       if((m_header.ddspf.dwFlags & PixelFormatFlags.FOURCC) && (m_header.ddspf.dwFourCC == D3DFORMAT.DX10))
       {
-        throw New!DDSLoadingException(format("Loading DX10 dds file '%s' is not supported yet", filename[]));
+        file.read(header10);
+        if(header10.arraySize > 1)
+        {
+          throw New!DDSLoadingException(format("Loading texture arrays is not supported yet"));
+        }
+        switch(header10.dxgiFormat)
+        {
+          case DXGI_FORMAT.R16G16B16A16_UNORM:
+            m_format = D3DFORMAT.R16G16B16A16;
+            break;
+          default:
+            throw New!DDSLoadingException(format("unsupported DXGI format in DX10 extension header"));
+        }
+      }
+      else if(m_header.ddspf.dwFlags & PixelFormatFlags.FOURCC)
+      {
+        // compressed texture
+        if(m_header.ddspf.dwFourCC != D3DFORMAT.DXT1 &&
+           m_header.ddspf.dwFourCC != D3DFORMAT.DXT2 &&
+           m_header.ddspf.dwFourCC != D3DFORMAT.DXT3 &&
+           m_header.ddspf.dwFourCC != D3DFORMAT.DXT4 &&
+           m_header.ddspf.dwFourCC != D3DFORMAT.DXT5)
+        {
+          throw New!DDSLoadingException(format("Unkown fourcc format in file '%s'", filename[]));
+        }
+        bCompressed = true;
+      }
+      else if(m_header.ddspf.dwFlags & PixelFormatFlags.RGB)
+      {
+        if(m_header.ddspf.dwRGBBitCount != 32)
+        {
+          throw New!DDSLoadingException(format("Rgb formats are only supported with alpha. file: '%s'", m_filename[]));
+        }
+        // swizzeled because of endianes
+
+        if(m_header.ddspf.dwABitMask != 0xFF_00_00_00 ||
+           m_header.ddspf.dwRBitMask != 0x00_00_00_FF ||
+           m_header.ddspf.dwGBitMask != 0x00_00_FF_00 ||
+           m_header.ddspf.dwBBitMask != 0x00_FF_00_00 )
+        {
+          throw New!DDSLoadingException(format("Unsupported rgb format in file '%s'.", m_filename[]));
+        }
+
+        m_format = D3DFORMAT.R8G8B8A8;
+      }
+      else
+      {
+        throw New!DDSLoadingException(format("The format of the file '%s' is not supported.", m_filename[]));
       }
 
       DWORD neededFlags = HeaderFlags.WIDTH | HeaderFlags.HEIGHT | HeaderFlags.PIXELFORMAT;
@@ -234,18 +317,8 @@ class DDSLoader
       scope(exit) AllocatorDelete(ThreadLocalStackAllocator.globalInstance, mipmapMemorySize);
 
       size_t memoryNeeded;
-      if((m_header.ddspf.dwFlags & PixelFormatFlags.FOURCC) != 0)
+      if(bCompressed)
       {
-        // compressed texture
-        if(m_header.ddspf.dwFourCC != D3DFORMAT.DXT1 &&
-           m_header.ddspf.dwFourCC != D3DFORMAT.DXT2 &&
-           m_header.ddspf.dwFourCC != D3DFORMAT.DXT3 &&
-           m_header.ddspf.dwFourCC != D3DFORMAT.DXT4 &&
-           m_header.ddspf.dwFourCC != D3DFORMAT.DXT5)
-        {
-          throw New!DDSLoadingException(format("Unkown fourcc format in file '%s'", filename[]));
-        }
-
         m_format = cast(D3DFORMAT)m_header.ddspf.dwFourCC;
 
         size_t blockSize = (m_header.ddspf.dwFourCC == D3DFORMAT.DXT1) ? 8 : 16;
@@ -276,25 +349,25 @@ class DDSLoader
           mipmapHeight /= 2;
         }
       }
-      else if(m_header.ddspf.dwFlags & PixelFormatFlags.RGB)
+      else
       {
-        if(m_header.ddspf.dwRGBBitCount != 32)
+        size_t bytesPerPixel;
+        final switch(m_format)
         {
-          throw New!DDSLoadingException(format("Rgb formats are only supported with alpha. file: '%s'", m_filename[]));
+          case D3DFORMAT.R16G16B16A16:
+            bytesPerPixel = 8;
+            break;
+          case D3DFORMAT.R8G8B8A8:
+            bytesPerPixel = 4;
+            break;
+          case D3DFORMAT.DXT1:
+          case D3DFORMAT.DXT2:
+          case D3DFORMAT.DXT3:
+          case D3DFORMAT.DXT4:
+          case D3DFORMAT.DXT5:
+          case D3DFORMAT.DX10:
+            assert(0, "should not happen");
         }
-        // swizzeled because of endianes
-
-        if(m_header.ddspf.dwABitMask != 0xFF_00_00_00 ||
-           m_header.ddspf.dwRBitMask != 0x00_00_00_FF ||
-           m_header.ddspf.dwGBitMask != 0x00_00_FF_00 ||
-           m_header.ddspf.dwBBitMask != 0x00_FF_00_00)
-        {
-          throw New!DDSLoadingException(format("Unsupported rgb format in file '%s'.", m_filename[]));
-        }
-        
-        m_format = D3DFORMAT.R8G8B8A8;
-
-        immutable size_t bytesPerPixel = 4;
 
         size_t mipmapWidth = m_header.dwWidth;
         size_t mipmapHeight = m_header.dwHeight;
@@ -308,10 +381,6 @@ class DDSLoader
           mipmapWidth /= 2;
           mipmapHeight /= 2;
         }
-      }
-      else
-      {
-        throw New!DDSLoadingException(format("The format of the file '%s' is not supported.", m_filename[]));
       }
 
       // Is it a cubemap?
@@ -354,6 +423,39 @@ class DDSLoader
         }
       }
     }
+}
+
+void WriteDDS(const(char)[] filename, uint width, uint height, DDSLoader.DXGI_FORMAT format,const(void)[] data)
+{
+  auto file = RawFile(filename, "wb");
+  DWORD ddsMarker = 0x20534444;
+  file.write(ddsMarker);
+
+  DDSLoader.DDS_HEADER header;
+  header.dwSize = int_cast!uint(DDSLoader.DDS_HEADER.sizeof);
+  assert(header.dwSize == 124);
+
+  header.dwFlags = DDSLoader.HeaderFlags.CAPS | DDSLoader.HeaderFlags.WIDTH | DDSLoader.HeaderFlags.HEIGHT | DDSLoader.HeaderFlags.PIXELFORMAT | DDSLoader.HeaderFlags.PITCH;
+  header.dwWidth = width;
+  header.dwHeight = height;
+  header.dwPitchOrLinearSize = 0;//width * DDSLoader.bytesPerPixel(format);
+  header.ddspf.dwSize = header.ddspf.sizeof;
+  assert(header.ddspf.dwSize == 32);
+  header.ddspf.dwFlags = DDSLoader.PixelFormatFlags.FOURCC;
+  header.ddspf.dwFourCC = DDSLoader.D3DFORMAT.DX10;
+  header.dwCaps = DDSLoader.DDSCAPS.TEXTURE;
+  file.write(header);
+
+  DDSLoader.DDS_HEADER_DXT10 header10;
+  header10.dxgiFormat = format;
+  header10.resourceDimension = DDSLoader.D3D10_RESOURCE_DIMENSION.TEXTURE2D;
+  header10.miscFlag = 0;
+  header10.arraySize = 1;
+  header10.miscFlags2 = 0;
+  file.write(header10);
+
+  assert(data.length == width * DDSLoader.bytesPerPixel(format) * height);
+  file.writeArray(data);
 }
 
 unittest

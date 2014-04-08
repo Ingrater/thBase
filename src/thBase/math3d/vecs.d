@@ -46,6 +46,12 @@ struct vec2_t(T) if(is(T == float) || is(T == short) || is(T == int))
 	this(T[2] f){
 		this.f[0..1] = f[0..1];
 	}
+
+  void opOpAssign(string op, U)(auto ref const(U) v) if(is(U == vec2_t!T) && op == "+")
+  {
+    this.x += v.x;
+    this.y += v.y;
+  }
 	
 	/**
 	 * adds this and another vector
