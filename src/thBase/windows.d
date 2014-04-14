@@ -127,6 +127,7 @@ enum {
   RIM_TYPEMOUSE   =    0,
   RIM_TYPEKEYBOARD =   1,
   RIM_TYPEHID       =  2,
+  SWP_NOSIZE        = 0x0001
 }
 
 alias HRAWINPUT = void*;
@@ -139,13 +140,15 @@ extern(Windows)
   HANDLE CreateIoCompletionPort(HANDLE FileHandle, HANDLE ExistingCompletionPort, ULONG_PTR CompletionKey, DWORD NumberOfConcurrentThreads);
   BOOL GetQueuedCompletionStatus(HANDLE CompletionPort, DWORD* lpNumberOfBytes, PULONG_PTR lpCompletionKey, OVERLAPPED** lpOverlapped, DWORD dwMilliseconds);
   BOOL CancelIo(HANDLE hFile);
-  void OutputDebugStringA(LPCTSTR lpOutputStr);
+  void OutputDebugStringA(LPCTSTR lpOutputStr) nothrow;
   BOOL SetDllDirectoryA(LPCTSTR lpPathName);
   BOOL IsDebuggerPresent();
   BOOL SetEnvironmentVariableA(LPCTSTR lpName, LPCTSTR lpValue);
   BOOL RegisterRawInputDevices(RAWINPUTDEVICE* pRawInputDevices, UINT uiNumDevices, UINT cbSize );
   UINT GetRawInputData(HRAWINPUT hRawInput, UINT uiCommand, LPVOID pData, PUINT pcbSize, UINT cbSizeHeader);
   BOOL DestroyWindow(HWND hWnd);
+  BOOL SetWindowPos(HWND hWnd, HWND hWndInsertAfter,int X,int Y,int cx,int cy, UINT uFlags);
+  BOOL MoveWindow(HWND hWnd, int X, int Y, int nWidth, int nHeight, BOOL bRepaint);
 }
 
 size_t formatLastError(char[] buffer)
