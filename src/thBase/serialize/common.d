@@ -2,6 +2,7 @@ module thBase.serialize.common;
 
 import std.traits;
 import core.traits;
+public import thBase.traits : hasAttribute, getAttribute;
 
 struct Optional {}
 struct Ignore {}
@@ -13,60 +14,6 @@ enum IsOptional : bool
 {
   No = false,
   Yes = true
-}
-
-template hasAttribute(alias sym, T)
-{
-  static bool helper()
-  {
-    foreach(a; __traits(getAttributes, sym))
-    {
-      if(is(a == T) || __traits(compiles, typeof(a)) && is(typeof(a) == T))
-        return true;
-    }
-    return false;
-  }
-  enum bool hasAttribute = helper();
-}
-
-template getAttribute(alias sym, T)
-{
-  static T helper()
-  {
-    foreach(a; __traits(getAttributes, sym))
-    {
-      if(is(a == T) || __traits(compiles, typeof(a)) && is(typeof(a) == T))
-        return a;
-    }
-    assert(0, "attribute " ~ T.stringof ~ " not found");
-  }
-  enum T getAttribute = helper();
-}
-
-unittest
-{
-  static struct IntAttr
-  {
-    int i;
-  }
-
-  static struct StringAttr
-  {
-    string name;
-  }
-
-  @StringAttr("test") static struct Test
-  {
-    @IntAttr(2) int m1;
-    @Optional int m2;
-    @Ignore int m3;
-  }
-
-  static assert(hasAttribute!(Test.m2, Optional));
-  static assert(hasAttribute!(Test.m3, Ignore));
-  static assert(hasAttribute!(Test.m1, IntAttr));
-  static assert(getAttribute!(Test.m1, IntAttr).i == 2);
-  static assert(getAttribute!(Test, StringAttr).name == "test");
 }
 
 template isFunction(T){

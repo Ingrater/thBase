@@ -542,7 +542,7 @@ unittest
   }
 }
 
-Tokenizer!T split(T)(T str, Tokenizer!T.element_t splitChar)
+Tokenizer!T split(T, U)(T str, U splitChar)
 {
   return Tokenizer!T(str, splitChar);
 }
