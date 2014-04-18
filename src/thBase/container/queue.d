@@ -4,6 +4,7 @@ import thBase.container.vector;
 import thBase.types;
 import thBase.scoped;
 import thBase.algorithm : move;
+import thBase.traits;
 
 import core.sync.semaphore;
 import core.sync.mutex;
@@ -87,7 +88,7 @@ public:
 
   void enqueue(T)(auto ref T elem)
   {
-    synchronized(m_Lock)
+    auto lock = ScopedLock!Mutex(m_Lock);
     {
       if(m_DataEnd - m_NextWrite < T.sizeof)
       {
@@ -104,14 +105,42 @@ public:
     }
   }
 
+  void enqueue(T, U)(auto ref T elem, U[] additionalData)
+  {
+    auto lock = ScopedLock!Mutex(m_Lock);
+    {
+      auto dataSize = T.sizeof + (additionalData.length * U.sizeof);
+      if(m_DataEnd - m_NextWrite < dataSize)
+      {
+        assert(m_NextRead <= m_NextWrite || m_NextRead == m_Data, "overflow");
+        m_JumpAt = m_NextWrite;
+        m_NextWrite = m_Data;
+      }
+      assert(!(m_NextRead > m_NextWrite && m_NextWrite + dataSize >= m_NextRead), "overflow");
+      T* mem = cast(T*)m_NextWrite;
+      uninitializedCopy(*mem, elem);
+      alias V = StripModifier!U;
+      V* memAdditional = cast(V*)(m_NextWrite + T.sizeof);
+      memAdditional[0..additionalData.length] = additionalData[];
+      m_NextWrite += dataSize;
+      if(m_NextWrite > m_JumpAt)
+        m_JumpAt = m_NextWrite;
+    }
+  }
+
   void enqueue(T)(auto ref T elem) shared
   {
     (cast(ThreadSafeRingBuffer!AT)this).enqueue(elem);
   }
 
+  void enqueue(T, U)(auto ref T elem, U[] additionalData) shared
+  {
+    (cast(ThreadSafeRingBuffer!AT)this).enqueue(elem, additionalData);
+  }
+
   T* tryGet(T)()
   {
-    synchronized(m_Lock)
+    auto lock = ScopedLock!Mutex(m_Lock);
     {
       void* readAt = m_NextRead;
 
@@ -137,16 +166,31 @@ public:
 
   void skip(T)()
   {
-    synchronized(m_Lock)
+    auto lock = ScopedLock!Mutex(m_Lock);
     {
       callDtor(cast(T*)m_NextRead);
       skipHelper(T.sizeof);
     }
   }
 
+  void skip(T, U)(U[] additionalData)
+  {
+    auto lock = ScopedLock!Mutex(m_Lock);
+    {
+      callDtor(cast(T*)m_NextRead);
+      callDtor(additionalData);
+      skipHelper(T.sizeof + (U.sizeof * additionalData.length));
+    }
+  }
+
   void skip(T)() shared
   {
     (cast(ThreadSafeRingBuffer!AT)this).skip!T();
+  }
+
+  void skip(T, U)(U[] additionalData) shared
+  {
+    (cast(ThreadSafeRingBuffer!AT)this).skip!(T, U)(additionalData);
   }
 
   private:
