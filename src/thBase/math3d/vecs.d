@@ -104,10 +104,15 @@ struct vec2_t(T) if(is(T == float) || is(T == short) || is(T == int))
 	/**
 	 * Returns: the length of this vector
 	 */
-	float length()
+	float length() const pure
   {
 		return sqrtf(this.x * this.x + this.y * this.y);
 	}
+
+  float squaredLength() const pure
+  {
+    return this.x * this.x + this.y * this.y;
+  }
 
   deprecated("use normalized instead") alias normalize = normalized;
 	
