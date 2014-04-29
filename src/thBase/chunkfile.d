@@ -326,7 +326,8 @@ class Chunkfile
     final void endReadChunk()
     {
       assert(m_readInfo.size > 0, "no chunk to end");
-      assert(m_readInfo.top.bytesLeft == 0, "there is still data left in the chunk");
+      auto bytesLeft = m_readInfo.top.bytesLeft;
+      assert(bytesLeft == 0, "there is still data left in the chunk");
       m_readInfo.pop();
     }
 

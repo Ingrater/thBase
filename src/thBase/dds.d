@@ -43,6 +43,7 @@ class DDSLoader
   enum DXGI_FORMAT
   {
     R16G16B16A16_UNORM = 11,
+    DXGI_FORMAT_R8G8B8A8_UNORM = 28,
   }
 
   static uint bytesPerPixel(DXGI_FORMAT format)
@@ -51,6 +52,8 @@ class DDSLoader
     {
       case DXGI_FORMAT.R16G16B16A16_UNORM:
         return 8;
+      case DXGI_FORMAT.DXGI_FORMAT_R8G8B8A8_UNORM:
+        return 4;
     }
   }
 
@@ -256,6 +259,9 @@ class DDSLoader
           case DXGI_FORMAT.R16G16B16A16_UNORM:
             m_format = D3DFORMAT.R16G16B16A16;
             break;
+          case DXGI_FORMAT.DXGI_FORMAT_R8G8B8A8_UNORM:
+            m_format = D3DFORMAT.R8G8B8A8;
+            break;
           default:
             throw New!DDSLoadingException(format("unsupported DXGI format in DX10 extension header"));
         }
@@ -438,7 +444,7 @@ void WriteDDS(const(char)[] filename, uint width, uint height, DDSLoader.DXGI_FO
   header.dwFlags = DDSLoader.HeaderFlags.CAPS | DDSLoader.HeaderFlags.WIDTH | DDSLoader.HeaderFlags.HEIGHT | DDSLoader.HeaderFlags.PIXELFORMAT | DDSLoader.HeaderFlags.PITCH;
   header.dwWidth = width;
   header.dwHeight = height;
-  header.dwPitchOrLinearSize = 0;//width * DDSLoader.bytesPerPixel(format);
+  header.dwPitchOrLinearSize = width * DDSLoader.bytesPerPixel(format);
   header.ddspf.dwSize = header.ddspf.sizeof;
   assert(header.ddspf.dwSize == 32);
   header.ddspf.dwFlags = DDSLoader.PixelFormatFlags.FOURCC;

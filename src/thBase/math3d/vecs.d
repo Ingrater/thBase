@@ -52,6 +52,12 @@ struct vec2_t(T) if(is(T == float) || is(T == short) || is(T == int))
     this.x += v.x;
     this.y += v.y;
   }
+
+  void opOpAssign(string op, U)(auto ref const(U) v) if(is(U == vec2_t!T) && op == "*")
+  {
+    this.x *= v.x;
+    this.y *= v.y;
+  }
 	
 	/**
 	 * adds this and another vector
@@ -648,6 +654,11 @@ vec3_t!(T) floor(V : vec3_t!(T), T)(V v) if(is(T == float) || is(T == double)) {
 	return vec3_t!(T)(cast(T)std.math.floor(v.x),
 					  cast(T)std.math.floor(v.y),
 					  cast(T)std.math.floor(v.z));
+}
+
+vec2_t!(T) floor(V : vec2_t!(T), T)(V v) if(is(T == float) || is(T == double)) {
+	return vec2_t!(T)(cast(T)std.math.floor(v.x),
+                    cast(T)std.math.floor(v.y));
 }
 
 /**
