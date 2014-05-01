@@ -120,7 +120,7 @@ struct vec2_t(T) if(is(T == float) || is(T == short) || is(T == int))
     return this.x * this.x + this.y * this.y;
   }
 
-  deprecated("use normalized instead") alias normalize = normalized;
+  //deprecated("use normalized instead") alias normalize = normalized;
 	
 	/**
 	 * Returns: a normalized copy of this vector
@@ -313,7 +313,7 @@ struct vec3_t(T) if(is(T == float) || is(T == short) || is(T == int))
     return res;
   }
 
-  deprecated("use normalized instead") alias normalize = normalized;
+  //deprecated("use normalized instead") alias normalize = normalized;
 	
 	/**
 	 * Returns: a normalized copy of this vector
@@ -528,7 +528,7 @@ struct vec4_t(T) if(is(T == float) || is(T == short) || is(T == int)) {
 		return vec3_t!(T)(this.x, this.y, this.z);
 	}
 
-  deprecated("use normalized instead") alias normalize = normalized;
+  //deprecated("use normalized instead") alias normalize = normalized;
 	
 	/**
 	 * Returns: a normalized copy of this vector
@@ -636,7 +636,7 @@ unittest {
 	const(vec4) v2 = vec4(2,2,2,2);
 	const(vec4) v3 = vec4(3,3,3,3);
 	
-	vec4 res = (v1.normalize() + v2) / v3;
+	vec4 res = (v1.normalized() + v2) / v3;
 }
 
 /**

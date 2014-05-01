@@ -222,21 +222,6 @@ struct mat4 {
 		temp.z = v.x * this.f[2] + v.y * this.f[6] + v.z * this.f[10];
 		return temp;		
   }
-	
-	/**
-
-	 * multiplies this matrix with a vector
-	 * Params:
-	 *  v = the vector
-	 */ 
-	vec3 opMul(vec3 v) const pure
-	{
-    vec3 temp;
-		temp.x = v.x * this.f[0] + v.y * this.f[4] + v.z * this.f[8]  + this.f[12];
-		temp.y = v.x * this.f[1] + v.y * this.f[5] + v.z * this.f[9]  + this.f[13];
-		temp.z = v.x * this.f[2] + v.y * this.f[6] + v.z * this.f[10] + this.f[14];
-		return temp;		
-	}
 
   /// \brief transform a position vector
   vec3 transformPosition(vec3 v) const pure
