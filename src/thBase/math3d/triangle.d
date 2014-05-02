@@ -258,9 +258,9 @@ struct Triangle {
     }
     else
     {
-		  vec3 v1 = transformation * this.v0;
-		  vec3 v2 = transformation * this.v1;
-		  vec3 v3 = transformation * this.v2;
+		  vec3 v1 = transformation.transformPosition(this.v0);
+		  vec3 v2 = transformation.transformPosition(this.v1);
+		  vec3 v3 = transformation.transformPosition(this.v2);
 		
 		  return Triangle(v1,v2,v3);
     }
