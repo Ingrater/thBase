@@ -128,7 +128,7 @@ struct Sphere
 
 unittest
 {
-  auto r = Ray(vec3(0,0,0), vec3(2.9f,3.1f,3.2f).normalize());
+  auto r = Ray(vec3(0,0,0), vec3(2.9f,3.1f,3.2f).normalized);
   auto s = Sphere(vec3(3,3,3), 1.0f);
   assert(s.intersects(r) == true);
 }

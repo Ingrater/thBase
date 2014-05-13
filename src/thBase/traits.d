@@ -303,6 +303,9 @@ unittest
     string name;
   }
 
+  static struct Optional {}
+  static struct Ignore {}
+
   @StringAttr("test") static struct Test
   {
     @IntAttr(2) int m1;

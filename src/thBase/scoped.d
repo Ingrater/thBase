@@ -119,8 +119,8 @@ unittest
 {
   auto leak = LeakChecker("thBase.scoped.scopedRef unittest");
   {
-    auto ref1 = scopedRef!Object(NoArgs());
-    auto ref2 = scopedRef!Object(NoArgs());
+    auto ref1 = scopedRef!Object(defaultCtor);
+    auto ref2 = scopedRef!Object(defaultCtor);
     Delete(ref2.releaseRef());
   }
 }
