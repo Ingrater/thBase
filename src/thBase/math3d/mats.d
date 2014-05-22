@@ -364,6 +364,26 @@ struct mat4 {
     }
     return result;
   }
+
+  @property vec3 translation() const pure
+  {
+    return vec3(this.f[12..15]);
+  }
+
+  @property vec3 xAxis() const pure
+  {
+    return vec3(this.f[0..3]);
+  }
+
+  @property vec3 yAxis() const pure
+  {
+    return vec3(this.f[4..7]);
+  }
+
+  @property vec3 zAxis() const pure
+  {
+    return vec3(this.f[8..11]);
+  }
 	
 	/**
 	 * Returns: A conversion from Left to Right handed coordinate system and vise versa
@@ -505,12 +525,16 @@ struct mat4 {
 		
 		res.f[8] = 0.0f;
 		res.f[9] = 0.0f;
-		res.f[10] = -2.0f / (pFar - pNear);
+		//res.f[10] = -2.0f / (pFar - pNear);
+    res.f[10] = 1.0f / (pNear - pFar);
 		res.f[11] = 0.0f;
 		
-		res.f[12] = -(pRight + pLeft) / (pRight - pLeft);
-		res.f[13] = -(pTop + pBottom) / (pTop - pBottom);
-		res.f[14] = -(pFar + pNear) / (pFar - pNear);
+		//res.f[12] = -(pRight + pLeft) / (pRight - pLeft);
+		//res.f[13] = -(pTop + pBottom) / (pTop - pBottom);
+		//res.f[14] = -(pFar + pNear) / (pFar - pNear);
+    res.f[12] = (pLeft + pRight) / (pLeft - pRight);
+    res.f[13] = (pTop + pBottom) / (pBottom - pTop);
+    res.f[14] = pNear / (pNear - pFar);
 		res.f[15] = 1.0f;
 		return res;
 	}
