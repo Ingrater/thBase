@@ -27,6 +27,7 @@ struct mat3 {
   union
   {
     struct {
+      // standard matrix notation m<column><row>
       float m00, m01, m02, 
             m10, m11, m12,
             m20, m21, m22;
@@ -162,7 +163,17 @@ struct mat3 {
  * $(BR) [ 3] [ 7] [11] [15]
  */
 struct mat4 {
-	float[16] f; /// data
+  union
+  {
+    struct {
+      // standard matrix notation m<column><row>
+      float m00, m01, m02, m03, 
+            m10, m11, m12, m13,
+            m20, m21, m22, m23,
+            m30, m31, m32, m33;
+    }
+	  float[16] f; /// data
+  }
 	
 	/**
 	 * constructor

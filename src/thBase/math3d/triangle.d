@@ -601,7 +601,7 @@ version(unittest)
 
 unittest
 {
-  mat4 transformation = TranslationMatrix(1,2,3) * Quaternion(vec3(1,5,2), -15).toMat4() * ScaleMatrix(0.1,0.1,0.1);
+  mat4 transformation = TranslationMatrix(1,2,3) * Quaternion(vec3(1,5,2), 15).toMat4() * ScaleMatrix(0.1,0.1,0.1);
   auto t1 = Triangle(vec3(1,1,0), vec3(-1,1,0), vec3(-1,-1,0));
   auto t2 = t1.transform(transformation);
   assert(t2.v0.epsilonCompare(vec3(0.27152431f, 0.37433851f, 0.078391626f)));

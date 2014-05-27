@@ -89,6 +89,7 @@
   <resfile />
   <exefile>$(OutDir)\$(ProjectName).exe</exefile>
   <useStdLibPath>1</useStdLibPath>
+  <cRuntime>2</cRuntime>
   <additionalOptions>-defaultlib=phobosnogcd -debuglib=phobosnogcd</additionalOptions>
   <preBuildCommand>set CWD=%CD%
 cd $(ProjectDir)\..\..\druntime
@@ -190,6 +191,7 @@ cd %CWD%</preBuildCommand>
   <resfile />
   <exefile>$(OutDir)\$(ProjectName).exe</exefile>
   <useStdLibPath>1</useStdLibPath>
+  <cRuntime>1</cRuntime>
   <additionalOptions>-defaultlib=phobosnogc -debuglib=phobosnogc $(ProjectDir)\..\..\druntime\lib\gcstub.obj</additionalOptions>
   <preBuildCommand>set CWD=%CD%
 cd $(ProjectDir)\..\..\druntime
@@ -291,6 +293,7 @@ cd %CWD%</preBuildCommand>
   <resfile />
   <exefile>..\lib\thBased.lib</exefile>
   <useStdLibPath>0</useStdLibPath>
+  <cRuntime>1</cRuntime>
   <additionalOptions />
   <preBuildCommand>set CWD=%CD%
 cd $(ProjectDir)\..\..\druntime
@@ -392,6 +395,7 @@ cd %CWD%</preBuildCommand>
   <resfile />
   <exefile>..\lib\thBase.lib</exefile>
   <useStdLibPath>1</useStdLibPath>
+  <cRuntime>1</cRuntime>
   <additionalOptions />
   <preBuildCommand>set CWD=%CD%
 cd $(ProjectDir)\..\..\druntime
@@ -493,6 +497,7 @@ cd %CWD%</preBuildCommand>
   <resfile />
   <exefile>$(OutDir)\$(ProjectName).exe</exefile>
   <useStdLibPath>1</useStdLibPath>
+  <cRuntime>2</cRuntime>
   <additionalOptions>-defaultlib=phobosnogc64d -debuglib=phobosnogc64d -m64 -op</additionalOptions>
   <preBuildCommand>set CWD=%CD%
 cd $(ProjectDir)\..\..\druntime
@@ -594,6 +599,7 @@ cd %CWD%</preBuildCommand>
   <resfile />
   <exefile>$(OutDir)\$(ProjectName).exe</exefile>
   <useStdLibPath>1</useStdLibPath>
+  <cRuntime>1</cRuntime>
   <additionalOptions>-defaultlib=phobosnogc64 -debuglib=phobosnogc64 -L/LIBPATH:&quot;$(ProjectDir)\..\..\thBase\lib&quot; -L/LIBPATH:&quot;$(ProjectDir)\..\..\phobos&quot;</additionalOptions>
   <preBuildCommand>set CWD=%CD%
 cd $(ProjectDir)\..\..\druntime
@@ -695,6 +701,7 @@ cd %CWD%</preBuildCommand>
   <resfile />
   <exefile>..\lib\thBase64d.lib</exefile>
   <useStdLibPath>0</useStdLibPath>
+  <cRuntime>1</cRuntime>
   <additionalOptions>-op</additionalOptions>
   <preBuildCommand>set CWD=%CD%
 cd $(ProjectDir)\..\..\druntime
@@ -796,6 +803,7 @@ cd %CWD%</preBuildCommand>
   <resfile />
   <exefile>..\lib\thBase64.lib</exefile>
   <useStdLibPath>1</useStdLibPath>
+  <cRuntime>1</cRuntime>
   <additionalOptions />
   <preBuildCommand>set CWD=%CD%
 cd $(ProjectDir)\..\..\druntime
@@ -897,6 +905,7 @@ cd %CWD%</preBuildCommand>
   <resfile />
   <exefile>$(OutDir)\$(ProjectName).exe</exefile>
   <useStdLibPath>1</useStdLibPath>
+  <cRuntime>1</cRuntime>
   <additionalOptions>-defaultlib=phobosnogcd -debuglib=phobosnogcd</additionalOptions>
   <preBuildCommand>set CWD=%CD%
 cd $(ProjectDir)\..\..\druntime
@@ -998,6 +1007,7 @@ cd %CWD%</preBuildCommand>
   <resfile />
   <exefile>$(OutDir)\$(ProjectName).exe</exefile>
   <useStdLibPath>1</useStdLibPath>
+  <cRuntime>1</cRuntime>
   <additionalOptions>-defaultlib=phobosnogc64d_mingw -debuglib=phobosnogc64d_mingw -nostdinc -O0 -v</additionalOptions>
   <preBuildCommand>set CWD=%CD%
 cd $(ProjectDir)\..\..\druntime
@@ -1099,6 +1109,7 @@ cd %CWD%</preBuildCommand>
   <resfile />
   <exefile>$(OutDir)\$(ProjectName).exe</exefile>
   <useStdLibPath>1</useStdLibPath>
+  <cRuntime>1</cRuntime>
   <additionalOptions>-defaultlib=phobosnogcd -debuglib=phobosnogcd</additionalOptions>
   <preBuildCommand>set CWD=%CD%
 cd $(ProjectDir)\..\..\druntime
@@ -1200,6 +1211,7 @@ cd %CWD%</preBuildCommand>
   <resfile />
   <exefile>..\lib\libthBase64d_mingw.a</exefile>
   <useStdLibPath>1</useStdLibPath>
+  <cRuntime>1</cRuntime>
   <additionalOptions>-nostdinc -O0</additionalOptions>
   <preBuildCommand>set CWD=%CD%
 cd $(ProjectDir)\..\..\druntime

@@ -47,12 +47,12 @@ const(mat4) RotationMatrixXYZ(float x, float y, float z){
   mat4 result;
   float A,B,C,D,E,F,AD,BD;
 
-  A       = cos(x/(-180.0f) * PI);
-  B       = sin(x/(-180.0f) * PI);
-  C       = cos(y/(-180.0f) * PI);
-  D       = sin(y/(-180.0f) * PI);
-  E       = cos(z/(-180.0f) * PI);
-  F       = sin(z/(-180.0f) * PI);
+  A       = cos(x/(180.0f) * PI);
+  B       = sin(x/(180.0f) * PI);
+  C       = cos(y/(180.0f) * PI);
+  D       = sin(y/(180.0f) * PI);
+  E       = cos(z/(180.0f) * PI);
+  F       = sin(z/(180.0f) * PI);
   AD      =   A * D;
   BD      =   B * D;
   result.f[0]  =   C * E;
@@ -69,23 +69,31 @@ const(mat4) RotationMatrixXYZ(float x, float y, float z){
   return result;
 }
 
+unittest
+{
+  // test that the quaternion respects the "rotate right" rule 
+  // (e.g. use left hand rotation for a left handed coordinate system and right hand rotation for a right handed coordinate system)
+  auto temp = RotationMatrixXYZ(0.0f, 0.0f, 90.0f).transformDirection(vec3(1, 0, 0));
+  assert(epsilonCompare(temp, vec3(0, 1, 0)), "rotation matrix rotates in the wrong direction");
+}
+
 /**
  * Creates a rotation matrix
  * $(BR) Rotation is done in order X,Y,Z
  * Params:
  *  v3Rotation = rotation in degrees
  */
-const(mat4) RotationMatrixXYZ(ref const(vec3) v3Rotation)
+const(mat4) RotationMatrixXYZ(vec3 v3Rotation)
 {
   mat4 result;
   float A,B,C,D,E,F,AD,BD;
 
-  A       = cos(v3Rotation.x/(-180.0f) * PI);
-  B       = sin(v3Rotation.x/(-180.0f) * PI);
-  C       = cos(v3Rotation.y/(-180.0f) * PI);
-  D       = sin(v3Rotation.y/(-180.0f) * PI);
-  E       = cos(v3Rotation.z/(-180.0f) * PI);
-  F       = sin(v3Rotation.z/(-180.0f) * PI);
+  A       = cos(v3Rotation.x/(180.0f) * PI);
+  B       = sin(v3Rotation.x/(180.0f) * PI);
+  C       = cos(v3Rotation.y/(180.0f) * PI);
+  D       = sin(v3Rotation.y/(180.0f) * PI);
+  E       = cos(v3Rotation.z/(180.0f) * PI);
+  F       = sin(v3Rotation.z/(180.0f) * PI);
   AD      =   A * D;
   BD      =   B * D;
   result.f[0]  =   C * E;
@@ -100,6 +108,14 @@ const(mat4) RotationMatrixXYZ(ref const(vec3) v3Rotation)
   result.f[3]  =  result.f[7] = result.f[11] = result.f[12] = result.f[13] = result.f[14] = 0;
   result.f[15] =  1;
   return result;		
+}
+
+unittest
+{
+  // test that the quaternion respects the "rotate right" rule 
+  // (e.g. use left hand rotation for a left handed coordinate system and right hand rotation for a right handed coordinate system)
+  auto temp = RotationMatrixXYZ(vec3(0.0f, 0.0f, 90.0f)).transformDirection(vec3(1, 0, 0));
+  assert(epsilonCompare(temp, vec3(0, 1, 0)), "rotation matrix rotates in the wrong direction");
 }
 
 /**

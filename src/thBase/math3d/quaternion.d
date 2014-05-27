@@ -47,9 +47,9 @@ struct Quaternion {
     if(trace > 0.00000001f)
     {
       float S = sqrt(trace) * 2.0f;
-      this.x = ( rot.f[7] - rot.f[5] ) / S;
-      this.y = ( rot.f[2] - rot.f[6] ) / S;
-      this.z = ( rot.f[3] - rot.f[1] ) / S;
+      this.x = ( rot.f[5] - rot.f[7] ) / S;
+      this.y = ( rot.f[6] - rot.f[2] ) / S;
+      this.z = ( rot.f[1] - rot.f[3] ) / S;
       this.angle = 0.25 * S;
     }
     else
@@ -60,7 +60,7 @@ struct Quaternion {
         this.x = 0.25f * S;
         this.y = ( rot.f[3] + rot.f[1] ) / S;
         this.z = ( rot.f[2] + rot.f[6] ) / S;
-        this.angle = ( rot.f[7] - rot.f[5] ) / S;
+        this.angle = ( rot.f[5] - rot.f[7] ) / S;
       }
       else if( rot.f[4] > rot.f[8] ) // Column 1:
       { 
@@ -68,7 +68,7 @@ struct Quaternion {
         this.x = ( rot.f[3] + rot.f[1] ) / S;
         this.y = 0.25f * S;
         this.z = ( rot.f[7] + rot.f[5] ) / S;
-        this.angle = ( rot.f[2] - rot.f[6] ) / S;
+        this.angle = ( rot.f[6] - rot.f[2] ) / S;
       }
       else 
       {
@@ -76,7 +76,7 @@ struct Quaternion {
         this.x = ( rot.f[2] + rot.f[6] ) / S;
         this.y = ( rot.f[7] + rot.f[5] ) / S;
         this.z = 0.25f * S;
-        this.angle = ( rot.f[3] - rot.f[1] ) / S;
+        this.angle = ( rot.f[1] - rot.f[3] ) / S;
       }
     }
 	}
@@ -129,15 +129,19 @@ struct Quaternion {
 	  float yw  = norm.y * norm.angle;
 	  float zz  = norm.z * norm.z;
 	  float zw  = norm.z * norm.angle;
-	  mat.f[0]  = 1.0f - 2.0f * ( yy + zz );
-	  mat.f[1]  =        2.0f * ( xy - zw );
-	  mat.f[2]  =        2.0f * ( xz + yw );
-	  mat.f[4]  =        2.0f * ( xy + zw );
-	  mat.f[5]  = 1.0f - 2.0f * ( xx + zz );
-	  mat.f[6]  =        2.0f * ( yz - xw );
-	  mat.f[8]  =        2.0f * ( xz - yw );
-	  mat.f[9]  =        2.0f * ( yz + xw );
-	  mat.f[10] = 1.0f - 2.0f * ( xx + yy );
+
+	  mat.m00  = 1.0f - 2.0f * ( yy + zz );
+	  mat.m10  =        2.0f * ( xy - zw );
+	  mat.m20  =        2.0f * ( xz + yw );
+
+	  mat.m01  =        2.0f * ( xy + zw );
+	  mat.m11  = 1.0f - 2.0f * ( xx + zz );
+	  mat.m21  =        2.0f * ( yz - xw );
+
+	  mat.m02  =        2.0f * ( xz - yw );
+	  mat.m12  =        2.0f * ( yz + xw );
+	  mat.m22  = 1.0f - 2.0f * ( xx + yy );
+
 	  mat.f[3]  = mat.f[7] = mat.f[11] = mat.f[12] = mat.f[13] = mat.f[14] = 0.0f;
 	  mat.f[15] = 1.0f;
 	  return mat;
@@ -150,6 +154,7 @@ struct Quaternion {
 	body {
 	  mat3 mat;
 	  Quaternion norm = normalize();
+
 	  float xx  = norm.x * norm.x;
 	  float xy  = norm.x * norm.y;
 	  float xz  = norm.x * norm.z;
@@ -159,15 +164,15 @@ struct Quaternion {
 	  float yw  = norm.y * norm.angle;
 	  float zz  = norm.z * norm.z;
 	  float zw  = norm.z * norm.angle;
-	  mat.f[0] = 1.0f - 2.0f * ( yy + zz );
-	  mat.f[1] =        2.0f * ( xy - zw );
-	  mat.f[2] =        2.0f * ( xz + yw );
-	  mat.f[3] =        2.0f * ( xy + zw );
-	  mat.f[4] = 1.0f - 2.0f * ( xx + zz );
-	  mat.f[5] =        2.0f * ( yz - xw );
-	  mat.f[6] =        2.0f * ( xz - yw );
-	  mat.f[7] =        2.0f * ( yz + xw );
-	  mat.f[8] = 1.0f - 2.0f * ( xx + yy );
+	  mat.m00 = 1.0f - 2.0f * ( yy + zz );
+	  mat.m10 =        2.0f * ( xy - zw );
+	  mat.m20 =        2.0f * ( xz + yw );
+	  mat.m01 =        2.0f * ( xy + zw );
+	  mat.m11 = 1.0f - 2.0f * ( xx + zz );
+	  mat.m21 =        2.0f * ( yz - xw );
+	  mat.m02 =        2.0f * ( xz - yw );
+	  mat.m12 =        2.0f * ( yz + xw );
+	  mat.m22 = 1.0f - 2.0f * ( xx + yy );
 	  return mat;
 	}
 	
@@ -255,5 +260,28 @@ version(unittest)
 
 unittest
 {
+  import thBase.math3d.all : RotationMatrixXYZ;
   assert(epsilonCompare(Quaternion.identity.toMat3() * vec3(1, 2, 3), vec3(1, 2, 3)), "identity is wrong");
+
+  // test that the quaternion respects the "rotate right" rule 
+  // (e.g. use left hand rotation for a left handed coordinate system and right hand rotation for a right handed coordinate system)
+
+  auto q = Quaternion(vec3(0, 0, 1), 90.0f);
+  auto temp = q.toMat3() * vec3(1, 0, 0);
+  assert(epsilonCompare(temp, vec3(0, 1, 0)), "quaternion rotates the wrong way");
+
+  temp = q.toMat4().transformDirection(vec3(1, 0, 0));
+  assert(epsilonCompare(temp, vec3(0, 1, 0)), "quaternion rotates the wrong way");
+
+  auto q2 = Quaternion(RotationMatrixXYZ(0.0f, 0.0f, 90.0f).rotationPart());
+
+  temp = q2.toMat3() * vec3(1, 0, 0);
+  assert(epsilonCompare(temp, vec3(0, 1, 0)), "matrix to quaternion conversion rotates the wrong way");
+
+  mat4 m1 = RotationMatrixXYZ(13.0f, 17.0f, 31.0f);
+  mat4 m2 = Quaternion(m1.rotationPart()).toMat4();
+  for(size_t i=0; i< m1.f.length; i++)
+  {
+    assert(epsilonCompare(m1.f[i], m2.f[i]));
+  }
 }
