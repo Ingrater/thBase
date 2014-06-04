@@ -1261,6 +1261,7 @@ cd %CWD%</preBuildCommand>
    <File path="thBase\allocator.d" />
    <File path="thBase\asserthandler.d" />
    <File path="thBase\bitstream.d" />
+   <File path="thBase\boolexpr.d" />
    <File path="thBase\casts.d" />
    <File path="thBase\chunkfile.d" />
    <File path="thBase\constref.d" />

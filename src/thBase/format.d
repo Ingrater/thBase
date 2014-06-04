@@ -86,14 +86,20 @@ struct NothingPutPolicy(T)
 
 size_t formatImpl(T,PP)(T f, uint num,ref PP putPolicy, bool allowCut) if(isFloatingPoint!T)
 {
+  size_t needed = 0;
+  if(f < cast(T)0)
+  {
+    putPolicy.put('-');
+    needed++;
+    f *= cast(T)-1;
+  }
+
   long start = cast(long)f;
-  size_t needed = formatImpl(start,putPolicy);
+  needed += formatImpl(start,putPolicy);
   if(num == 0)
     return needed;
 
   f -= cast(T)start;
-  if( f < cast(T)0)
-    f *= cast(T)-1;
   
   putPolicy.put('.');   
   needed++;
@@ -270,6 +276,7 @@ size_t formatDo(PP)(ref PP putPolicy, const(char)[] fmt, TypeInfo[] arguments, v
       if(i+1 < fmt.length && fmt[i+1] == '%')
       {
         putPolicy.put('%');
+        needed++;
         i++;
       }
       else if(i+1 >= fmt.length)
@@ -713,4 +720,6 @@ unittest
   assert(str2[] == "[1.25, 0.5, 3.75] [1.25, 0.5, 3.75] [0, 1, 2]"); 
   auto str3 = format("%s:%d", cast(const(char*))"hello".ptr, cast(ushort)80);
   assert(str3 == "hello:80");
+  auto str4 = format("%.3f, %.3f, %.3f", 0.404, -0.404, -0.808);
+  assert(str4 == "0.404, -0.404, -0.808");
 }

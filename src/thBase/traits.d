@@ -283,7 +283,7 @@ template getAttribute(alias sym, T)
   {
     foreach(a; __traits(getAttributes, sym))
     {
-      if(is(a == T) || __traits(compiles, typeof(a)) && is(typeof(a) == T))
+      static if(is(a == T) || __traits(compiles, typeof(a)) && is(typeof(a) == T))
         return a;
     }
     assert(0, "attribute " ~ T.stringof ~ " not found");
@@ -308,7 +308,7 @@ unittest
 
   @StringAttr("test") static struct Test
   {
-    @IntAttr(2) int m1;
+    @IntAttr(2) @StringAttr("test") int m1;
     @Optional int m2;
     @Ignore int m3;
   }
@@ -317,6 +317,8 @@ unittest
   static assert(hasAttribute!(Test.m3, Ignore));
   static assert(hasAttribute!(Test.m1, IntAttr));
   static assert(getAttribute!(Test.m1, IntAttr).i == 2);
+  static assert(hasAttribute!(Test.m1, StringAttr));
+  static assert(getAttribute!(Test.m1, StringAttr).name == "test");
   static assert(getAttribute!(Test, StringAttr).name == "test");
 }
 
