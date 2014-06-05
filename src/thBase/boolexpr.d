@@ -60,7 +60,7 @@ class ParseError : RCException
 class AstNode
 {
 public:
-  abstract Value eval(Context, bool lookup = true);
+  abstract Value eval(Context) const;
 }
 
 class DefinedNode : AstNode
@@ -79,14 +79,14 @@ public:
     Delete(symbol);
   }
 
-  override Value eval(Context context, bool lookup)
+  override Value eval(Context context) const
   {
-    auto sym = symbol.eval(context, false);
-    if(sym.type != Value.Type.symbol)
+    auto sym = cast(ValueNode)symbol;
+    if(sym is null || sym.value.type != Value.Type.symbol)
     {
-      throw New!EvalError(format("'defined' expected a symbol but got a '%s'", EnumToString(sym.type)));
+      throw New!EvalError(format("'defined' expected a symbol but got a '%s'", (sym is null) ? typeid(symbol).toString()[] : EnumToString(sym.value.type)));
     }
-    return Value(context.exists(sym.sym));
+    return Value(context.exists(sym.value.sym));
   }
 }
 
@@ -101,9 +101,9 @@ public:
     this.value = value;
   }
 
-  override Value eval(Context context, bool lookup)
+  override Value eval(Context context) const
   {
-    if(lookup && value.type == Value.Type.symbol)
+    if(value.type == Value.Type.symbol)
     {
       Value temp;
       if(!context.tryGet(value.sym, temp))
@@ -131,10 +131,10 @@ public:
     Delete(rhs);
   }
 
-  override Value eval(Context context, bool lookup)
+  override Value eval(Context context) const
   {
-    auto vlhs = lhs.eval(context, true);
-    auto vrhs = rhs.eval(context, true);
+    auto vlhs = lhs.eval(context);
+    auto vrhs = rhs.eval(context);
     if(vlhs.type != expectedType)
       throw New!EvalError(format(op ~ " left hand side is not a %s value but a '%s'", EnumToString(expectedType), EnumToString(vlhs.type)));
     if(vrhs.type != expectedType)
@@ -159,9 +159,9 @@ public:
     Delete(value);
   }
 
-  override Value eval(Context context, bool lookup)
+  override Value eval(Context context) const
   {
-    auto v = value.eval(context, true);
+    auto v = value.eval(context);
     if(v.type != Value.Type._bool)
       throw New!EvalError(format("not expected a boolean value but got a '%s'", EnumToString(v.type)));
     return Value(!v.b);
@@ -178,7 +178,7 @@ private
 
   void skipWhitespace(ref ParserState s)
   {
-    while(s.i < s.expr.length && (s.expr[s.i] == ' ' || s.expr[s.i] == '\t'))
+    while(s.i < s.expr.length && (s.expr[s.i] == ' ' || s.expr[s.i] == '\t' || s.expr[s.i] == '\r' || s.expr[s.i] == '\n'))
     {
       s.i++;
     }
@@ -309,7 +309,7 @@ private
       default:
     }
 
-    auto end = countUntil!"curChar == ' ' || curChar == '\t'"(s);
+    auto end = countUntil!"curChar == ' ' || curChar == '\\t' || curChar == '\\r' || curChar == '\\n'"(s);
     throw New!ParseError(format("unkown operator '%s'", s.expr[s.i..s.i+end])); 
   }
 
@@ -357,7 +357,7 @@ private
 
   ValueNode parseSymbol(ref ParserState s)
   {
-    auto end = countUntil!"curChar == ' ' || curChar == '\t' || curChar == ')'"(s);
+    auto end = countUntil!"curChar == ' ' || curChar == '\\t' || curChar == '\\r' || curChar == '\\n' || curChar == ')'"(s);
     auto str = s.expr[s.i..s.i+end];
     s.i += end;
     return New!ValueNode(Value(str));
