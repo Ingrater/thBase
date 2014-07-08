@@ -1230,6 +1230,7 @@ cd %CWD%</preBuildCommand>
     <File path="thBase\container\hashmap.d" />
     <File path="thBase\container\linkedlist.d" />
     <File path="thBase\container\octree.d" />
+    <File path="thBase\container\quadtree.d" />
     <File path="thBase\container\queue.d" />
     <File path="thBase\container\stack.d" />
     <File path="thBase\container\vector.d" />

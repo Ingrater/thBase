@@ -32,22 +32,33 @@ struct AlignedBox_t(T) {
 	  }
   }
 	
-	@property vec3 size() const {
+	@property auto size() const {
 		return (max - min);
 	}
+
+  enum size_t numVertices = 2 ^^ min.f.length;
 	
-	@property T[8] vertices() const
+	@property T[numVertices] vertices() const
 		{
-			T[8] res;
+			T[numVertices] res;
 			auto s = this.size();
 			res[0] = min;
-			res[1] = min + vec3(s.x ,0.0f,0.0f);
-			res[2] = min + vec3(s.x ,s.y ,0.0f);
-			res[3] = min + vec3(0.0f,s.y ,0.0f);
-			res[4] = min + vec3(0.0f,0.0f,s.z );
-			res[5] = min + vec3(s.x ,0.0f,s.z );
-			res[6] = min + vec3(s.x ,s.y ,s.z );
-			res[7] = min + vec3(0.0f,s.y ,s.z );
+      static if(is(T == vec2))
+      {
+        res[1] = min + vec2(s.x ,0.0f);
+        res[2] = min + vec2(s.x ,s.y );
+        res[3] = min + vec2(0.0f,s.y );
+      }
+      else
+      {
+        res[1] = min + vec3(s.x ,0.0f,0.0f);
+        res[2] = min + vec3(s.x ,s.y ,0.0f);
+        res[3] = min + vec3(0.0f,s.y ,0.0f);
+        res[4] = min + vec3(0.0f,0.0f,s.z );
+        res[5] = min + vec3(s.x ,0.0f,s.z );
+        res[6] = min + vec3(s.x ,s.y ,s.z );
+        res[7] = min + vec3(0.0f,s.y ,s.z );
+      }
 			return res;
 		}
 	
@@ -99,10 +110,29 @@ struct AlignedBox_t(T) {
 			assert(min.allComponents!("<=")(max));
 		}
 	}
+
+  auto width()
+  {
+    return max.x - min.x;
+  }
+
+  auto height()
+  {
+    return max.y - min.y;
+  }
+
+  static if(T.f.length >= 3)
+  {
+    auto depth()
+    {
+      return max.z - min.z;
+    }
+  }
 }
 
 alias AlignedBox_t!Position AlignedBox;
 alias AlignedBox_t!vec3 AlignedBoxLocal;
+alias AlignedBox_t!vec2 Rectangle;
 
 unittest {
 	AlignedBox box1 = AlignedBox(vec3(-20,-20,-20),vec3(-10,-10,-10));
