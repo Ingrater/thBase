@@ -185,16 +185,20 @@ protected:
     }
   }
 
-  static void ProcessLineNumber(ref uint value, TiXmlElement element, string name, uint offset)
+  static void ProcessLineNumber(ref uint value, TiXmlElement element, string name, uint offset, IsOptional isOptional)
   {
     TiXmlNode node = element.FirstChildElement(name);
     if(node is null)
     {
-      char[256] msg;
-      formatStatic(msg, "missing child node '%s'", name);
-      HandleError(cast(TiXmlNode)element, msg);
+      if(!isOptional)
+      {
+        char[256] msg;
+        formatStatic(msg, "missing child node '%s'", name);
+        HandleError(cast(TiXmlNode)element, msg);
+      }
     }
-    value = node.location.row + offset;
+    else
+      value = node.location.row + offset;
   }
 	
 	static void ProcessMember(MT)(ref MT pValue, TiXmlNode pFather, string pName, IsOptional isOptional, TiXmlNode pNode = null)
@@ -376,7 +380,9 @@ protected:
                     else static if(hasAttribute!(__traits(getMember, pValue, m), LineNumber))
                     {
                       alias attr = getAttribute!(__traits(getMember, pValue, m), LineNumber);
-                      ProcessLineNumber(__traits(getMember, pValue, m), element, attr.nodeName, attr.offset);
+                      enum string referencedName = attr.nodeName;
+                      enum isLineNumberOptional = hasAttribute!(__traits(getMember, pValue, referencedName), Optional) ? IsOptional.Yes : IsOptional.No;
+                      ProcessLineNumber(__traits(getMember, pValue, m), element, attr.nodeName, attr.offset, isLineNumberOptional);
                     }
                     else
                     {

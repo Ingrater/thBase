@@ -24,6 +24,9 @@ thResult to(TT,ST)(ST arg, out TT result) if(isIntegral!TT && thBase.traits.isSo
   auto str = arg[];
   TT sign = 1;
 
+  if(str.length == 0)
+    return thResult.FAILURE;
+
   static if(isSigned!TT)
   {
     if(str[0] == '-')
@@ -71,6 +74,7 @@ unittest {
   int result;
   long lresult;
   uint uiresult;
+  assert(to!int("", result) == thResult.FAILURE);
   assert(to!(int)("123",result) == thResult.SUCCESS);
   assert(result == 123);
   assert(to!(int)("+657",result) == thResult.SUCCESS);
@@ -88,6 +92,9 @@ thResult to(TT,ST)(ST arg, out TT result) if(isFloatingPoint!TT && thBase.traits
   auto str = arg[];
   TT sign = cast(TT)1;
   size_t needed = 0;
+
+  if(str.length == 0)
+    return thResult.FAILURE;
 
   if(str[0] == '-')
   {
@@ -134,6 +141,7 @@ unittest
 {
   float fresult;
   double dresult;
+  assert(to("", result) == thResult.FAILURE);
   assert(to("-12.345",fresult) == thResult.SUCCESS);
   assert(fresult == -12.345f);
   assert(to("450",dresult) == thResult.SUCCESS);

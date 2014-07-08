@@ -381,6 +381,13 @@ struct mat4 {
     return vec3(this.f[12..15]);
   }
 
+  @property void translation(vec3 value) pure
+  {
+    this.f[12] = value.x;
+    this.f[13] = value.y;
+    this.f[14] = value.z;
+  }
+
   @property vec3 xAxis() const pure
   {
     return vec3(this.f[0..3]);
