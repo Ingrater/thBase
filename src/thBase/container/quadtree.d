@@ -4,6 +4,7 @@ import thBase.container.vector;
 import thBase.container.hashmap;
 
 /++
+
 /// <summary>
 /// manages all game objects, keeps them inside a quad tree
 /// </summary>
@@ -16,11 +17,19 @@ private:
   static class ObjectInfo
   {
     public T m_obj;
-    public composite!(Vector!QuadTreeNode) m_isIn;
+    public Vector!QuadTreeNode m_isIn;
 
-    this(T obj)
+    /// Constructs a new ObjectInfo
+    /// @param isIn Takes ownership of the given vector container
+    this(T obj, Vector!QuadTreeNode isIn)
     {
       this.m_obj = obj;
+      this.m_isIn = isIn;
+    }
+
+    ~this()
+    {
+      Delete(isIn);
     }
 
     public void moveFromTo(QuadTreeNode from, QuadTreeNode to){
@@ -186,7 +195,7 @@ private:
       }
       else
       {
-        foreach (IGameObject obj in objects)
+        foreach (T obj in objects)
         {
           index = (short)pPoints.Count;
           pPoints.Add(new VertexPositionColor(new Vector3(obj.collision.bounds.Left, obj.collision.bounds.Top, 0.5f), Color.Green));
@@ -214,6 +223,7 @@ private:
   QuadTreeNode m_root;
   bool m_extensionSwitch = false;
 
+public:
   this()
   {
     m_root = New!QuadTreeNode(Rectangle(vec2(-128, -128), vec2(128, 128)), this);
@@ -222,79 +232,78 @@ private:
   /// <summary>
   /// helper to insert new game objects into the quad tree (recursion)
   /// </summary>
-  /// <param name="pGameObject">game object to insert</param>
-  /// <param name="pList">list quad tree nodes the object has be inserted in</param>
-  /// <param name="pNode">the current node beeing porcessed</param>
-  private void QuadTreeInsertHelper(IGameObject pGameObject, List<QuadTreeNode> pList, QuadTreeNode pNode)
+  /// <param name="obj">game object to insert</param>
+  /// <param name="isIn">list quad tree nodes the object has be inserted in</param>
+  /// <param name="node">the current node beeing porcessed</param>
+  private void QuadTreeInsertHelper(T obj, Vector!QuadTreeNode isIn, QuadTreeNode node)
   {
-    Vector2 pos = pGameObject.movement.position;
+    Vector2 pos = obj.movement.position;
     //Inside or on the bounds of the current Node
-    if (pNode.bounds.Intersects(pGameObject.collision.bounds))
+    if (node.bounds.Intersects(obj.collision.bounds))
     {
-      if (pNode.childs == null)
+      if (node.childs == null)
       {
-        if (pNode.objects.Count >= 4 && pNode.bounds.Width > 8)
+        if (node.objects.Count >= 4 && node.bounds.Width > 8)
         {
-          pNode.Subdivide();
-          QuadTreeInsertHelper(pGameObject, pList, pNode);
+          node.Subdivide();
+          QuadTreeInsertHelper(obj, isIn, node);
         }
-        else if(!pNode.objects.Contains(pGameObject))
+        else if(!node.objects.Contains(obj))
         {
-          pList.Add(pNode);
-          pNode.objects.Add(pGameObject);
+          isIn.Add(node);
+          node.objects.Add(obj);
         }
       }
       else
       {
-        Debug.Assert(pNode.objects.Count == 0, "Node with childs and objects");
-        foreach (QuadTreeNode child in pNode.childs)
+        Debug.Assert(node.objects.Count == 0, "Node with childs and objects");
+        foreach (child; node.childs)
         {
-          if (child.bounds.Intersects(pGameObject.collision.bounds))
+          if (child.bounds.Intersects(obj.collision.bounds))
           {
-            QuadTreeInsertHelper(pGameObject, pList, child);
+            QuadTreeInsertHelper(obj, isIn, child);
           }
         }
       }
     }
-
   }
 
   /// <summary>
   /// inserts a game object into the quad tree
   /// </summary>
-  /// <param name="pGameObject">the game object</param>
+  /// <param name="obj">the game object</param>
   /// <returns>list of all quad tree nodes the object was added to</returns>
-  private List<QuadTreeNode> QuadTreeInsert(IGameObject pGameObject)
+  private Vector!QuadTreeNode QuadTreeInsert(T obj)
   {
-    List<QuadTreeNode> result = new List<QuadTreeNode>();
+    Vector!QuadTreeNode result = New!(Vector!QuadTreeNode)();
 
     //Tree is not big enough
-    while ((m_root.bounds.Intersects(pGameObject.collision.bounds) && !m_root.bounds.Contains(pGameObject.collision.bounds))
-           || !m_root.bounds.Contains(pGameObject.collision.bounds)) 
+    while ((m_root.bounds.Intersects(obj.collision.bounds) && !m_root.bounds.Contains(obj.collision.bounds))
+           || !m_root.bounds.Contains(obj.collision.bounds)) 
     {
       QuadTreeNode newRoot;
       //Extend to top left
       if (m_extensionSwitch)
       {
-        newRoot = new QuadTreeNode(new Rectangle(m_root.bounds.X - m_root.bounds.Width,
-                                                 m_root.bounds.Y - m_root.bounds.Height,
-                                                 m_root.bounds.Width * 2,
-                                                 m_root.bounds.Height * 2), this);
-        newRoot.childs = new QuadTreeNode[4];
+        newRoot = New!QuadTreeNode(Rectangle(m_root.bounds.X - m_root.bounds.Width,
+                                             m_root.bounds.Y - m_root.bounds.Height,
+                                             m_root.bounds.Width * 2,
+                                             m_root.bounds.Height * 2), this);
+        newRoot.childs = NewArray!QuadTreeNode(4);
 
-        newRoot.childs[0] = new QuadTreeNode(new Rectangle(newRoot.bounds.X,
-                                                           newRoot.bounds.Y,
-                                                           m_root.bounds.Width,
-                                                           m_root.bounds.Height),this);
-        newRoot.childs[1] = new QuadTreeNode(new Rectangle(newRoot.bounds.X + m_root.bounds.Width,
-                                                           newRoot.bounds.Y,
-                                                           m_root.bounds.Width,
-                                                           m_root.bounds.Height),this);
+        newRoot.childs[0] = New!QuadTreeNode(Rectangle(newRoot.bounds.X,
+                                                       newRoot.bounds.Y,
+                                                       m_root.bounds.Width,
+                                                       m_root.bounds.Height),this);
+        newRoot.childs[1] = New!QuadTreeNode(Rectangle(newRoot.bounds.X + m_root.bounds.Width,
+                                                       newRoot.bounds.Y,
+                                                       m_root.bounds.Width,
+                                                       m_root.bounds.Height),this);
         newRoot.childs[2] = m_root;
-        newRoot.childs[3] = new QuadTreeNode(new Rectangle(newRoot.bounds.X,
-                                                           newRoot.bounds.Y + m_root.bounds.Height,
-                                                           m_root.bounds.Width,
-                                                           m_root.bounds.Height),this);
+        newRoot.childs[3] = New!QuadTreeNode(Rectangle(newRoot.bounds.X,
+                                                       newRoot.bounds.Y + m_root.bounds.Height,
+                                                       m_root.bounds.Width,
+                                                       m_root.bounds.Height),this);
       }
       else //Extend to bottom right
       {
@@ -322,7 +331,7 @@ private:
       m_root = newRoot;
     }
 
-    QuadTreeInsertHelper(pGameObject, result, m_root);
+    QuadTreeInsertHelper(obj, result, m_root);
 
     return result;
   }
@@ -332,62 +341,62 @@ private:
     m_root.Draw(pPoints, pIndices);
   }*/
 
-  void objectHasMoved(T pGameObject)
+  void objectHasMoved(T obj)
   {
-    if (m_objects.ContainsKey(pGameObject))
+    if (m_objects.ContainsKey(obj))
     {
       //Simple solution for now, removes the object from the tree and adds it back in
-      ObjectInfo info = m_objects[pGameObject];
-      foreach (QuadTreeNode node in info.isIn)
+      ObjectInfo info = m_objects[obj];
+      foreach (node; info.isIn)
       {
-        node.objects.Remove(pGameObject);
+        node.objects.Remove(obj);
       }
-      Debug.Assert(m_root.Contains(pGameObject) == false, "not removed completely");
-      info.isIn = QuadTreeInsert(pGameObject);
+      assert(m_root.contains(obj) == false, "not removed completely");
+      info.isIn = QuadTreeInsert(obj);
     }
   }
 
   /// <summary>
   /// removes a game object from the quad tree, and the world
   /// </summary>
-  /// <param name="pGameObject">the game object</param>
-  public void remove(T pGameObject){
-    if (m_objects.ContainsKey(pGameObject))
+  /// <param name="obj">the game object</param>
+  public void remove(T obj){
+    if (m_objects.ContainsKey(obj))
     {
-      ObjectInfo info = m_objects[pGameObject];
-      foreach (QuadTreeNode node in info.isIn)
+      ObjectInfo info = m_objects[obj];
+      foreach(node; info.isIn)
       {
-        node.objects.Remove(pGameObject);
+        node.objects.Remove(obj);
       }
-      m_objects.Remove(pGameObject);
+      m_objects.Remove(obj);
 
-      Debug.Assert(m_root.Contains(pGameObject) == false, "not removed completely");
+      Debug.Assert(m_root.Contains(obj) == false, "not removed completely");
     }
   }
 
   /// <summary>
   /// helper function to query all objects inside a rectangle
   /// </summary>
-  /// <param name="pNode">current node beeing processed</param>
+  /// <param name="node">current node beeing processed</param>
   /// <param name="pRect">the rectangle</param>
-  /// <param name="pList">list of all found objects</param>
-  private void QueryObjectInsideRectHelper(QuadTreeNode pNode, Rectangle pRect, List<IGameObject> pList){
-    if (pNode.bounds.Intersects(pRect))
+  /// <param name="isIn">list of all found objects</param>
+  /*private void QueryObjectInsideRectHelper(QuadTreeNode node, Rectangle pRect, Vector!QuadTreeNode isIn){
+    if (node.bounds.Intersects(pRect))
     {
-      if (pNode.childs != null)
+      if (node.childs != null)
       {
-        foreach (QuadTreeNode node in pNode.childs)
+        foreach (QuadTreeNode node in node.childs)
         {
-          QueryObjectInsideRectHelper(node, pRect, pList);
+          QueryObjectInsideRectHelper(node, pRect, isIn);
         }
       }
       else
       {
-        foreach (IGameObject obj in pNode.objects)
+        foreach (T obj in node.objects)
         {
-          if (pRect.Intersects(obj.collision.bounds) && !pList.Contains(obj))
+          if (pRect.Intersects(obj.collision.bounds) && !isIn.Contains(obj))
           {
-            pList.Add(obj);
+            isIn.Add(obj);
           }
         }
       }
@@ -399,11 +408,11 @@ private:
   /// </summary>
   /// <param name="pRect">the rectangle</param>
   /// <returns>a list of all game objects inside or on the bounds of this rectangle</returns>
-  public List<IGameObject> queryObjectsInsideRect(Rectangle pRect){
-    List<IGameObject> list = new List<IGameObject>();
+  public List<T> queryObjectsInsideRect(Rectangle pRect){
+    List<T> list = new List<T>();
     QueryObjectInsideRectHelper(m_root, pRect, list);
     return list;
-  }
+  }*/
 
   public void optimize()
   {
@@ -417,7 +426,7 @@ private:
 
   public void clear()
   {
-    foreach (IGameObject obj in m_objects.Keys.ToArray())
+    foreach (obj; m_objects.keys)
     {
       remove(obj);
     }
@@ -425,4 +434,4 @@ private:
   }
 }
 
-++/
+  ++/

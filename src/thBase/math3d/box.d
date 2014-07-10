@@ -36,7 +36,10 @@ struct AlignedBox_t(T) {
 		return (max - min);
 	}
 
-  enum size_t numVertices = 2 ^^ min.f.length;
+  static if(is(T == vec2))
+    enum size_t numVertices = 4;
+  else
+    enum size_t numVertices = 8;
 	
 	@property T[numVertices] vertices() const
 		{
@@ -121,7 +124,7 @@ struct AlignedBox_t(T) {
     return max.y - min.y;
   }
 
-  static if(T.f.length >= 3)
+  static if(is(typeof(min.z)))
   {
     auto depth()
     {

@@ -28,6 +28,14 @@ struct Position {
         return cellDiff;
       return cast(int)(this.relPos > rh.relPos) - cast(int)(this.relPos < rh.relPos);
     }
+
+    auto opBinary(string op)(const(Component) rh) if(op == "-")
+    {
+      auto res = cast(typeof(relPos))(this.cell - rh.cell) * cellSize;
+      res += this.relPos - rh.relPos;
+
+      return res;
+    }
   }
 
   version(USE_SSE){

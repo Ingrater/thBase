@@ -134,6 +134,16 @@ struct vec2_t(T) if(is(T == float) || is(T == short) || is(T == int))
     }
     return res;
   }
+
+  bool allComponents(string op)(const(vec2) rh) const if(op == "<" || op == "<=" || op == ">" || op == ">=")
+  {
+    return mixin("this.x " ~ op ~ " rh.x && this.y " ~ op ~ " rh.y");
+  }
+
+  rcstring toString()
+  {
+    return format("%s", f);
+  }
 	
   @NiceName(GenerateNiceName!("vec2", T, vec2_t!T))
 	struct XmlValue {
