@@ -476,6 +476,16 @@ public:
 			m_Data[insertPos] = temp;
 		}
 	}
+
+  bool contains(string op )(T value)
+  {
+    foreach(ref v; m_Data[0..m_Size])
+    {
+      if(mixin("v " ~ op ~ " value"))
+        return true;
+    }
+    return false;
+  }
 }
 
 version(unittest){

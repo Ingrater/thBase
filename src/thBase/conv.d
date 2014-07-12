@@ -141,7 +141,7 @@ unittest
 {
   float fresult;
   double dresult;
-  assert(to("", result) == thResult.FAILURE);
+  assert(to("", fresult) == thResult.FAILURE);
   assert(to("-12.345",fresult) == thResult.SUCCESS);
   assert(fresult == -12.345f);
   assert(to("450",dresult) == thResult.SUCCESS);

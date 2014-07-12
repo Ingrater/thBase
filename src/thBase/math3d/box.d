@@ -96,6 +96,11 @@ struct AlignedBox_t(T) {
 	bool intersects(AlignedBox_t!T rh) const {
     return (min.allComponents!("<=")(rh.max) && max.allComponents!(">=")(rh.min));
 	}
+
+  bool contains(U)(U lh)
+  {
+    return lh in this;
+  }
 	
   static if(is(typeof(T.isValid)))
   {
