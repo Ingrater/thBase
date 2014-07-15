@@ -475,9 +475,21 @@ public:
       m_curPos = node.objects.GetRange();
     }
 
+    void reset(tree_t tree, Rectangle queryRect)
+    {
+      m_tree = tree;
+      m_queryRect = queryRect;
+      m_remainingNodes.clear();
+      m_alreadyFound.clear();
+      m_currentNode = null;
+      m_currentObject = null;
+      m_curPos = typeof(m_curPos).init;
+      add(m_tree.m_root);
+      popFront();
+    }
+
   public:
-    @disable this();
-      
+
     this(tree_t tree, Rectangle queryRect)
     {
       m_tree = tree;
@@ -491,6 +503,7 @@ public:
     this(this)
     {
       m_remainingNodes = New!(Stack!QuadTreeNode)(m_remainingNodes);
+      m_alreadyFound = New!(typeof(m_alreadyFound))(m_alreadyFound);
     }
 
     ~this()
@@ -548,6 +561,12 @@ public:
   auto query(Rectangle queryRect)
   {
     return QuadTreeQueryRange(this, queryRect);
+  }
+
+  auto query(Rectangle queryRect, QuadTreeQueryRange range)
+  {
+    range.reset(this, queryRect);
+    return range;
   }
 
   /// <summary>
@@ -608,6 +627,16 @@ public:
     }
     m_objects.clear();
   }
+
+  auto objects()
+  {
+    return m_objects.keys;
+  }
+}
+
+version(unittest)
+{
+  extern(C) uint time();
 }
 
 unittest
@@ -617,7 +646,7 @@ unittest
   import thBase.policies.hashing;
   import thBase.algorithm : swap;
 
-  uint seed = 1;
+  uint seed = time();
 
   Random gen;
   gen.seed(seed);
