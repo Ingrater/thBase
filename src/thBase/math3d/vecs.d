@@ -37,6 +37,12 @@ struct vec2_t(T) if(is(T == float) || is(T == short) || is(T == int))
 		this.x = x;
 		this.y = y;
 	}
+
+  this(T xy)
+  {
+    this.x = xy;
+    this.y = xy;
+  }
 	
 	/**
 	 * constructor

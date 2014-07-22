@@ -141,6 +141,14 @@ public:
 	size_t size(){
 		return (memCur - memStart);
 	}
+
+  void clear()
+  {
+    while(!empty)
+    {
+      pop();
+    }
+  }
 }
 
 unittest {
