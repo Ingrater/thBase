@@ -233,7 +233,7 @@ else
   }
 }
 
-private void log(LogLevel level, string fmt, TypeInfo[] arg_types, va_list argptr){	
+private void log(LogLevel level, const(char)[] fmt, TypeInfo[] arg_types, va_list argptr){	
   char[2048] buf;
   char[] message;
 
@@ -271,7 +271,7 @@ else
 /**
  * logs a message
  */
-void logMessage(string fmt, ...)
+void logMessage(const(char)[] fmt, ...)
 {
   if(CanLog(LogLevel.Message))
   {
@@ -282,7 +282,7 @@ void logMessage(string fmt, ...)
 /**
  * logs a information
  */
-void logInfo(string fmt, ...)
+void logInfo(const(char)[] fmt, ...)
 {
   if(CanLog(LogLevel.Info))
   {
@@ -293,7 +293,7 @@ void logInfo(string fmt, ...)
 /**
  * logs a warning
  */
-void logWarning(string fmt, ...)
+void logWarning(const(char)[] fmt, ...)
 {
   if(CanLog(LogLevel.Warning))
   {
