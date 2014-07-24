@@ -204,6 +204,12 @@ struct vec3_t(T) if(is(T == float) || is(T == short) || is(T == int))
 	this(vec4_t!(T) v4) pure {
 		this.f[0..3] = v4.f[0..3];
 	}
+
+  this(vec2_t!T v2, T z) pure 
+  {
+    this.f[0..2] = v2.f[0..2];
+    this.z = z;
+  }
 	
 	/**
 	 * constructor
