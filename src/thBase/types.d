@@ -1,9 +1,9 @@
 module thBase.types;
 
-enum thResult : uint 
+enum thResult : bool 
 {
-  SUCCESS,
-  FAILURE
+  FAILURE = false,
+  SUCCESS = true
 }
 
 enum PolicyInit 
