@@ -33,6 +33,7 @@ class DDSLoader
       R8G8B8A8 = 1,
       R16G16B16A16 = 2,
       R32G32B32A32_FLOAT = 3,
+      R16G16 = 4,
       DXT1 = MAKEFOURCC!('D','X','T','1'),
       DXT2 = MAKEFOURCC!('D','X','T','2'),
       DXT3 = MAKEFOURCC!('D','X','T','3'),
@@ -45,7 +46,8 @@ class DDSLoader
   {
     R16G16B16A16_UNORM = 11,
     R8G8B8A8_UNORM = 28,
-    R32G32B32A32_FLOAT = 2
+    R32G32B32A32_FLOAT = 2,
+    R16G16_UNORM = 35,
   }
 
   static uint bytesPerPixel(DXGI_FORMAT format)
@@ -55,6 +57,7 @@ class DDSLoader
       case DXGI_FORMAT.R16G16B16A16_UNORM:
         return 8;
       case DXGI_FORMAT.R8G8B8A8_UNORM:
+      case DXGI_FORMAT.R16G16_UNORM:
         return 4;
       case DXGI_FORMAT.R32G32B32A32_FLOAT:
         return 16;
@@ -269,6 +272,9 @@ class DDSLoader
           case DXGI_FORMAT.R32G32B32A32_FLOAT:
             m_format = D3DFORMAT.R32G32B32A32_FLOAT;
             break;
+          case DXGI_FORMAT.R16G16_UNORM:
+            m_format = D3DFORMAT.R16G16;
+            break;
           default:
             throw New!DDSLoadingException(format("unsupported DXGI format in DX10 extension header"));
         }
@@ -371,6 +377,7 @@ class DDSLoader
             bytesPerPixel = 8;
             break;
           case D3DFORMAT.R8G8B8A8:
+          case D3DFORMAT.R16G16:
             bytesPerPixel = 4;
             break;
           case D3DFORMAT.R32G32B32A32_FLOAT:
