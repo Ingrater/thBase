@@ -48,6 +48,7 @@ class DDSLoader
     R8G8B8A8_UNORM = 28,
     R32G32B32A32_FLOAT = 2,
     R16G16_UNORM = 35,
+    R10G10B10A2_UNORM = 24,
   }
 
   static uint bytesPerPixel(DXGI_FORMAT format)
@@ -58,6 +59,7 @@ class DDSLoader
         return 8;
       case DXGI_FORMAT.R8G8B8A8_UNORM:
       case DXGI_FORMAT.R16G16_UNORM:
+      case DXGI_FORMAT.R10G10B10A2_UNORM:
         return 4;
       case DXGI_FORMAT.R32G32B32A32_FLOAT:
         return 16;
