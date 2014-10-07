@@ -221,6 +221,7 @@ public:
   {
     this(size_t startSize, size_t growBy)
     {
+      assert(growBy < 0xFFFFFF, "very large grow by factor, unsinged integer underflow?");
       m_allocator = Allocator.globalInstance;
       m_GrowBy = growBy;
       m_Data = data_t.AllocateArray(startSize, m_allocator, InitializeMemoryWith.NOTHING);
@@ -302,6 +303,7 @@ private:
       (cast(BT[])(newData[]))[0..m_CurPos] = m_Buffer[0..m_CurPos];
       m_Data = newData;
       m_Buffer = cast(BT[])m_Data[];
+      assert(m_Buffer.length - m_CurPos > count);
     }
   }
 
@@ -797,7 +799,8 @@ if(thBase.traits.isSomeString!S1 && thBase.traits.isSomeString!S2 && thBase.trai
       return str;
   }
 
-  auto appender = StringAppendBuffer!()(str.length, max(8, replaceWith.length - searchFor.length * 8));
+  auto roomForMatches = searchFor.length * 8;
+  auto appender = StringAppendBuffer!()(str.length, roomForMatches > replaceWith.length ? 8 : replaceWith.length - roomForMatches);
   do
   {
     appender ~= remainder[0..pos];

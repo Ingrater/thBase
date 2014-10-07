@@ -1244,6 +1244,7 @@ cd %CWD%</preBuildCommand>
     <File path="thBase\math3d\position.d" />
     <File path="thBase\math3d\quaternion.d" />
     <File path="thBase\math3d\ray.d" />
+    <File path="thBase\math3d\sh.d" />
     <File path="thBase\math3d\sphere.d" />
     <File path="thBase\math3d\triangle.d" />
     <File path="thBase\math3d\vecs.d" />

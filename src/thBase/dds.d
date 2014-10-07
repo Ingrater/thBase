@@ -190,6 +190,11 @@ class DDSLoader
       return (m_header.dwCaps2 & DDSCAPS2.CUBEMAP) != 0;
     }
 
+    @property final bool is3DTexture() const
+    {
+      return m_header.dwDepth > 0;
+    }
+
     @property final uint width() const
     {
       return cast(uint)m_header.dwWidth;
@@ -198,6 +203,11 @@ class DDSLoader
     @property final uint height() const
     {
       return cast(uint)m_header.dwHeight;
+    }
+
+    @property final uint depth() const
+    {
+      return cast(uint)m_header.dwDepth;
     }
 
     this(IAllocator allocator)
@@ -266,6 +276,10 @@ class DDSLoader
         if(header10.arraySize > 1)
         {
           throw New!DDSLoadingException(format("Loading texture arrays is not supported yet"));
+        }
+        if(header10.resourceDimension != DDSLoader.D3D10_RESOURCE_DIMENSION.TEXTURE3D)
+        {
+          m_header.dwDepth = 0;
         }
         switch(header10.dxgiFormat)
         {
@@ -410,15 +424,17 @@ class DDSLoader
 
         size_t mipmapWidth = m_header.dwWidth;
         size_t mipmapHeight = m_header.dwHeight;
+        size_t mipmapDepth = max(m_header.dwDepth, 1);
 
         for(size_t i=0; i<numMipmaps; i++)
         {
           size_t mipmapPitch = mipmapWidth * bytesPerPixel;
-          size_t mipmapNumScanlines = mipmapHeight;
+          size_t mipmapNumScanlines = mipmapHeight * mipmapDepth;
           mipmapMemorySize[i] = mipmapPitch * mipmapNumScanlines;
           memoryNeeded += mipmapMemorySize[i];
-          mipmapWidth /= 2;
-          mipmapHeight /= 2;
+          mipmapWidth = max(mipmapWidth / 2, 1);
+          mipmapHeight = max(mipmapHeight / 2, 1);
+          mipmapDepth = max(mipmapDepth / 2, 1);
         }
       }
 
@@ -494,6 +510,40 @@ void WriteDDS(const(char)[] filename, uint width, uint height, DDSLoader.DXGI_FO
   file.write(header10);
 
   assert(data.length == width * DDSLoader.bytesPerPixel(format) * height);
+  file.writeArray(data);
+}
+
+void WriteDDS(const(char)[] filename, uint width, uint height, uint depth, DDSLoader.DXGI_FORMAT format,const(void)[] data)
+{
+  auto file = RawFile(filename, "wb");
+  DWORD ddsMarker = 0x20534444;
+  file.write(ddsMarker);
+
+  DDSLoader.DDS_HEADER header;
+  header.dwSize = int_cast!uint(DDSLoader.DDS_HEADER.sizeof);
+  assert(header.dwSize == 124);
+
+  header.dwFlags = DDSLoader.HeaderFlags.CAPS | DDSLoader.HeaderFlags.WIDTH | DDSLoader.HeaderFlags.HEIGHT | DDSLoader.HeaderFlags.PIXELFORMAT | DDSLoader.HeaderFlags.PITCH;
+  header.dwWidth = width;
+  header.dwHeight = height;
+  header.dwDepth = depth;
+  header.dwPitchOrLinearSize = width * DDSLoader.bytesPerPixel(format);
+  header.ddspf.dwSize = header.ddspf.sizeof;
+  assert(header.ddspf.dwSize == 32);
+  header.ddspf.dwFlags = DDSLoader.PixelFormatFlags.FOURCC;
+  header.ddspf.dwFourCC = DDSLoader.D3DFORMAT.DX10;
+  header.dwCaps = DDSLoader.DDSCAPS.TEXTURE;
+  file.write(header);
+
+  DDSLoader.DDS_HEADER_DXT10 header10;
+  header10.dxgiFormat = format;
+  header10.resourceDimension = DDSLoader.D3D10_RESOURCE_DIMENSION.TEXTURE3D;
+  header10.miscFlag = 0;
+  header10.arraySize = 1;
+  header10.miscFlags2 = 0;
+  file.write(header10);
+
+  assert(data.length == width * DDSLoader.bytesPerPixel(format) * height * depth);
   file.writeArray(data);
 }
 
