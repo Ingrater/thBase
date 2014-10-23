@@ -220,6 +220,14 @@ version(Windows)
             !(attributes & FILE_ATTRIBUTE_DIRECTORY));
   }
 
+  bool isDirectory(const(char)[] path)
+  {
+    mixin(stackCString("path", "cstr"));
+    DWORD attributes = GetFileAttributesA(cstr.ptr);
+    return (attributes != 0xFFFFFFFF && 
+            (attributes & FILE_ATTRIBUTE_DIRECTORY));
+  }
+
   enum OverwriteIfExists
   {
     No = 0,
