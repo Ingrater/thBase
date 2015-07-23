@@ -28,7 +28,7 @@ class BitStreamBase
         }
         else
         {
-          static assert(0, "not implemented");
+          return val;
         }
       }
     }
@@ -47,7 +47,7 @@ class BitOutStream(AT = StdAllocator) : BitStreamBase
       size_t currentLength =(m_currentByte - m_data.ptr) + 1;
       if( m_data.length - currentLength - 1 < size)
       {
-        size_t newLength = size * 2;
+        size_t newLength = m_data.length * 2;
         while(newLength - currentLength - 1 < size)
         {
           newLength *= 2;
@@ -101,16 +101,16 @@ class BitOutStream(AT = StdAllocator) : BitStreamBase
         T swizzeldValue = swizzle(value);
         ubyte[] buf = (cast(ubyte*)&swizzeldValue)[0..T.sizeof];
         ensureBytesLeft((bits + 7) / 8);
-        size_t curByte=0;
+        size_t curByte=1;
         size_t curBit=0;
         for(size_t bitsDone = 0; bitsDone < bits;)
         {
           size_t bitsTodo = min(8 - m_currentBit, bits - bitsDone);
           ubyte mask = cast(ubyte)(((1 << bitsTodo) - 1));
           mask = cast(ubyte)(mask << m_currentBit);
-          ubyte data = buf[curByte] >> curBit;
+          ubyte data = buf[T.sizeof - curByte] >> curBit;
           if(bitsTodo > 8 - curBit)
-            data = data | cast(ubyte)( buf[curByte+1] << (8 - curBit) );
+            data = data | cast(ubyte)( buf[T.sizeof - curByte - 1] << (8 - curBit) );
           data = cast(ubyte)(data << m_currentBit);
           *m_currentByte = ((*m_currentByte) & (~mask)) | (data & mask);
           if(m_currentBit + bitsTodo >= 8)
@@ -126,7 +126,10 @@ class BitOutStream(AT = StdAllocator) : BitStreamBase
 
     @property ubyte[] data()
     {
-      return m_data;
+      auto len = (m_currentByte - m_data.ptr);
+      if(m_currentBit > 0)
+        len++;
+      return m_data[0..len];
     }
 }
 
@@ -140,7 +143,7 @@ class BitInStream : BitStreamBase
     bool areBytesLeft(size_t size)
     {      
       size_t currentLength =(m_currentByte - m_data.ptr) + 1;
-      return m_data.length - currentLength - 1 > size;
+      return m_data.length - currentLength >= size;
     }
 
   public:
@@ -172,10 +175,11 @@ class BitInStream : BitStreamBase
         if(!areBytesLeft(bytes))
           return thResult.FAILURE;
         ubyte[T.sizeof] mem;
-        size_t cur=0;
+        size_t cur=1;
         for(size_t bitsDone = 0; bitsDone < bits; cur++)
         {
           size_t bitsTodo = min(8, bits - bitsDone);
+          assert(m_currentByte < m_data.ptr + m_data.length);
           ubyte data = (*m_currentByte) >> m_currentBit;
           if(bitsTodo > 8 - m_currentBit)
           {
@@ -183,7 +187,7 @@ class BitInStream : BitStreamBase
             data = data | cast(ubyte)( (*m_currentByte) << (8 - m_currentBit) );
           }
           data = data & cast(ubyte)((1 << bitsTodo) - 1);
-          mem[cur] = data;
+          mem[T.sizeof - cur] = data;
           bitsDone += bitsTodo;
           m_currentBit = (m_currentBit + bitsTodo) % 8;
         }
@@ -198,8 +202,17 @@ unittest
   auto outStream = New!(BitOutStream!())(1024);
   scope(exit) Delete(outStream);
 
+  outStream.write!ubyte(123, 8);
+  outStream.write!ushort(12345, 16);
+  outStream.write!uint(12345678, 32);
   outStream.write!ubyte(1, 1);
   outStream.write!ushort(12345, 16);
+  outStream.write!uint(13, 4);
+  outStream.write!uint(14, 4);
+  outStream.write!uint(3, 2);
+  outStream.write!ubyte(123, 8);
+  outStream.write!ushort(12345, 16);
+  outStream.write!uint(12345678, 32);
 
   auto inStream = New!BitInStream(outStream.data);
   scope(exit) Delete(inStream);
@@ -207,6 +220,19 @@ unittest
   thResult result;
   ubyte ubdata;
   ushort usdata;
+  uint uidata;
+
+  result = inStream.read!ubyte(ubdata, 8);
+  assert(result == thResult.SUCCESS);
+  assert(ubdata == 123);
+
+  result = inStream.read!ushort(usdata, 16);
+  assert(result == thResult.SUCCESS);
+  assert(usdata == 12345);
+
+  result = inStream.read!uint(uidata, 32);
+  assert(result == thResult.SUCCESS);
+  assert(uidata == 12345678);
 
   result = inStream.read!ubyte(ubdata, 1);
   assert(result == thResult.SUCCESS);
@@ -215,4 +241,36 @@ unittest
   result = inStream.read!ushort(usdata, 16);
   assert(result == thResult.SUCCESS);
   assert(usdata == 12345);
+  
+  result = inStream.read!uint(uidata, 4);
+  assert(result == thResult.SUCCESS);
+  assert(uidata == 13);
+
+  result = inStream.read!uint(uidata, 4);
+  assert(result == thResult.SUCCESS);
+  assert(uidata == 14);
+
+  result = inStream.read!uint(uidata, 2);
+  assert(result == thResult.SUCCESS);
+  assert(uidata == 3);
+
+  result = inStream.read!ubyte(ubdata, 8);
+  assert(result == thResult.SUCCESS);
+  assert(ubdata == 123);
+
+  result = inStream.read!ushort(usdata, 16);
+  assert(result == thResult.SUCCESS);
+  assert(usdata == 12345);
+
+  result = inStream.read!uint(uidata, 32);
+  assert(result == thResult.SUCCESS);
+  assert(uidata == 12345678);
+
+  //isData 0 1
+  //rleLength 7 3
+  //isData 1 1
+  //rleLength 3 3
+  //index 0 0
+  //X 413 9
+  //Y 57 9
 }

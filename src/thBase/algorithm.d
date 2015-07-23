@@ -201,18 +201,18 @@ void swap(T)(ref T value1, ref T value2)
   }
 }
 
-void insertionSort(T)(T data) if(isRCArray!T)
+void insertionSort(alias less=quicksortLess, T)(T data) if(isRCArray!T)
 {
-  insertionSort(data[]);
+  insertionSort!less(data[]);
 }
 
-void insertionSort(T)(T data) if(!isRCArray!T)
+void insertionSort(alias less=quicksortLess, T)(T data) if(!isRCArray!T)
 {
   for(size_t sorted = 1; sorted < data.length; sorted++)
   {
     ptrdiff_t insertPos = sorted-1;
     auto temp = data[sorted];
-    while(insertPos >= 0 && data[insertPos] > temp)
+    while(insertPos >= 0 && less(temp, data[insertPos]))//data[insertPos] > temp)
       insertPos--;
     insertPos++;
     if(insertPos != sorted)
@@ -243,7 +243,12 @@ unittest
   }
 }
 
-private size_t quicksortSwap(T)(T data)
+bool quicksortLess(T)(auto ref T lhs, auto ref T rhs)
+{
+  return lhs < rhs;
+}
+
+private size_t quicksortSwap(alias less, T)(T data)
 {
   size_t mediatorIndex = 0;
   static if(is(StripModifier!(arrayType!T) == class) || is(StripModifier!(arrayType!T) == interface) || isNumeric!(arrayType!T))
@@ -253,11 +258,11 @@ private size_t quicksortSwap(T)(T data)
     med[1] = data[$/2];
     med[2] = data[$-1];
 
-    if(med[0] > med[1])
+    if(less(med[1], med[0]))// med[0] > med[1])
     {
-      if(med[0] > med[2])
+      if(less(med[2], med[0]))// med[0] > med[2])
       {
-        if(med[1] > med[2])
+        if(less(med[2], med[1]))// med[1] > med[2])
           mediatorIndex = data.length / 2;
         else
           mediatorIndex = data.length - 1;
@@ -266,9 +271,9 @@ private size_t quicksortSwap(T)(T data)
     }
     else
     {
-      if(med[0] < med[2])
+      if(less(med[0], med[2]))//med[0] < med[2])
       {
-        if(med[1] < med[2])
+        if(less(med[1], med[2]))//med[1] < med[2])
           mediatorIndex = data.length / 2;
         else
           mediatorIndex = data.length - 1;
@@ -283,11 +288,11 @@ private size_t quicksortSwap(T)(T data)
     med[1] = &data[$/2];
     med[2] = &data[$-1];
 
-    if(*med[0] > *med[1])
+    if(less(*med[1], *med[0]))//*med[0] > *med[1])
     {
-      if(*med[0] > *med[2])
+      if(less(*med[2], *med[0]))//*med[0] > *med[2])
       {
-        if(*med[1] < *med[2])
+        if(less(*med[2], *med[1]))//*med[1] > *med[2])
           mediatorIndex = data.length / 2;
         else
           mediatorIndex = data.length - 1;
@@ -296,9 +301,9 @@ private size_t quicksortSwap(T)(T data)
     }
     else
     {
-      if(*med[0] < *med[2])
+      if(less(*med[0], *med[2]))//*med[0] < *med[2])
       {
-        if(*med[1] < *med[2])
+        if(less(*med[1], *med[2]))//*med[1] < *med[2])
           mediatorIndex = data.length / 2;
         else
           mediatorIndex = data.length - 1;
@@ -313,28 +318,30 @@ private size_t quicksortSwap(T)(T data)
   }
 
   size_t smallerIndex = 0; size_t biggerIndex = data.length - 2;
+  size_t end = data.length - 1;
   while(true)
   {
-    while(smallerIndex < data.length && data[smallerIndex] <= data[$-1])
+    while(smallerIndex < end && !less(data[end], data[smallerIndex]))//data[smallerIndex] <= data[$-1])
       smallerIndex++;
-    while(biggerIndex > 0 && data[biggerIndex] >= data[$-1])
+    while(biggerIndex > 0 && !less(data[biggerIndex], data[end]))//data[biggerIndex] >= data[$-1])
       biggerIndex--;
     if(biggerIndex <= smallerIndex)
       break;
     swap(data[smallerIndex], data[biggerIndex]);
   }
-  swap(data[smallerIndex], data[$-1]);
+  if(smallerIndex < end)
+    swap(data[smallerIndex], data[end]);
   return smallerIndex;
 }
 
 /**
  * sorts the array using the quicksort algorithm
  */
-void quicksort(T)(T data) if(!isRCArray!T)
+void quicksort(alias less = quicksortLess, T)(T data) if(!isRCArray!T)
 {
   if(data.length > 1)
   {
-    size_t smallerIndex = quicksortSwap(data);
+    size_t smallerIndex = quicksortSwap!less(data);
     quicksort(data[0..smallerIndex]);
     quicksort(data[(smallerIndex+1)..$]);
   }
@@ -376,17 +383,17 @@ void sort(T)(T data) if(isRCArray!T)
 }
 
 /// ditto
-void sort(T)(T data) if(!isRCArray!T)
+void sort(alias less=quicksortLess, T)(T data) if(!isRCArray!T)
 {
   if(data.length < 16)
   {
-    insertionSort(data);
+    insertionSort!less(data);
   }
   else
   {
-    size_t smallerIndex = quicksortSwap(data);
-    sort(data[0..smallerIndex]);
-    sort(data[(smallerIndex+1)..$]);
+    size_t smallerIndex = quicksortSwap!less(data);
+    sort!less(data[0..smallerIndex]);
+    sort!less(data[(smallerIndex+1)..$]);
   }  
 }
 
